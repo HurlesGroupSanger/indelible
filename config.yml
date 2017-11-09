@@ -6,6 +6,12 @@ random_forest_model: "/nfs/users/nfs_a/as33/Projects/Indelible/data/random_fores
 exac_constraint: "/nfs/users/nfs_a/as33/Projects/Indelible/data/cleaned_exac_with_pLI_march16_anno.txt"
 hgnc_synonyms: "/nfs/users/nfs_a/as33/Projects/Indelible/data/hgnc_gene_synonyms.txt"
 hgnc_file: "/nfs/users/nfs_a/as33/Projects/Indelible/data/hgnc_genes.tsv"
+
+#BLASTPATHS:
+blastdb: "/lustre/scratch113/projects/ddd/users/as33/resources/resources_striped/hs37d5.fa"
+windowmaskerdb: "/lustre/scratch113/projects/ddd/users/as33/resources/resources_striped/wmasker.obinary"
+repeatdb: "/lustre/scratch113/projects/ddd/users/as33/Indelible/repbase_fixed.fasta"
+
 # PARAMETERS:
 # -----------
 # HC_THRESHOLD: Quality threshold at which to hard clip from the ends

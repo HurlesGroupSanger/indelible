@@ -1,7 +1,7 @@
 """
     Author: Alejandro Sifrim
     Affiliation: Wellcome Trust Sanger Institute
-    
+
     Loads the Random Forest model and scores all the variants in the file
 
     Parameters
@@ -9,18 +9,18 @@
 
     1) File to be scored
 	2) Model file
-    
+
     Returns
     -------
 
     1) File with appended scored
-    
+
 """
 import sys
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn import cross_validation
-import cPickle
+#from sklearn import cross_validation
+import pickle
 import bz2
 
 def trainForest(training_file_path):
@@ -31,7 +31,7 @@ def trainForest(training_file_path):
     clf.fit(values,outcome)
     return clf
 
-def score_file(forest_path, testing_file_path): 
+def score_file(forest_path, testing_file_path):
     df = pd.read_csv(testing_file_path,sep="\t")
     values = df.ix[:, df.columns.difference(["chrom","position","seq_longest"])]
     clf = loadForest(forest_path)
@@ -43,14 +43,14 @@ def score_file(forest_path, testing_file_path):
 
 def saveForest(clf,output_path):
     with bz2.BZ2File(output_path, 'wb') as fid:
-        cPickle.dump(clf, fid)
+        pickle.dump(clf, fid)
     return True
 
 def loadForest(path):
     with bz2.BZ2File(path, 'rb') as fid:
-        clf = cPickle.load(fid)
+        clf = pickle.load(fid,encoding='latin1')
     return clf
-    
+
 
 def score_positions(input_path, output_path, config):
     df = score_file(config['random_forest_model'],input_path)
@@ -68,4 +68,3 @@ def train(input_path, output_path):
 # 	plt.xlabel("Score")
 # 	pdf.savefig()
 # 	plt.close()
-

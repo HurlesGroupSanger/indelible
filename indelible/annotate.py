@@ -2,19 +2,19 @@ import csv
 import pybedtools as bedtools
 import re
 import sys
-from indelible_lib import *
+from indelible.indelible_lib import *
 
 
 CHROMOSOMES = [str(x) for  x in range(1,23)]+["X","Y"]
 
 def create_gene_synonym_hash(hgnc_synonyms):
-	syn_hash = {} 
+	syn_hash = {}
 	syn_file = hgnc_synonyms
 	for row in csv.DictReader(open(syn_file,'r'),delimiter="\t"):
 		if row['Status'] != "Approved":
 			continue
 		synonyms = []
-		synonyms.extend(row['Previous Symbols'].split(", "))	
+		synonyms.extend(row['Previous Symbols'].split(", "))
 		# synonyms.extend(row['Synonyms'].split(", "))
 		for synonym in synonyms:
 			syn_hash[synonym] = row['Approved Symbol']
@@ -48,7 +48,7 @@ def interval_overlap(start1,end1,start2,end2):
 	e1 = max(int(start1),int(end1))
 	s2 = min(int(start2),int(end2))
 	e2 = max(int(start2),int(end2))
-	
+
 	overlap = max(0, min(e1, e2) - max(s1, s2))
 	if overlap > 0:
 		return True
@@ -82,7 +82,7 @@ def find_hgnc_genes(chrom,start,end, config):
 	for row in csv.DictReader(open(config['hgnc_file'],'r'),delimiter="\t"):
 		HGNC_COORDS[row['HGNC']] = {"chrom": row['CHROM'],"start": int(row["START"]),"end": int(row["END"])}
 
-	for (gene,coords) in HGNC_COORDS.iteritems():
+	for (gene,coords) in HGNC_COORDS.items():
 		if chrom == coords["chrom"]:
 			if interval_overlap(start,end,coords["start"],coords["end"]):
 				res.append(gene)
@@ -92,7 +92,7 @@ def find_hgnc_genes(chrom,start,end, config):
 		return None
 
 def hgnc_constrained_subset(genes,constraint_hash):
-	constrained_hgnc = []	
+	constrained_hgnc = []
 	for hg in genes:
 		if hg in constraint_hash:
 			if constraint_hash[hg] > 0.9:
@@ -119,12 +119,12 @@ def create_blast_hash(scored_file):
 			h[key] = {}
 			h[key]["nonrepeats"] = []
 			h[key]["repeats"] = []
-		
+
 		h[key]["repeats"].append(row)
 	return h
 
 #THIS IS POSSIBLY THE UGLIEST CODE I'VE EVER WRITTEN
-def annotate_blast(hit,blast_hash):
+def annotate_blast(hit,blast_hash,ddg2p_db,constraint_hash,config):
 	key = hit["chrom"] + "_" + hit["position"] +"_"+str(len(hit["seq_longest"]))
 	if key in blast_hash:
 		blast_hit = blast_hash[key]
@@ -133,19 +133,19 @@ def annotate_blast(hit,blast_hash):
 				blast_hit = blast_hit["nonrepeats"][0]
 				hit["blast_hit"] = "%s:%s-%s" % (blast_hit['target_chrom'],blast_hit['target_start'],blast_hit['target_end'])
 				hit["blast_strand"] = blast_hit["target_strand"]
-				
+
 				if blast_hit["target_chrom"] == hit["chrom"]:
 					hit["blast_dist"] = min(
 						abs(int(hit["position"])-int(blast_hit["target_start"])),
 						abs(int(hit["position"])-int(blast_hit["target_end"]))
 						)
-					#Choose smallest interval 
+					#Choose smallest interval
 					if abs(int(hit["position"])-int(blast_hit["target_start"])) > abs(int(hit["position"])-int(blast_hit["target_end"])):
-						hit["blast_hgnc"] = find_hgnc_genes(hit["chrom"],hit["position"],blast_hit["target_end"])
+						hit["blast_hgnc"] = find_hgnc_genes(hit["chrom"],hit["position"],blast_hit["target_end"],config)
 					else:
-						hit["blast_hgnc"] = find_hgnc_genes(hit["chrom"],hit["position"],blast_hit["target_start"])
+						hit["blast_hgnc"] = find_hgnc_genes(hit["chrom"],hit["position"],blast_hit["target_start"],config)
 					if hit["blast_hgnc"] != None:
-						hit["blast_ddg2p"] = set(hit["blast_hgnc"]) & (DDG2P_MONOALLELIC | DDG2P_XLD_HEMI)
+						hit["blast_ddg2p"] = set(hit["blast_hgnc"]) & (ddg2p_db.keys())
 						hit["blast_hgnc_constrained"] = hgnc_constrained_subset(hit["blast_hgnc"],constraint_hash)
 						hit["blast_hgnc"] = ";".join(hit["blast_hgnc"])
 						hit["blast_hgnc_constrained"] = ";".join(hit["blast_hgnc_constrained"])
@@ -158,7 +158,7 @@ def annotate_blast(hit,blast_hash):
 					hit["blast_hgnc"] = "NA"
 				hit["blast_identity"] = blast_hit["target_identity"]
 
-				
+
 			else:
 				hit["blast_hit"] = "multi_hit"
 				hit["blast_dist"] = "NA"
@@ -175,7 +175,6 @@ def annotate_blast(hit,blast_hash):
 			hit["blast_hgnc"] = "NA"
 			hit["blast_ddg2p"] = "NA"
 			hit["blast_hgnc_constrained"] = "NA"
-			print hit
 	else:
 		hit["blast_hit"] = "no_hit"
 		hit["blast_dist"] = "NA"
@@ -184,8 +183,8 @@ def annotate_blast(hit,blast_hash):
 		hit["blast_hgnc"] = "NA"
 		hit["blast_ddg2p"] = "NA"
 		hit["blast_hgnc_constrained"] = "NA"
-	return hit	
-				
+	return hit
+
 
 def annotate(input_path, output_path, config):
 	scored_file = csv.DictReader(open(input_path),delimiter="\t")
@@ -202,12 +201,12 @@ def annotate(input_path, output_path, config):
 	ddg2p_db = read_ddg2p(config['ddg2p_bed'])
 
 	for v in scored_file:
-		v = annotate_blast(v,bhash)
+		v = annotate_blast(v,bhash,ddg2p_db,constraint_hash,config)
 		chrom = v["chrom"]
 		pos = int(v["position"])
 		hgnc_genes = find_hgnc_genes(chrom,pos,pos+1,config)
 		ddg2p_genes = find_ddg2p_gene(chrom,pos,pos+1,ddg2p_db)
-		
+
 		if hgnc_genes != None:
 			v["hgnc"] = ";".join(hgnc_genes)
 			hgnc_constrained = hgnc_constrained_subset(hgnc_genes,constraint_hash)
@@ -234,5 +233,3 @@ def annotate(input_path, output_path, config):
 		else:
 			v["maf"] = ""
 		output_file.writerow(v)
-
-

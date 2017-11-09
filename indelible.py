@@ -3,9 +3,9 @@
 """
     Author: Alejandro Sifrim
     Affiliation: Wellcome Trust Sanger Institute
-    
+
     Indelible main program
-    
+
 """
 import time
 import yaml
@@ -92,7 +92,7 @@ required = ["MINIMUM_SR_COVERAGE","SHORT_SR_CUTOFF",
 
 for r in required:
 	if r not in config:
-		print "ERROR: %s not specified in config file!"
+		print("ERROR: %s not specified in config file!")
 		exit(1)
 
 """
@@ -107,13 +107,13 @@ AGGREGATE command
 
 if args.command == "aggregate":
 	if not os.path.isfile(args.input_path):
-		print "ERROR: Input file does not exist or cannot be accessed!"
+		print("ERROR: Input file does not exist or cannot be accessed!")
 		exit(1)
 	if not os.path.isfile(args.input_bam):
-		print "ERROR: Input BAM does not exist or cannot be accessed!"
+		print("ERROR: Input BAM does not exist or cannot be accessed!")
 		exit(1)
 	if not os.path.isfile(args.reference_path):
-		print "ERROR: Reference path does not exist or cannot be accessed!"
+		print("ERROR: Reference path does not exist or cannot be accessed!")
 		exit(1)
 	indelible.aggregate_positions(args.input_path, args.input_bam, args.output_path, args.reference_path, config)
 
@@ -122,10 +122,10 @@ SCORE command
 """
 if args.command == "score":
 	if not os.path.isfile(config['random_forest_model']):
-		print "ERROR: The path specified for random_forest_model in config does not exist!"
+		print("ERROR: The path specified for random_forest_model in config does not exist!")
 		exit(1)
 	if not os.path.isfile(args.input_path):
-		print "ERROR: Input file does not exist!"
+		print("ERROR: Input file does not exist!")
 		exit(1)
 	indelible.score_positions(args.input_path, args.output_path, config)
 
@@ -134,7 +134,7 @@ BLAST
 """
 if args.command == "blast":
 	if not os.path.isfile(args.input_path):
-		print "ERROR: Input file does not exist!"
+		print("ERROR: Input file does not exist!")
 		exit(1)
 	indelible.blast(args.input_path,config)
 
@@ -143,7 +143,7 @@ ANNOTATE command
 """
 if args.command == "annotate":
 	if not os.path.isfile(args.input_path):
-		print "ERROR: Input file does not exist!"
+		print("ERROR: Input file does not exist!")
 		exit(1)
 	indelible.annotate(args.input_path, args.output_path, config)
 
@@ -152,13 +152,13 @@ DENOVO command
 """
 if args.command == "denovo":
 	if not os.path.isfile(args.child_input):
-		print "ERROR: Input file does not exist!"
+		print("ERROR: Input file does not exist!")
 		exit(1)
 	if not os.path.isfile(args.mother_bam):
-		print "ERROR: Maternal BAM file does not exist!"
+		print("ERROR: Maternal BAM file does not exist!")
 		exit(1)
 	if not os.path.isfile(args.father_bam):
-		print "ERROR: Paternal BAM file does not exist!"
+		print("ERROR: Paternal BAM file does not exist!")
 		exit(1)
 	indelible.denovo_caller(args.child_input, args.mother_bam, args.father_bam, args.output_path, config)
 
@@ -167,7 +167,7 @@ TRAIN command
 """
 if args.command == "train":
 	if not os.path.isfile(args.input_path):
-		print "ERROR: Input file does not exist!"
+		print("ERROR: Input file does not exist!")
 		exit(1)
 	indelible.train(args.input_path, args.output_path)
 
@@ -176,13 +176,13 @@ COMPLETE command
 """
 if args.command == "complete":
 	if not os.path.isfile(args.input_path):
-		print "ERROR: Input file does not exist!"
+		print("ERROR: Input file does not exist!")
 		exit(1)
 	if not os.path.isfile(args.reference_path):
-		print "ERROR: Reference path does not exist or cannot be accessed!"
+		print("ERROR: Reference path does not exist or cannot be accessed!")
 		exit(1)
 	if not os.path.isdir(args.output_path):
-		print "ERROR: Output directory does not exist!"
+		print("ERROR: Output directory does not exist!")
 		exit(1)
 
 	reads_path = args.output_path+"/"+os.path.basename(args.input_path)+".sc_reads"
@@ -190,19 +190,19 @@ if args.command == "complete":
 	scored_path = counts_path+".scored"
 	annotated_path = counts_path+".annotated"
 	final_path = args.output_path+"/"+os.path.basename(args.input_path)+".indelible.tsv"
-	print "%s: Fetching reads..." % timestamp()
+	print("%s: Fetching reads..." % timestamp())
 	indelible.fetch_reads(args.input_path, reads_path, config)
-	print "%s: Aggregating across positions..." % timestamp()
+	print("%s: Aggregating across positions..." % timestamp())
 	indelible.aggregate_positions(reads_path, args.input_path, counts_path, args.reference_path, config)
-	print "%s: Scoring positions..." % timestamp()
+	print("%s: Scoring positions..." % timestamp())
 	indelible.score_positions(counts_path, scored_path, config)
-	print "%s: Blasting soft-clipped segments..." % timestamp()
+	print("%s: Blasting soft-clipped segments..." % timestamp())
 	indelible.blast(scored_path, config)
-	print "%s: Annotating positions..." % timestamp()
+	print("%s: Annotating positions..." % timestamp())
 	indelible.annotate(scored_path, annotated_path, config)
 	shutil.copy(annotated_path,final_path)
 	if args.keep_tmp != True:
-		print "%s: Removing temporary files..." % timestamp()
+		print("%s: Removing temporary files..." % timestamp())
 		os.remove(reads_path)
 		os.remove(counts_path)
 		os.remove(scored_path)
@@ -210,7 +210,3 @@ if args.command == "complete":
 		os.remove(scored_path+".fasta.hits_nonrepeats")
 		os.remove(scored_path+".fasta.hits_repeats")
 		os.remove(scored_path+".fasta")
-
-
-
-

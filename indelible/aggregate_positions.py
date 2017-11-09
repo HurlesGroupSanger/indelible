@@ -7,8 +7,7 @@ from pyfaidx import Fasta
 import swalign
 import numpy
 import re
-from indelible_lib import *
-
+from indelible.indelible_lib import *
 """
 Author: Alejandro Sifrim
 Affiliation: Wellcome Trust Sanger Institute
@@ -42,7 +41,7 @@ def dedup(sr_reads = []):
 	res = []
 	res.extend(tmp["3"].values())
 	res.extend(tmp["5"].values())
-	return res	
+	return res
 
 
 
@@ -70,7 +69,7 @@ def sr_coverage(sr_reads = [],cutoff=10):
 				long_3 += 1
 			else:
 				long_5 += 1
-		
+
 	return (total,total_long,total_short,long_5,short_5,long_3,short_3)
 
 
@@ -171,8 +170,3 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 				res["seq_longest"] = seq_longest(sr_reads)
 				splitwriter.writerow(res)
 				outputfile.flush()
-
-				
-
-				
-		
