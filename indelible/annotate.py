@@ -145,44 +145,30 @@ def annotate_blast(hit,blast_hash,ddg2p_db,constraint_hash,config):
 					else:
 						hit["blast_hgnc"] = find_hgnc_genes(hit["chrom"],hit["position"],blast_hit["target_start"],config)
 					if hit["blast_hgnc"] != None:
-						hit["blast_ddg2p"] = set(hit["blast_hgnc"]) & (ddg2p_db.keys())
-						hit["blast_hgnc_constrained"] = hgnc_constrained_subset(hit["blast_hgnc"],constraint_hash)
 						hit["blast_hgnc"] = ";".join(hit["blast_hgnc"])
-						hit["blast_hgnc_constrained"] = ";".join(hit["blast_hgnc_constrained"])
-						hit["blast_ddg2p"] = ";".join(hit["blast_ddg2p"])
 				else:
 					hit["blast_dist"] = "other_chrom"
 					hit["blast_hgnc"] = "NA"
-					hit["blast_ddg2p"] = "NA"
-					hit["blast_hgnc_constrained"] = "NA"
 					hit["blast_hgnc"] = "NA"
 				hit["blast_identity"] = blast_hit["target_identity"]
-
-
 			else:
 				hit["blast_hit"] = "multi_hit"
 				hit["blast_dist"] = "NA"
 				hit["blast_identity"] = "NA"
 				hit["blast_strand"] = "NA"
 				hit["blast_hgnc"] = "NA"
-				hit["blast_ddg2p"] = "NA"
-				hit["blast_hgnc_constrained"] = "NA"
 		else:
 			hit["blast_hit"] = "repeats_hit"
 			hit["blast_dist"] = "NA"
 			hit["blast_identity"] = "NA"
 			hit["blast_strand"] = "NA"
 			hit["blast_hgnc"] = "NA"
-			hit["blast_ddg2p"] = "NA"
-			hit["blast_hgnc_constrained"] = "NA"
 	else:
 		hit["blast_hit"] = "no_hit"
 		hit["blast_dist"] = "NA"
 		hit["blast_identity"] = "NA"
 		hit["blast_strand"] = "NA"
 		hit["blast_hgnc"] = "NA"
-		hit["blast_ddg2p"] = "NA"
-		hit["blast_hgnc_constrained"] = "NA"
 	return hit
 
 
@@ -192,7 +178,7 @@ def annotate(input_path, output_path, config):
 	db = read_database(config['indelible_db'])
 	#Prepare outputfile
 	new_fieldnames = scored_file.fieldnames
-	new_fieldnames.extend(("ddg2p",'hgnc','hgnc_constrained',"exonic","transcripts","exon_numbers","maf","blast_hit", "blast_strand", "blast_identity", "blast_dist", "blast_hgnc","blast_hgnc_constrained","blast_ddg2p"))
+	new_fieldnames.extend(("ddg2p",'hgnc','hgnc_constrained',"exonic","transcripts","exon_numbers","maf","blast_hit", "blast_strand", "blast_identity", "blast_dist", "blast_hgnc"))
 	output_file = csv.DictWriter(open(output_path,'w'),fieldnames=new_fieldnames,delimiter="\t")
 	output_file.writeheader()
 	#Prepare searchable hashes
@@ -212,18 +198,18 @@ def annotate(input_path, output_path, config):
 			hgnc_constrained = hgnc_constrained_subset(hgnc_genes,constraint_hash)
 			v["hgnc_constrained"] = ";".join(hgnc_constrained)
 		else:
-			v["hgnc"] = ""
+			v["hgnc"] = "NA"
 
 		if ddg2p_genes != None:
 			v["ddg2p"] = ";".join(ddg2p_genes)
 		else:
-			v["ddg2p"] = ""
+			v["ddg2p"] = "NA"
 
 		exons = find_protein_coding_ensembl_exon(chrom,pos,ensembl_exons)
 		if exons == None:
 			v["exonic"] = False
-			v["transcripts"] = ""
-			v["exon_numbers"] = ""
+			v["transcripts"] = "NA"
+			v["exon_numbers"] = "NA"
 		else:
 			v["exonic"] = True
 			v["transcripts"] = ";".join(exons[0])
@@ -231,5 +217,6 @@ def annotate(input_path, output_path, config):
 		if pos in db[chrom]:
 			v["maf"] = db[chrom][pos]
 		else:
-			v["maf"] = ""
+			v["maf"] = "NA"
+
 		output_file.writerow(v)

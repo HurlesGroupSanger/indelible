@@ -48,7 +48,7 @@ def saveForest(clf,output_path):
 
 def loadForest(path):
     with bz2.BZ2File(path, 'rb') as fid:
-        clf = pickle.load(fid,encoding='latin1')
+        clf = pickle.load(fid)
     return clf
 
 

@@ -43,6 +43,9 @@ def fetch_reads(input_path,output_path,config):
 	for s in infile:
 		cigar = s.cigar
 		if len(cigar) == 2:
+			refname = infile.getrname(s.tid)
+			if refname == "hs37d5":
+				continue
 			#5' Split Reads
 			if cigar[0][0] == 4 and cigar[1][0] == 0: # 4 = SOFT CLIP/ 0 = MATCH
 				sr = {}
@@ -72,7 +75,9 @@ def fetch_reads(input_path,output_path,config):
 				sr["strand"] = s.is_reverse
 				outfile.write(print_if_ok(sr,config))
 		elif len(cigar) == 3:
-
+			refname = infile.getrname(s.tid)
+			if refname == "hs37d5":
+				continue	
 			# These are reads with Soft-clips on both sides, likely due to dropped quality at the end
 			if cigar[0][0] == 4 and cigar[1][0] == 0 and cigar[2][0] == 4:
 				#1st split-segment

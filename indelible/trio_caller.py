@@ -34,6 +34,7 @@ def compute_stats(bam_file,chrom,position,relationship,config):
 def denovo_caller(child_input, mother_bam, father_bam, output_path,config):
 	mum_bam = pysam.Samfile(mother_bam,'rb')
 	dad_bam = pysam.Samfile(father_bam,'rb')
+	print (child_input)
 	scored_file = csv.DictReader(open(child_input,'r'), delimiter="\t")
 	new_fieldnames = scored_file.fieldnames
 	new_fieldnames.extend(("mum_sr","dad_sr",'mum_indel_context','dad_indel_context',"mum_cov","dad_cov"))

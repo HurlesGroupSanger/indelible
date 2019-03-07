@@ -8,9 +8,9 @@ hgnc_synonyms: "/nfs/users/nfs_a/as33/Projects/Indelible/data/hgnc_gene_synonyms
 hgnc_file: "/nfs/users/nfs_a/as33/Projects/Indelible/data/hgnc_genes.tsv"
 
 #BLASTPATHS:
-blastdb: "/lustre/scratch113/projects/ddd/users/as33/resources/resources_striped/hs37d5.fa"
-windowmaskerdb: "/lustre/scratch113/projects/ddd/users/as33/resources/resources_striped/wmasker.obinary"
-repeatdb: "/lustre/scratch113/projects/ddd/users/as33/Indelible/repbase_fixed.fasta"
+blastdb: "/lustre/scratch119/humgen/projects/ddd/users/as33/resources/resources_striped/hs37d5.fa"
+windowmaskerdb: "/lustre/scratch119/humgen/projects/ddd/users/as33/resources/resources_striped/wmasker.obinary"
+repeatdb: "/lustre/scratch119/humgen/projects/ddd/users/as33/Indelible/repbase_fixed.fasta"
 
 # PARAMETERS:
 # -----------
