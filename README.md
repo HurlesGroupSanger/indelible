@@ -116,6 +116,8 @@ All the previous commands can be performed in succession automatically with the 
 
 One can also look for *de novo* mutation events using the **denovo** command:
 
+If maternal and paternal bam files are not supplied, *denovo* filtering will not be performed (this simply acts to format non-trio data identicially to trio data).
+
 * `--c` : path to scored/annotated calls in the proband.
 * `--m` : path to maternal BAM file.
 * `--p` : path to paternal BAM file.

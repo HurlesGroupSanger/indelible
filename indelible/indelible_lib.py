@@ -11,8 +11,30 @@ import re
 
 BASE_QUALITIES = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 
-def coverage_at_position(bam_file,chr,pos):
-	for pileupcolumn in bam_file.pileup(chr, pos, pos+1):
+def bam_open(bam_file):
+
+	if bam_file is None:
+		bam_reader = None
+	elif 'bam' in bam_file:
+		bam_reader = pysam.Samfile(bam_file, 'rb')
+	elif 'cram' in bam_file:
+		bam_reader = pysam.Samfile(bam_file, 'rc')
+
+	return bam_reader
+
+def coverage_at_position_fetch(bam_file,chr,pos):
+
+	tot = 0
+
+	arrays_bases = bam_file.count_coverage(chr, pos, pos + 1, quality_threshold=13, read_callback="nofilter")
+
+	coverage = arrays_bases[0][0] + arrays_bases[1][0] + arrays_bases[2][0] + arrays_bases[3][0]
+
+	return coverage
+
+def coverage_at_position_pileup(bam_file,chr,pos):
+
+	for pileupcolumn in bam_file.pileup(chr,pos,pos+1):
 		if pileupcolumn.pos == pos:
 			return pileupcolumn.n
 	else:
@@ -21,7 +43,12 @@ def coverage_at_position(bam_file,chr,pos):
 def reads_with_indels_in_neighbourhood(bam_file,chrom,pos,config):
 	counts = {"insertions": 0, "deletions": 0}
 	window_size = config['WINDOW_SIZE']
-	for alignedread in bam_file.fetch(chrom,pos-(window_size/2),pos+(window_size/2)):
+	fetch_start = pos-(window_size/2)
+	fetch_end = pos+(window_size/2)
+	if fetch_start <= 0:
+		fetch_start = 0
+
+	for alignedread in bam_file.fetch(chrom,fetch_start,fetch_end):
 		cigar = alignedread.cigar
 		cigar_types = [c[0] for c in cigar]
 		if 1 in cigar_types: counts["insertions"] += 1
@@ -32,7 +59,6 @@ def hard_clip(seq,qual,threshold=10):
 	res_seq = ""
 	res_qual = ""
 
-	
 	offset = 0
 	q = BASE_QUALITIES.index(qual[offset])
 	while q < threshold and offset < len(seq):

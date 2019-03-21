@@ -110,13 +110,16 @@ def avg_avg_sr_qual(sr_reads=[]):
 
 
 def aggregate_positions(input_path, input_bam, output_path, reference_path, config):
+
 	chr_dict = dict([(chrom,{}) for chrom in CHROMOSOMES])
 	result_dict = dict([(chrom,{}) for chrom in CHROMOSOMES])
 
 	#ARGUMENTS ARE 1) sr_reads file 2) BAM file 3) reference fasta file
 
 	splitfile = open(input_path,'r')
-	bam_file = pysam.Samfile(input_bam,'rb')
+
+	bam_file = bam_open(input_bam)
+
 	reference = Fasta(reference_path,as_raw=True)
 	splitreader = csv.DictReader(splitfile,delimiter="\t",quoting=csv.QUOTE_NONE)
 	header = ("chrom","position","coverage","insertion_context","deletion_context",
@@ -138,16 +141,23 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 
 		chr_dict[row['chr']][row['split_position']].append(row)
 
-
 	for chrom in chr_dict:
 		for position in chr_dict[chrom]:
 			pos = int(position)
 			if len(chr_dict[chrom][position]) >= config["MINIMUM_SR_COVERAGE"]:
 				sr_reads = chr_dict[chrom][position]
+
+				print chrom + "\t" + position
+
 				res = {}
 				res["chrom"] = chrom
 				res["position"] = pos
-				res["coverage"] = coverage_at_position(bam_file,chrom,pos)
+
+				covPU = coverage_at_position_pileup(bam_file, chrom, pos)
+				covFE = coverage_at_position_fetch(bam_file, chrom, pos)
+
+				res["coverage"] = covPU
+
 				indel_counts = reads_with_indels_in_neighbourhood(bam_file,chrom,pos,config)
 				res["insertion_context"] = indel_counts["insertions"]
 				res["deletion_context"] = indel_counts["deletions"]

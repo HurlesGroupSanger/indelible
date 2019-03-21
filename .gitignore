@@ -1,3 +1,5 @@
 data/*
 results/*
 src/*
+venv/*
+test_data_full/*

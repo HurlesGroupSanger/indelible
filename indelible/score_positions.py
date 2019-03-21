@@ -48,9 +48,8 @@ def saveForest(clf,output_path):
 
 def loadForest(path):
     with bz2.BZ2File(path, 'rb') as fid:
-        clf = pickle.load(fid,encoding='latin1')
+        clf = pickle.load(fid)
     return clf
-
 
 def score_positions(input_path, output_path, config):
     df = score_file(config['random_forest_model'],input_path)
