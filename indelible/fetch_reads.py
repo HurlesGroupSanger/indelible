@@ -1,4 +1,5 @@
 import pysam
+from indelible.indelible_lib import *
 
 BASE_QUALITIES = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 
@@ -6,7 +7,6 @@ def hard_clip(seq,qual,threshold=10):
 	res_seq = ""
 	res_qual = ""
 
-	
 	offset = 0
 	q = BASE_QUALITIES.index(qual[offset])
 	while q < threshold and offset < len(seq):
@@ -34,9 +34,10 @@ def print_if_ok(sr,config):
 		return ""
 
 
-
 def fetch_reads(input_path,output_path,config):
-	infile = pysam.Samfile(input_path,'rb')
+
+	infile = bam_open(input_path)
+
 	outfile = open(output_path,'w')
 	outfile.write("chr\tsplit_position\tprime\tsplit_length\tseq\tqual\tmapq\tavg_sr_qual\treverse_strand\n")
 
@@ -77,7 +78,7 @@ def fetch_reads(input_path,output_path,config):
 		elif len(cigar) == 3:
 			refname = infile.getrname(s.tid)
 			if refname == "hs37d5":
-				continue	
+				continue
 			# These are reads with Soft-clips on both sides, likely due to dropped quality at the end
 			if cigar[0][0] == 4 and cigar[1][0] == 0 and cigar[2][0] == 4:
 				#1st split-segment

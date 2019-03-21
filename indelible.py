@@ -64,8 +64,8 @@ subparser.add_argument('--o', help='path to output file', metavar="<output_path>
 
 subparser = subparsers.add_parser('denovo', help='searches for de novo events')
 subparser.add_argument('--c', help='path to scored/annotated calls in the child', metavar="<child_indelible_path>", required=True, dest="child_input")
-subparser.add_argument('--m', help='path to maternal BAM file', metavar="<mother_bam_path>", required=True, dest="mother_bam")
-subparser.add_argument('--p', help='path to paternal BAM file', metavar="<father_bam_path>", required=True, dest="father_bam")
+subparser.add_argument('--m', help='path to maternal BAM file', metavar="<mother_bam_path>", required=False, dest="mother_bam")
+subparser.add_argument('--p', help='path to paternal BAM file', metavar="<father_bam_path>", required=False, dest="father_bam")
 subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 
 subparser = subparsers.add_parser('train', help='trains the Random Forest model on a bunch of examples')
@@ -151,16 +151,12 @@ if args.command == "annotate":
 DENOVO command
 """
 if args.command == "denovo":
+
 	if not os.path.isfile(args.child_input):
 		print("ERROR: Input file does not exist!")
 		exit(1)
-	if not os.path.isfile(args.mother_bam):
-		print("ERROR: Maternal BAM file does not exist!")
-		exit(1)
-	if not os.path.isfile(args.father_bam):
-		print("ERROR: Paternal BAM file does not exist!")
-		exit(1)
-	indelible.denovo_caller(args.child_input, args.mother_bam, args.father_bam, args.output_path, config)
+
+	indelible.denovo_caller_trio(args.child_input, args.mother_bam, args.father_bam, args.output_path, config)
 
 """
 TRAIN command

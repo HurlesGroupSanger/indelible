@@ -11,8 +11,30 @@ import re
 
 BASE_QUALITIES = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 
-def coverage_at_position(bam_file,chr,pos):
-	for pileupcolumn in bam_file.pileup(chr, pos, pos+1):
+def bam_open(bam_file):
+
+	if bam_file is None:
+		bam_reader = None
+	elif 'bam' in bam_file:
+		bam_reader = pysam.Samfile(bam_file, 'rb')
+	elif 'cram' in bam_file:
+		bam_reader = pysam.Samfile(bam_file, 'rc')
+
+	return bam_reader
+
+def coverage_at_position_fetch(bam_file,chr,pos):
+
+	tot = 0
+
+	arrays_bases = bam_file.count_coverage(chr, pos, pos + 1, quality_threshold=13, read_callback="nofilter")
+
+	coverage = arrays_bases[0][0] + arrays_bases[1][0] + arrays_bases[2][0] + arrays_bases[3][0]
+
+	return coverage
+
+def coverage_at_position_pileup(bam_file,chr,pos):
+
+	for pileupcolumn in bam_file.pileup(chr,pos,pos+1):
 		if pileupcolumn.pos == pos:
 			return pileupcolumn.n
 	else:
@@ -37,7 +59,6 @@ def hard_clip(seq,qual,threshold=10):
 	res_seq = ""
 	res_qual = ""
 
-	
 	offset = 0
 	q = BASE_QUALITIES.index(qual[offset])
 	while q < threshold and offset < len(seq):

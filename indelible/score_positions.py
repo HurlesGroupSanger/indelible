@@ -51,7 +51,6 @@ def loadForest(path):
         clf = pickle.load(fid)
     return clf
 
-
 def score_positions(input_path, output_path, config):
     df = score_file(config['random_forest_model'],input_path)
     df.to_csv(output_path,sep="\t",index=False)
