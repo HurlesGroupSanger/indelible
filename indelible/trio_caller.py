@@ -27,9 +27,9 @@ import math
 def compute_stats(bam_reader,chrom,position,relationship,config):
 	res = {}
 	if bam_reader is None:
-		res['coverage'] = 'NA'
-		res['indel_context'] = 'NA'
-		res['sr_context'] = 'NA'
+		res['coverage'] = None
+		res['indel_context'] = None
+		res['sr_context'] = None
 	else:
 		res['coverage'] = coverage_at_position_pileup(bam_reader, chrom, position)
 		res['indel_context'] = reads_with_indels_in_neighbourhood(bam_reader, chrom, position, config)
