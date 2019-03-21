@@ -6,7 +6,6 @@ pyfaidx == 0.2.3
 pysam == 0.15.2
 scipy == 0.15.1
 swalign == 0.3.1
-pyblast == 0.1
 scikit_learn == 0.17.1
 PyYAML == 3.11
 pyblast == 0.1
