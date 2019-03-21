@@ -31,9 +31,9 @@ def compute_stats(bam_reader,chrom,position,relationship,config):
 		res['indel_context'] = 'NA'
 		res['sr_context'] = 'NA'
 	else:
-		res['coverage'] = coverage_at_position_pileup(bam_file, chrom, position)
-		res['indel_context'] = reads_with_indels_in_neighbourhood(bam_file, chrom, position, config)
-		res['sr_context'] = split_reads_in_neighbourhood(bam_file, chrom, position, config)
+		res['coverage'] = coverage_at_position_pileup(bam_reader, chrom, position)
+		res['indel_context'] = reads_with_indels_in_neighbourhood(bam_reader, chrom, position, config)
+		res['sr_context'] = split_reads_in_neighbourhood(bam_reader, chrom, position, config)
 		# res['relationship'] = relationship
 
 	return res
