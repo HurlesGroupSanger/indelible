@@ -27,15 +27,11 @@ import math
 def compute_stats(bam_reader,chrom,position,relationship,config):
 	res = {}
 	if bam_reader is None:
-		res['coverage'] = None
-		res['indel_context']['deletions'] = None
-		res['indel_context']['insertions'] = None
-		res['sr_context'] = None
+		res = {'coverage': "NA", 'sr_context': "NA", 'indel_context': {'deletions': "NA",'insertions': ""}}
 	else:
 		res['coverage'] = coverage_at_position_pileup(bam_reader, chrom, position)
 		res['indel_context'] = reads_with_indels_in_neighbourhood(bam_reader, chrom, position, config)
 		res['sr_context'] = split_reads_in_neighbourhood(bam_reader, chrom, position, config)
-		# res['relationship'] = relationship
 
 	return res
 
@@ -54,9 +50,9 @@ def denovo_caller_trio(child_input, mother_bam, father_bam, output_path,config):
 		if float(v['prob_Y']) >= config['SCORE_THRESHOLD']:
 			mum_stats = compute_stats(mum_reader,v['chrom'],int(v['position']),'mum',config)
 			dad_stats = compute_stats(dad_reader,v['chrom'],int(v['position']),'dad',config)
-			v['mum_sr'] =  mum_stats['sr_context']
-			v['dad_sr'] =  dad_stats['sr_context']
-			v['mum_indel_context'] =  mum_stats['indel_context']['deletions'] +  mum_stats['indel_context']['insertions']
+			v['mum_sr'] = mum_stats['sr_context']
+			v['dad_sr'] = dad_stats['sr_context']
+			v['mum_indel_context'] =  mum_stats['indel_context']['deletions'] + mum_stats['indel_context']['insertions']
 			v['dad_indel_context'] =  dad_stats['indel_context']['deletions'] + dad_stats['indel_context']['insertions']
 			v['mum_cov'] = mum_stats['coverage']
 			v['dad_cov'] = dad_stats['coverage']
