@@ -9,3 +9,4 @@ venv/*
 pyblast/*
 blastdb/*
 test_data_full/*
+config.yml

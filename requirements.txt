@@ -1,6 +1,6 @@
+cython
 numpy == 1.11.0
 pandas == 0.18.1
-cython
 pybedtools == 0.6.7
 pyfaidx == 0.2.3
 pysam == 0.15.2
@@ -8,4 +8,4 @@ scipy == 0.15.1
 swalign == 0.3.1
 scikit_learn == 0.17.1
 PyYAML == 3.11
-Biopython
+Biopython == 1.73

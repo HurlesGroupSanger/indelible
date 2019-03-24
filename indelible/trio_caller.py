@@ -28,7 +28,8 @@ def compute_stats(bam_reader,chrom,position,relationship,config):
 	res = {}
 	if bam_reader is None:
 		res['coverage'] = None
-		res['indel_context'] = None
+		res['indel_context']['deletions'] = None
+		res['indel_context']['insertions'] = None
 		res['sr_context'] = None
 	else:
 		res['coverage'] = coverage_at_position_pileup(bam_reader, chrom, position)
@@ -43,7 +44,6 @@ def denovo_caller_trio(child_input, mother_bam, father_bam, output_path,config):
 	mum_reader = bam_open(mother_bam)
 	dad_reader = bam_open(father_bam)
 
-	print (child_input)
 	scored_file = csv.DictReader(open(child_input,'r'), delimiter="\t")
 	new_fieldnames = scored_file.fieldnames
 	new_fieldnames.extend(("mum_sr","dad_sr",'mum_indel_context','dad_indel_context',"mum_cov","dad_cov"))
