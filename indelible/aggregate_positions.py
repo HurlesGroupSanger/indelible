@@ -147,8 +147,6 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 			if len(chr_dict[chrom][position]) >= config["MINIMUM_SR_COVERAGE"]:
 				sr_reads = chr_dict[chrom][position]
 
-				print chrom + "\t" + position
-
 				res = {}
 				res["chrom"] = chrom
 				res["position"] = pos

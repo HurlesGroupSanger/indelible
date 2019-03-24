@@ -1,5 +1,11 @@
-data/*
+data/*.txt
+data/*.tsv
+data/*.bed
+data/*.gff
+data/*.pkl
 results/*
 src/*
 venv/*
+pyblast/*
+blastdb/*
 test_data_full/*

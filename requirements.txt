@@ -8,4 +8,4 @@ scipy == 0.15.1
 swalign == 0.3.1
 scikit_learn == 0.17.1
 PyYAML == 3.11
-pyblast == 0.1
+Biopython

@@ -33,7 +33,6 @@ def print_if_ok(sr,config):
 	else:
 		return ""
 
-
 def fetch_reads(input_path,output_path,config):
 
 	infile = bam_open(input_path)

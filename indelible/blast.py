@@ -14,12 +14,10 @@ Returns
 -------
 
 """
-import sys
-import os
 import csv
 import time
-import pyblast
-import yaml
+from Bio.Blast.Applications import NcbiblastnCommandline
+import StringIO
 
 today = time.strftime('%Y%m%d')
 
@@ -32,8 +30,8 @@ MINIMUM_LENGTH = 20
 MINIMUM_SCORE = 0.5
 
 BLAST_FIELDS = [
-    'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend',
-    'sstart', 'send', 'sstrand','evalue', 'bitscore']
+	'qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend',
+	'sstart', 'send', 'sstrand','evalue', 'bitscore']
 
 def generate_fasta(scored_file):
 	output_fasta = open(scored_file+".fasta",'w')
@@ -44,55 +42,58 @@ def generate_fasta(scored_file):
 	output_fasta.close()
 	return scored_file+".fasta"
 
-def blast_fasta(fasta_file,output_path,BLASTdb,WINDOWMASKERdb,REPEATdb):
-	fa = open(fasta_file)
+## New blast interface from Pybio
+def run_blast(fasta_file, db, WINDOWMASKERdb=None):
+
+	blastn_clin = NcbiblastnCommandline(query=fasta_file, db=db, word_size=15,
+										max_target_seqs=100, penalty=-3, evalue=0.001, reward=1,
+										outfmt="\'6 " + " ".join(BLAST_FIELDS) + "\'")
+	if not WINDOWMASKERdb is None:
+		blastn_clin.set_parameter("window_masker_db",WINDOWMASKERdb)
+
+	stdout, stderr = blastn_clin()
+	input = StringIO.StringIO(stdout)
+
+	hits = {}
+
+	for r in input:
+		data = r.rstrip().split("\t")
+		if data[0] in hits:
+			hits[data[0]].append(data)
+		else:
+			hits[data[0]] = [data]
+
+	return hits
+
+def blast_fasta_new(fasta_file,output_path,db,WINDOWMASKERdb = None):
+
 	fieldnames = ["chrom","pos","query_length","target_chrom","target_start","target_end","target_identity","target_strand","evalue"]
 	writer = csv.DictWriter(open(output_path,'w'), fieldnames=fieldnames,delimiter="\t",extrasaction='ignore')
 	writer.writeheader()
-	for r in pyblast.blastn(fa, window_masker_db=WINDOWMASKERdb,word_size=15,max_target_seqs=100,penalty=-3,evalue=0.001,reward=1,db=BLASTdb,pb_fields=BLAST_FIELDS):
-		msg = 'query {} has {} hits'.format(r.id, len(r.hits))
-		print(msg)
-		if len(r.hits) < 10:
-			for hit in r.hits:
-				res = {}
-				res["chrom"] = r.id.split("_")[0]
-				res["pos"] = r.id.split("_")[1]
-				res["query_length"] = r.id.split("_")[2]
-				res["target_chrom"] = hit.sseqid
-				res["target_start"] = hit.sstart
-				res["target_end"] = hit.send
-				res["target_identity"] = hit.pident
-				res["target_strand"] = hit.sstrand
-				res["evalue"] = hit.evalue
-				writer.writerow(res)
-		# print msg
 
-def blast_repeats(fasta_file,output_path,BLASTdb,WINDOWMASKERdb,REPEATdb):
-	fa = open(fasta_file)
-	fieldnames = ["chrom","pos","query_length","target_id","target_start","target_end","target_identity","target_strand","evalue"]
-	writer = csv.DictWriter(open(output_path,'w'), fieldnames=fieldnames,delimiter="\t",extrasaction='ignore')
-	writer.writeheader()
-	for r in pyblast.blastn(fa,word_size=15,max_target_seqs=100,penalty=-3,evalue=0.001,reward=1,db=REPEATdb,pb_fields=BLAST_FIELDS):
-		msg = 'query {} has {} hits'.format(r.id, len(r.hits))
-		if len(r.hits) < 10:
-			for hit in r.hits:
+	hits = run_blast(fasta_file,db,WINDOWMASKERdb)
+
+	for seq in hits:
+		msg = 'query {} has {} hits'.format(seq, len(hits[seq]))
+		#print msg
+		if len(hits[seq]) < 10:
+			for result in hits[seq]:
 				res = {}
-				res["chrom"] = r.id.split("_")[0]
-				res["pos"] = r.id.split("_")[1]
-				res["query_length"] = r.id.split("_")[2]
-				res["target_id"] = hit.sseqid
-				res["target_start"] = hit.sstart
-				res["target_end"] = hit.send
-				res["target_identity"] = hit.pident
-				res["target_strand"] = hit.sstrand
-				res["evalue"] = hit.evalue
+				res["chrom"] = result[0].split("_")[0]
+				res["pos"] = result[0].split("_")[1]
+				res["query_length"] = result[0].split("_")[2]
+				res["target_chrom"] = result[1]
+				res["target_start"] = result[8]
+				res["target_end"] = result[9]
+				res["target_identity"] = result[2]
+				res["target_strand"] = result[10]
+				res["evalue"] = result[11]
 				writer.writerow(res)
-		# print msg
 
 def blast(input_path, config):
-    BLASTdb = config['blastdb']
-    WINDOWMASKERdb = config['windowmaskerdb']
-    REPEATdb = config['repeatdb']
-    fasta_path = generate_fasta(input_path)
-    blast_fasta(fasta_path,fasta_path+".hits_nonrepeats",BLASTdb,WINDOWMASKERdb,REPEATdb)
-    blast_repeats(fasta_path,fasta_path+".hits_repeats",BLASTdb,WINDOWMASKERdb,REPEATdb)
+	BLASTdb = config['blastdb']
+	WINDOWMASKERdb = config['windowmaskerdb']
+	REPEATdb = config['repeatdb']
+	fasta_path = generate_fasta(input_path)
+	blast_fasta_new(fasta_path, fasta_path + ".hits_nonrepeats", BLASTdb, WINDOWMASKERdb)
+	blast_fasta_new(fasta_path, fasta_path + ".hits_repeats", REPEATdb)
