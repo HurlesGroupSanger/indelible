@@ -34,9 +34,9 @@ def check_sr(input_path, output_path, config):
         # outfile = open(output_path, 'w')
         # outfile.write("chr\tsplit_position\tprime\tsplit_length\tseq\tqual\tmapq\tavg_sr_qual\treverse_strand\n")
 
-        total_one = 0.0
-        total_two = 0.0
-        total = 0.0
+        total_one = 0
+        total_two = 0
+        total = 0
 
         for s in iter:
             cigar = s.cigartuples
@@ -65,5 +65,5 @@ def check_sr(input_path, output_path, config):
         v['total_one'] = total_one
         v['total_two'] = total_two
         v['total_reads'] = total
-        v['percent'] = total_two / total
+        v['percent'] = float(total_two) / float(total)
         output_file.writerow(v)
