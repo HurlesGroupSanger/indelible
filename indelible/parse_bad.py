@@ -20,7 +20,7 @@ def check_sr(input_path, output_path, config):
     denovo_file = csv.DictReader(open(input_path, 'r'), delimiter="\t")
     new_fieldnames = denovo_file.fieldnames
     new_fieldnames.extend(("total_one", "total_two", "total_reads", "percent"))
-    output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=new_fieldnames, delimiter="\t")
+    output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=new_fieldnames, delimiter="\t", lineterminator="\n")
     output_file.writeheader()
 
     for v in csv.DictReader(open(input_path,'r'), delimiter="\t"):

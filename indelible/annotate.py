@@ -179,7 +179,7 @@ def annotate(input_path, output_path, config):
 	#Prepare outputfile
 	new_fieldnames = scored_file.fieldnames
 	new_fieldnames.extend(("ddg2p",'hgnc','hgnc_constrained',"exonic","transcripts","exon_numbers","maf","blast_hit", "blast_strand", "blast_identity", "blast_dist", "blast_hgnc"))
-	output_file = csv.DictWriter(open(output_path,'w'),fieldnames=new_fieldnames,delimiter="\t")
+	output_file = csv.DictWriter(open(output_path,'w'),fieldnames=new_fieldnames,delimiter="\t",lineterminator="\n")
 	output_file.writeheader()
 	#Prepare searchable hashes
 	bhash = create_blast_hash(input_path)

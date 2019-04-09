@@ -45,7 +45,7 @@ def denovo_caller_trio(child_input, mother_bam, father_bam, output_path,config):
 	scored_file = csv.DictReader(open(child_input,'r'), delimiter="\t")
 	new_fieldnames = scored_file.fieldnames
 	new_fieldnames.extend(("mum_sr","dad_sr",'mum_indel_context','dad_indel_context',"mum_cov","dad_cov"))
-	output_file = csv.DictWriter(open(output_path,'w'),fieldnames=new_fieldnames,delimiter="\t")
+	output_file = csv.DictWriter(open(output_path,'w'),fieldnames=new_fieldnames,delimiter="\t",lineterminator="\n")
 	output_file.writeheader()
 
 	for v in csv.DictReader(open(child_input,'r'), delimiter="\t"):

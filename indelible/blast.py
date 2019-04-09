@@ -70,7 +70,7 @@ def run_blast(fasta_file, db, WINDOWMASKERdb=None):
 def blast_fasta(fasta_file,output_path,db,WINDOWMASKERdb = None):
 
 	fieldnames = ["chrom","pos","query_length","target_chrom","target_start","target_end","target_identity","target_strand","evalue"]
-	writer = csv.DictWriter(open(output_path,'w'), fieldnames=fieldnames,delimiter="\t",extrasaction='ignore')
+	writer = csv.DictWriter(open(output_path,'w'), fieldnames=fieldnames,delimiter="\t",extrasaction='ignore',lineterminator="\n")
 	writer.writeheader()
 
 	hits = run_blast(fasta_file,db,WINDOWMASKERdb)

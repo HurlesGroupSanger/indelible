@@ -131,7 +131,7 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 				  "entropy_upstream","entropy_downstream","sr_sw_similarity",
 				  "avg_avg_sr_qual","avg_mapq","seq_longest")
 	outputfile = open(output_path,'w')
-	splitwriter = csv.DictWriter(outputfile,fieldnames=header,delimiter="\t")
+	splitwriter = csv.DictWriter(outputfile,fieldnames=header,delimiter="\t",lineterminator="\n")
 	splitwriter.writeheader()
 	for row in splitreader:
 		if not row['chr'] in CHROMOSOMES:
