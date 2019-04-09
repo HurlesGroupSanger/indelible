@@ -24,7 +24,7 @@ def check_sr(input_path, output_path, config):
     output_file.writeheader()
 
     for v in csv.DictReader(open(input_path,'r'), delimiter="\t"):
-
+        print v["cram"]
         infile = bam_open(v['cram'])
 
         start_coord = int(v['position'])-config['WINDOW_SIZE']
