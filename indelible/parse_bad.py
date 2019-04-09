@@ -65,5 +65,7 @@ def check_sr(input_path, output_path, config):
         v['total_one'] = total_one
         v['total_two'] = total_two
         v['total_reads'] = total
-        v['percent'] = float(total_two) / float(total)
+        pct_bad = (total_two / total) * 100.0
+        pct_bad = '%(pct_bad)0.2f'
+        v['percent'] = pct_bad
         output_file.writerow(v)
