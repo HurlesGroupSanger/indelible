@@ -15,11 +15,17 @@ Returns
 from indelible.indelible_lib import *
 
 
-def check_sr(input_path,input_bam,config):
+def check_sr(input_path, output_path, config):
 
-    infile = bam_open(input_bam)
+    denovo_file = csv.DictReader(open(input_path, 'r'), delimiter="\t")
+    new_fieldnames = denovo_file.fieldnames
+    new_fieldnames.extend(("total_one", "total_two", "total_reads", "percent"))
+    output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=new_fieldnames, delimiter="\t")
+    output_file.writeheader()
 
     for v in csv.DictReader(open(input_path,'r'), delimiter="\t"):
+
+        infile = bam_open(v['cram'])
 
         start_coord = int(v['position'])-config['WINDOW_SIZE']
         end_coord = int(v['position']) + config['WINDOW_SIZE']
@@ -56,5 +62,8 @@ def check_sr(input_path,input_bam,config):
                             # sr["strand"] = s.is_reverse
                             # These are reads with Soft-clips on both sides, likely due to dropped quality at the end
                             # if cigar[0][0] == 4 and cigar[1][0] == 0 and cigar[2][0] == 4:
-
-        print v['chrom'],v['position'],total_one,total_two,total
+        v['total_one'] = total_one
+        v['total_two'] = total_two
+        v['total_reads'] = total
+        v['percent'] = total_two / total
+        output_file.writerow(v)

@@ -80,7 +80,7 @@ subparser.add_argument('--keeptmp', action='store_const', const=True,  dest="kee
 
 subparser = subparsers.add_parser('checksr', help='check srs for two ended information')
 subparser.add_argument('--i', help='path to input file (output of denovo command)', metavar="<input_path>", required=True, dest="input_path")
-subparser.add_argument('--b', help='path to input bam file which was used in the fetch command', metavar="<input_bam>", required=True, dest="input_bam")
+subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 args = parser.parse_args()
 
 """
@@ -214,4 +214,4 @@ if args.command == "complete":
 CHECKSR command
 """
 if args.command == "checksr":
-	indelible.check_sr(args.input_path,args.input_bam, config)
+	indelible.check_sr(args.input_path, args.output_path, config)
