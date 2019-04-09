@@ -20,12 +20,11 @@ def check_sr(input_path, output_path, config):
     denovo_file = csv.DictReader(open(input_path, 'r'), delimiter="\t")
     new_fieldnames = denovo_file.fieldnames
     new_fieldnames.extend(("total_one", "total_two", "total_reads", "percent"))
-    print new_fieldnames
     output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=new_fieldnames, delimiter="\t")
     output_file.writeheader()
 
     for v in csv.DictReader(open(input_path,'r'), delimiter="\t"):
-        print v["cram"]
+
         infile = bam_open(v['cram'])
 
         start_coord = int(v['position'])-config['WINDOW_SIZE']
@@ -35,9 +34,9 @@ def check_sr(input_path, output_path, config):
         # outfile = open(output_path, 'w')
         # outfile.write("chr\tsplit_position\tprime\tsplit_length\tseq\tqual\tmapq\tavg_sr_qual\treverse_strand\n")
 
-        total_one = 0
-        total_two = 0
-        total = 0
+        total_one = 0.0
+        total_two = 0.0
+        total = 0.0
 
         for s in iter:
             cigar = s.cigartuples
