@@ -33,6 +33,7 @@ BLAST_FIELDS = [
 	'qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'gapopen', 'qstart', 'qend',
 	'sstart', 'send', 'sstrand','evalue', 'bitscore']
 
+
 def generate_fasta(scored_file):
 	output_fasta = open(scored_file+".fasta",'w')
 	for row in csv.DictReader(open(scored_file,'r'),delimiter="\t"):
@@ -42,7 +43,7 @@ def generate_fasta(scored_file):
 	output_fasta.close()
 	return scored_file+".fasta"
 
-## New blast interface from Pybio
+
 def run_blast(fasta_file, db, WINDOWMASKERdb=None):
 
 	blastn_clin = NcbiblastnCommandline(query=fasta_file, db=db, word_size=15,
@@ -65,7 +66,8 @@ def run_blast(fasta_file, db, WINDOWMASKERdb=None):
 
 	return hits
 
-def blast_fasta_new(fasta_file,output_path,db,WINDOWMASKERdb = None):
+
+def blast_fasta(fasta_file,output_path,db,WINDOWMASKERdb = None):
 
 	fieldnames = ["chrom","pos","query_length","target_chrom","target_start","target_end","target_identity","target_strand","evalue"]
 	writer = csv.DictWriter(open(output_path,'w'), fieldnames=fieldnames,delimiter="\t",extrasaction='ignore')
@@ -95,5 +97,5 @@ def blast(input_path, config):
 	WINDOWMASKERdb = config['windowmaskerdb']
 	REPEATdb = config['repeatdb']
 	fasta_path = generate_fasta(input_path)
-	blast_fasta_new(fasta_path, fasta_path + ".hits_nonrepeats", BLASTdb, WINDOWMASKERdb)
-	blast_fasta_new(fasta_path, fasta_path + ".hits_repeats", REPEATdb)
+	blast_fasta(fasta_path, fasta_path + ".hits_nonrepeats", BLASTdb, WINDOWMASKERdb)
+	blast_fasta(fasta_path, fasta_path + ".hits_repeats", REPEATdb)

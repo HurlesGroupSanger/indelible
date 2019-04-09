@@ -40,7 +40,7 @@ denovo - searches for de novo events
 """
 parser = argparse.ArgumentParser(prog='indelible')
 subparsers = parser.add_subparsers(help='One of the following commands:',dest="command",metavar="<command>")
-#Fetch parser
+
 subparser = subparsers.add_parser('fetch', help='fetch reads from BAM file')
 subparser.add_argument('--i', help='path to input BAM file', metavar="<input_path>", required=True, dest="input_path")
 subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
@@ -77,8 +77,11 @@ subparser.add_argument('--i', help='path to input BAM file', metavar="<input_pat
 subparser.add_argument('--o', help='path to output directory', metavar="<output_path>", required=True, dest="output_path")
 subparser.add_argument('--r', help='path to reference genome', metavar="<reference_path>", required=True, dest="reference_path")
 subparser.add_argument('--keeptmp', action='store_const', const=True,  dest="keep_tmp")
-args = parser.parse_args()
 
+subparser = subparsers.add_parser('checksr', help='check srs for two ended information')
+subparser.add_argument('--i', help='path to input file (output of denovo command)', metavar="<input_path>", required=True, dest="input_path")
+subparser.add_argument('--b', help='path to input bam file which was used in the fetch command', metavar="<input_bam>", required=True, dest="input_bam")
+args = parser.parse_args()
 
 """
 Read config file
@@ -206,3 +209,9 @@ if args.command == "complete":
 		os.remove(scored_path+".fasta.hits_nonrepeats")
 		os.remove(scored_path+".fasta.hits_repeats")
 		os.remove(scored_path+".fasta")
+
+"""
+CHECKSR command
+"""
+if args.command == "checksr":
+	indelible.check_sr(args.input_path,args.input_bam, config)

@@ -41,70 +41,65 @@ def fetch_reads(input_path,output_path,config):
 	outfile.write("chr\tsplit_position\tprime\tsplit_length\tseq\tqual\tmapq\tavg_sr_qual\treverse_strand\n")
 
 	for s in infile:
-		cigar = s.cigar
-		if len(cigar) == 2:
+		cigar = s.cigartuples
+		if cigar is not None:
 			refname = infile.getrname(s.tid)
-			if refname == "hs37d5":
-				continue
-			#5' Split Reads
-			if cigar[0][0] == 4 and cigar[1][0] == 0: # 4 = SOFT CLIP/ 0 = MATCH
-				sr = {}
-				sr["chr"] = infile.getrname(s.tid)
-				sr["split_position"] = s.pos
-				sr["prime"] = 5
-				sr["seq"],sr["qual"] = hard_clip(s.seq[0:cigar[0][1]],s.qual[0:cigar[0][1]],config["HC_THRESHOLD"])
-				sr["length"] = len(sr["seq"])
-				sr["mapq"] = s.mapq
-				sr["avg_sr_qual"] = average_quality(sr["qual"])
-				sr["strand"] = s.is_reverse
-				outfile.write(print_if_ok(sr,config))
-			#3' Split Reads
-			if cigar[0][0] == 0 and cigar[1][0] == 4:
-				sr = {}
-				sr["chr"]  = infile.getrname(s.tid)
-				sr["split_position"] = s.pos + cigar[0][1]
-				sr["prime"] = 3
-				seq = s.seq[-cigar[1][1]:]
-				qual = s.qual[-cigar[1][1]:]
-				seq,qual = hard_clip(seq[::-1],qual[::-1],config["HC_THRESHOLD"])
-				sr["seq"] = seq[::-1]
-				sr["qual"] = qual[::-1]
-				sr["length"] = len(sr["seq"])
-				sr["mapq"] = s.mapq
-				sr["avg_sr_qual"] = average_quality(sr["qual"])
-				sr["strand"] = s.is_reverse
-				outfile.write(print_if_ok(sr,config))
-		elif len(cigar) == 3:
-			refname = infile.getrname(s.tid)
-			if refname == "hs37d5":
-				continue
-			# These are reads with Soft-clips on both sides, likely due to dropped quality at the end
-			if cigar[0][0] == 4 and cigar[1][0] == 0 and cigar[2][0] == 4:
-				#1st split-segment
-				sr = {}
-				sr["chr"] = infile.getrname(s.tid)
-				sr["split_position"] = s.pos
-				sr["prime"] = 5
-				sr["seq"],sr["qual"] = hard_clip(s.seq[0:cigar[0][1]],s.qual[0:cigar[0][1]],config["HC_THRESHOLD"])
-				sr["length"] = len(sr["seq"])
-				sr["mapq"] = s.mapq
-				sr["avg_sr_qual"] = average_quality(sr["qual"])
-				sr["strand"] = s.is_reverse
-				outfile.write(print_if_ok(sr,config))
-				#2nd split segment
-				sr = {}
-				sr["chr"]  = infile.getrname(s.tid)
-				sr["split_position"] = s.pos + cigar[1][1] #alignment_start + length of matching segment = start of 3' split segment
-				sr["prime"] = 3
-				seq = s.seq[-cigar[2][1]:]
-				qual = s.qual[-cigar[2][1]:]
-				seq,qual = hard_clip(seq[::-1],qual[::-1],config["HC_THRESHOLD"])
-				sr["seq"] = seq[::-1]
-				sr["qual"] = qual[::-1]
-				sr["length"] = len(sr["seq"])
-				sr["mapq"] = s.mapq
-				sr["avg_sr_qual"] = average_quality(sr["qual"])
-				sr["strand"] = s.is_reverse
-				outfile.write(print_if_ok(sr,config))
-
-		
+			if refname is not "hs37d5":
+				if len(cigar) == 2:
+					#5' Split Reads
+					if cigar[0][0] == 4 and cigar[1][0] == 0: # 4 = SOFT CLIP/ 0 = MATCH
+						sr = {}
+						sr["chr"] = infile.getrname(s.tid)
+						sr["split_position"] = s.pos
+						sr["prime"] = 5
+						sr["seq"],sr["qual"] = hard_clip(s.seq[0:cigar[0][1]],s.qual[0:cigar[0][1]],config["HC_THRESHOLD"])
+						sr["length"] = len(sr["seq"])
+						sr["mapq"] = s.mapq
+						sr["avg_sr_qual"] = average_quality(sr["qual"])
+						sr["strand"] = s.is_reverse
+						outfile.write(print_if_ok(sr,config))
+					#3' Split Reads
+					if cigar[0][0] == 0 and cigar[1][0] == 4:
+						sr = {}
+						sr["chr"]  = infile.getrname(s.tid)
+						sr["split_position"] = s.pos + cigar[0][1]
+						sr["prime"] = 3
+						seq = s.seq[-cigar[1][1]:]
+						qual = s.qual[-cigar[1][1]:]
+						seq,qual = hard_clip(seq[::-1],qual[::-1],config["HC_THRESHOLD"])
+						sr["seq"] = seq[::-1]
+						sr["qual"] = qual[::-1]
+						sr["length"] = len(sr["seq"])
+						sr["mapq"] = s.mapq
+						sr["avg_sr_qual"] = average_quality(sr["qual"])
+						sr["strand"] = s.is_reverse
+						outfile.write(print_if_ok(sr,config))
+				elif len(cigar) == 3:
+					# These are reads with Soft-clips on both sides, likely due to dropped quality at the end
+					if cigar[0][0] == 4 and cigar[1][0] == 0 and cigar[2][0] == 4:
+						#1st split-segment
+						sr = {}
+						sr["chr"] = infile.getrname(s.tid)
+						sr["split_position"] = s.pos
+						sr["prime"] = 5
+						sr["seq"],sr["qual"] = hard_clip(s.seq[0:cigar[0][1]],s.qual[0:cigar[0][1]],config["HC_THRESHOLD"])
+						sr["length"] = len(sr["seq"])
+						sr["mapq"] = s.mapq
+						sr["avg_sr_qual"] = average_quality(sr["qual"])
+						sr["strand"] = s.is_reverse
+						outfile.write(print_if_ok(sr,config))
+						#2nd split segment
+						sr = {}
+						sr["chr"]  = infile.getrname(s.tid)
+						sr["split_position"] = s.pos + cigar[1][1] #alignment_start + length of matching segment = start of 3' split segment
+						sr["prime"] = 3
+						seq = s.seq[-cigar[2][1]:]
+						qual = s.qual[-cigar[2][1]:]
+						seq,qual = hard_clip(seq[::-1],qual[::-1],config["HC_THRESHOLD"])
+						sr["seq"] = seq[::-1]
+						sr["qual"] = qual[::-1]
+						sr["length"] = len(sr["seq"])
+						sr["mapq"] = s.mapq
+						sr["avg_sr_qual"] = average_quality(sr["qual"])
+						sr["strand"] = s.is_reverse
+						outfile.write(print_if_ok(sr,config))

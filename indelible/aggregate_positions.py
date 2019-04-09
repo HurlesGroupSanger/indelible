@@ -44,7 +44,6 @@ def dedup(sr_reads = []):
 	return res
 
 
-
 def sr_coverage(sr_reads = [],cutoff=10):
 	total = 0
 	total_long = 0
@@ -73,14 +72,15 @@ def sr_coverage(sr_reads = [],cutoff=10):
 	return (total,total_long,total_short,long_5,short_5,long_3,short_3)
 
 
-
 def entropy_longest_sr(sr_reads=[]):
 	longest = sorted(sr_reads,key=lambda x:int(x["split_length"]),reverse=True)[0]
 	return entropy(longest["seq"])
 
+
 def seq_longest(sr_reads=[]):
 	longest = sorted(sr_reads,key=lambda x:int(x["split_length"]),reverse=True)[0]
 	return longest["seq"]
+
 
 def sequence_similarity_score(sr_reads=[]):
 	match = 2
@@ -100,9 +100,11 @@ def sequence_similarity_score(sr_reads=[]):
 				aln_scores.append(float(matches)/min_length)
 	return numpy.mean(aln_scores)
 
+
 def avg_mapq(sr_reads=[]):
 	mapqs = [int(x["mapq"]) for x in sr_reads]
 	return numpy.mean(mapqs)
+
 
 def avg_avg_sr_qual(sr_reads=[]):
 	avg_sr_quals = list([float(x["avg_sr_qual"]) for x in sr_reads])
@@ -151,10 +153,10 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 				res["chrom"] = chrom
 				res["position"] = pos
 
-				covPU = coverage_at_position_pileup(bam_file, chrom, pos)
+				# covPU = coverage_at_position_pileup(bam_file, chrom, pos)
 				covFE = coverage_at_position_fetch(bam_file, chrom, pos)
 
-				res["coverage"] = covPU
+				res["coverage"] = covFE
 
 				indel_counts = reads_with_indels_in_neighbourhood(bam_file,chrom,pos,config)
 				res["insertion_context"] = indel_counts["insertions"]
