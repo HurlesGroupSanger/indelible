@@ -20,16 +20,18 @@ import csv
 
 from indelible.indelible_lib import *
 
-def build_database(score_files, score_threshold):
+def build_database(score_files, output_file, score_threshold):
 
     db = {}
 
     allele_count = float(0)
 
+    output_writer = open(output_file, "w")
+
     for file in open(score_files, 'r'):
         allele_count += 1
-        print file
         file = file.rstrip()
+        print file
         c = csv.DictReader(open(file, 'r'), delimiter="\t")
         for line in c:
             if line["prob_Y"] >= score_threshold:
@@ -47,4 +49,4 @@ def build_database(score_files, score_threshold):
         for chr in db:
             for pos in db[chr]:
                 af = db[chr][pos] / allele_count
-                print chr + "\t" + str(pos) + "\t" + str(af)
+                output_writer.write(chr + "\t" + str(pos) + "\t" + str(af) + "\n")

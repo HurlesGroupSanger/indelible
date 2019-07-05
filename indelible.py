@@ -57,6 +57,7 @@ subparser.add_argument('--o', help='path to output file', metavar="<output_path>
 
 subparser = subparsers.add_parser('database', help='build allele frequency database')
 subparser.add_argument('--f', help='File of files from the score command representing a complete dataset', metavar="<fof>", required=True, dest="fof")
+subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 
 subparser = subparsers.add_parser('blast', help='blast clipped sequences')
 subparser.add_argument('--i', help='input file (output of score command)', metavar="<input_path>", required=True, dest="input_path")
@@ -136,7 +137,7 @@ if args.command == "score":
 DATABASE command
 """
 if args.command == "database":
-	indelible.build_database(args.fof, config['SCORE_THRESHOLD'])
+	indelible.build_database(args.fof, args.output_path, config['SCORE_THRESHOLD'])
 
 """
 BLAST
