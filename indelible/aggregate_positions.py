@@ -52,10 +52,15 @@ def sr_coverage(sr_reads = [],cutoff=10):
 	long_3 = 0
 	short_5 = 0
 	long_5 = 0
+	double_reads = 0
 
 	deduped_reads = dedup(sr_reads)
 	for read in deduped_reads:
 		total += 1
+
+		if read["is_double"] == "True":
+			double_reads += 1
+
 		if int(read["split_length"]) < cutoff:
 			total_short += 1
 			if int(read["prime"]) == 3:
@@ -69,7 +74,7 @@ def sr_coverage(sr_reads = [],cutoff=10):
 			else:
 				long_5 += 1
 
-	return (total,total_long,total_short,long_5,short_5,long_3,short_3)
+	return (total,total_long,total_short,long_5,short_5,long_3,short_3,double_reads)
 
 
 def entropy_longest_sr(sr_reads=[]):
@@ -129,7 +134,7 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 				  "sr_long_5","sr_short_5","sr_long_3",
 				  "sr_short_3","sr_entropy","context_entropy",
 				  "entropy_upstream","entropy_downstream","sr_sw_similarity",
-				  "avg_avg_sr_qual","avg_mapq","seq_longest")
+				  "avg_avg_sr_qual","avg_mapq","seq_longest","pct_double_split")
 	outputfile = open(output_path,'w')
 	splitwriter = csv.DictWriter(outputfile,fieldnames=header,delimiter="\t",lineterminator="\n")
 	splitwriter.writeheader()
@@ -169,6 +174,7 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 				res["sr_short_5"] = sr_cov[4]
 				res["sr_long_3"] = sr_cov[5]
 				res["sr_short_3"] = sr_cov[6]
+				res["pct_double_split"] = float(sr_cov[7]) / float(res["sr_total"])
 				res["sr_entropy"] = entropy_longest_sr(sr_reads)
 				seq_context = reference[str(chrom)][pos-20:pos+20]
 				res["context_entropy"] = entropy(seq_context)

@@ -19,7 +19,6 @@
 import sys
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-#from sklearn import cross_validation
 import pickle
 import bz2
 
@@ -33,7 +32,7 @@ def trainForest(training_file_path):
 
 def score_file(forest_path, testing_file_path):
     df = pd.read_csv(testing_file_path,sep="\t")
-    values = df.ix[:, df.columns.difference(["chrom","position","seq_longest"])]
+    values = df.ix[:, df.columns.difference(["chrom","position","seq_longest","pct_double_split"])]
     clf = loadForest(forest_path)
     predicted_class = clf.predict(values)
     df["predicted"] = predicted_class
@@ -58,12 +57,3 @@ def score_positions(input_path, output_path, config):
 def train(input_path, output_path):
     clf = trainForest(input_path)
     saveForest(clf, output_path)
-
-
-# with PdfPages(sys.argv[1]+".scored.plots.pdf") as pdf:
-# 	plt.hist(df["prob_Y"],bins=30)
-# 	plt.title("Distribution of scores")
-# 	plt.ylabel("Count")
-# 	plt.xlabel("Score")
-# 	pdf.savefig()
-# 	plt.close()

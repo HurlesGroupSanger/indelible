@@ -149,7 +149,6 @@ def annotate_blast(hit,blast_hash,ddg2p_db,constraint_hash,config):
 				else:
 					hit["blast_dist"] = "other_chrom"
 					hit["blast_hgnc"] = "NA"
-					hit["blast_hgnc"] = "NA"
 				hit["blast_identity"] = blast_hit["target_identity"]
 			else:
 				hit["blast_hit"] = "multi_hit"

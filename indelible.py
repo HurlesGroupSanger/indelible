@@ -55,6 +55,9 @@ subparser = subparsers.add_parser('score', help='score positions using Random Fo
 subparser.add_argument('--i', help='input file (output of aggregate command)', metavar="<input_path>", required=True, dest="input_path")
 subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 
+subparser = subparsers.add_parser('database', help='build allele frequency database')
+subparser.add_argument('--f', help='File of files from the score command representing a complete dataset', metavar="<fof>", required=True, dest="fof")
+
 subparser = subparsers.add_parser('blast', help='blast clipped sequences')
 subparser.add_argument('--i', help='input file (output of score command)', metavar="<input_path>", required=True, dest="input_path")
 
@@ -78,9 +81,6 @@ subparser.add_argument('--o', help='path to output directory', metavar="<output_
 subparser.add_argument('--r', help='path to reference genome', metavar="<reference_path>", required=True, dest="reference_path")
 subparser.add_argument('--keeptmp', action='store_const', const=True,  dest="keep_tmp")
 
-subparser = subparsers.add_parser('checksr', help='check srs for two ended information')
-subparser.add_argument('--i', help='path to input file (output of denovo command)', metavar="<input_path>", required=True, dest="input_path")
-subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 args = parser.parse_args()
 
 """
@@ -131,6 +131,12 @@ if args.command == "score":
 		print("ERROR: Input file does not exist!")
 		exit(1)
 	indelible.score_positions(args.input_path, args.output_path, config)
+
+"""
+DATABASE command
+"""
+if args.command == "database":
+	indelible.build_database(args.fof, config['SCORE_THRESHOLD'])
 
 """
 BLAST
@@ -209,9 +215,3 @@ if args.command == "complete":
 		os.remove(scored_path+".fasta.hits_nonrepeats")
 		os.remove(scored_path+".fasta.hits_repeats")
 		os.remove(scored_path+".fasta")
-
-"""
-CHECKSR command
-"""
-if args.command == "checksr":
-	indelible.check_sr(args.input_path, args.output_path, config)

@@ -27,7 +27,7 @@ def average_quality(qual):
 
 
 def print_if_ok(sr,config):
-	outputfmt = "%(chr)s\t%(split_position)s\t%(prime)s\t%(length)s\t%(seq)s\t%(qual)s\t%(mapq)s\t%(avg_sr_qual).2f\t%(strand)s"
+	outputfmt = "%(chr)s\t%(split_position)s\t%(prime)s\t%(length)s\t%(seq)s\t%(qual)s\t%(mapq)s\t%(avg_sr_qual).2f\t%(strand)s\t%(is_double)s"
 	if sr["length"] >= config["MINIMUM_LENGTH_SPLIT_READ"] and sr["mapq"] >= config["MINIMUM_MAPQ"] and sr["avg_sr_qual"] >= config["MININUM_AVERAGE_BASE_QUALITY_SR"]:
 		return (outputfmt % sr)+"\n"
 	else:
@@ -38,7 +38,7 @@ def fetch_reads(input_path,output_path,config):
 	infile = bam_open(input_path)
 
 	outfile = open(output_path,'w')
-	outfile.write("chr\tsplit_position\tprime\tsplit_length\tseq\tqual\tmapq\tavg_sr_qual\treverse_strand\n")
+	outfile.write("chr\tsplit_position\tprime\tsplit_length\tseq\tqual\tmapq\tavg_sr_qual\treverse_strand\tis_double\n")
 
 	for s in infile:
 		cigar = s.cigartuples
@@ -57,6 +57,7 @@ def fetch_reads(input_path,output_path,config):
 						sr["mapq"] = s.mapq
 						sr["avg_sr_qual"] = average_quality(sr["qual"])
 						sr["strand"] = s.is_reverse
+						sr["is_double"] = False
 						outfile.write(print_if_ok(sr,config))
 					#3' Split Reads
 					if cigar[0][0] == 0 and cigar[1][0] == 4:
@@ -73,6 +74,7 @@ def fetch_reads(input_path,output_path,config):
 						sr["mapq"] = s.mapq
 						sr["avg_sr_qual"] = average_quality(sr["qual"])
 						sr["strand"] = s.is_reverse
+						sr["is_double"] = False
 						outfile.write(print_if_ok(sr,config))
 				elif len(cigar) == 3:
 					# These are reads with Soft-clips on both sides, likely due to dropped quality at the end
@@ -87,6 +89,7 @@ def fetch_reads(input_path,output_path,config):
 						sr["mapq"] = s.mapq
 						sr["avg_sr_qual"] = average_quality(sr["qual"])
 						sr["strand"] = s.is_reverse
+						sr["is_double"] = True
 						outfile.write(print_if_ok(sr,config))
 						#2nd split segment
 						sr = {}
@@ -102,4 +105,5 @@ def fetch_reads(input_path,output_path,config):
 						sr["mapq"] = s.mapq
 						sr["avg_sr_qual"] = average_quality(sr["qual"])
 						sr["strand"] = s.is_reverse
+						sr["is_double"] = True
 						outfile.write(print_if_ok(sr,config))

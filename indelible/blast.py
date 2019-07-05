@@ -49,7 +49,7 @@ def run_blast(fasta_file, db, WINDOWMASKERdb=None):
 	blastn_clin = NcbiblastnCommandline(query=fasta_file, db=db, word_size=15,
 										max_target_seqs=100, penalty=-3, evalue=0.001, reward=1,
 										outfmt="\'6 " + " ".join(BLAST_FIELDS) + "\'")
-	if not WINDOWMASKERdb is None:
+	if WINDOWMASKERdb is not None:
 		blastn_clin.set_parameter("window_masker_db",WINDOWMASKERdb)
 
 	stdout, stderr = blastn_clin()
