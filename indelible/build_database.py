@@ -28,6 +28,7 @@ def build_database(score_files, score_threshold):
 
     for file in open(score_files, 'r'):
         allele_count += 1
+        print file
         file = file.rstrip()
         c = csv.DictReader(open(file, 'r'), delimiter="\t")
         for line in c:

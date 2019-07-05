@@ -119,8 +119,8 @@ One can also look for *de novo* mutation events using the **denovo** command:
 ***Note***: If maternal and/or paternal bam files are not supplied, *denovo* filtering will not be performed. This behaviour is intended to format non-trio data identically to trio data. If one of maternal **or** paternal bam is provided, Indelible will count coverage within that bam.
 
 * `--c` : path to scored/annotated calls in the proband.
-* `--m` : path to maternal BAM file.
-* `--p` : path to paternal BAM file.
+* `--m` : path to maternal BAM file. [optional]
+* `--p` : path to paternal BAM file. [optional]
 * `--o` : path to output file.
 
 ```
