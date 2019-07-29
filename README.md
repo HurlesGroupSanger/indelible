@@ -48,6 +48,7 @@ pip install -r requirements.txt
 python indelible.py --help
 ```
 
+**Note**: If you get some error about pysam not being able to load specific libraries (like openssl, libbz2, etc.) that is a pysam problem. Please see the pysam website to get help.
 
 
 ## Configuration
