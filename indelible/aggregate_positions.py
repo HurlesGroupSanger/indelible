@@ -159,7 +159,7 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 				res["position"] = pos
 
 				# covPU = coverage_at_position_pileup(bam_file, chrom, pos)
-				covFE = coverage_at_position_fetch(bam_file, chrom, pos)
+				covFE = coverage_at_position_pileup(bam_file, chrom, pos)
 
 				res["coverage"] = covFE
 
