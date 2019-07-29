@@ -19,6 +19,37 @@ TBD
 
 ## Installation
 
+To install Indelibe:
+
+1. Clone the git repo:
+
+```
+git clone https://github.com/eugenegardner/Indelible.git
+cd Indelible/
+```
+
+2. Create a virtual environment and activate it:
+
+```
+virtualenv venv
+source venv/vin/activate
+```
+
+3. Install cython and other required packages:
+
+```
+pip install cython
+pip install -r requirements.txt
+```
+
+4. Use indelible
+
+```
+python indelible.py --help
+```
+
+
+
 ## Configuration
 
 ## Usage
