@@ -49,6 +49,8 @@ cd data/
 unzip data.zip
 ```
 
+**Note**: The provided random_forest model will only work with v0.17.1 of scikit-learn which is incompatible with newer versions of Python2.7. It is thus necessary to retrain the model with the provided test set included in the `data/` directory. Please see documentation below on how to run the Indelible random forest.
+
 5. Download required blast resources:
 
 ```
