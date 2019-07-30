@@ -33,8 +33,11 @@ def create_exac_constraint_hash(config):
 	return constraint_hash
 
 def find_protein_coding_ensembl_exon(chrom,pos,ensembl_exons):
-	print pos
-	query = bedtools.Interval(chrom,int(pos-1),int(pos+1))
+
+	if pos == 0:
+		query = bedtools.Interval(chrom, int(0), int(pos + 1))
+	else:
+		query = bedtools.Interval(chrom, int(pos - 1), int(pos + 1))
 	res_exons = []
 	for v in ensembl_exons.all_hits(query):
 		res_exons.append(v.attrs)
