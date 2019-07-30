@@ -42,7 +42,28 @@ pip install cython
 pip install -r requirements.txt
 ```
 
-4. Use indelible
+4. Unzip required data files:
+
+```
+cd data/
+unzip data.zip
+```
+
+5. Download required blast resources:
+
+```
+## To be completed
+```
+
+6. Edit the config file to point to required data files:
+
+```
+cd ..
+vim config.yml
+## Provide the path to each required file at the top of the config.yml
+```
+
+7. Use indelible
 
 ```
 python indelible.py --help
@@ -50,6 +71,7 @@ python indelible.py --help
 
 **Note**: If you get some error about pysam not being able to load specific libraries (like openssl, libbz2, etc.) that is a pysam problem. Please see the pysam website to get help.
 
+**Note**: The above data resources will only work if you run Indelible using the the human GRCh37 reference. Instructions for rebuilding these resources for other genome builds is below.
 
 ## Configuration
 
