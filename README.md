@@ -19,6 +19,62 @@ TBD
 
 ## Installation
 
+To install Indelibe:
+
+1. Clone the git repo:
+
+```
+git clone https://github.com/eugenegardner/Indelible.git
+cd Indelible/
+```
+
+2. Create a virtual environment and activate it:
+
+```
+virtualenv venv
+source venv/vin/activate
+```
+
+3. Install cython and other required packages:
+
+```
+pip install cython
+pip install -r requirements.txt
+```
+
+4. Unzip required data files:
+
+```
+cd data/
+unzip data.zip
+```
+
+**Note**: The provided random_forest model will only work with v0.17.1 of scikit-learn which is incompatible with newer versions of Python2.7. It is thus necessary to retrain the model with the provided test set included in the `data/` directory. Please see documentation below on how to run the Indelible random forest.
+
+5. Download required blast resources:
+
+```
+## To be completed
+```
+
+6. Edit the config file to point to required data files:
+
+```
+cd ..
+vim config.yml
+## Provide the path to each required file at the top of the config.yml
+```
+
+7. Use indelible
+
+```
+python indelible.py --help
+```
+
+**Note**: If you get some error about pysam not being able to load specific libraries (like openssl, libbz2, etc.) that is a pysam problem. Please see the pysam website to get help.
+
+**Note**: The above data resources will only work if you run Indelible using the the human GRCh37 reference. Instructions for rebuilding these resources for other genome builds is below.
+
 ## Configuration
 
 ## Usage
