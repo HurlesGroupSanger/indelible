@@ -16,37 +16,56 @@
 
 """
 
-import csv
+import pandas
+import glob
 
 from indelible.indelible_lib import *
 
+
 def build_database(score_files, output_file, score_threshold):
 
-    db = {}
+    output_writer = open(output_file, "w")
+
+    data = []
 
     allele_count = float(0)
-
-    output_writer = open(output_file, "w")
 
     for file in open(score_files, 'r'):
         allele_count += 1
         file = file.rstrip()
-        print file
-        c = csv.DictReader(open(file, 'r'), delimiter="\t")
-        for line in c:
-            if line["prob_Y"] >= score_threshold:
-                if line["chrom"] in db:
-                    if line["position"] in db[line["chrom"]]:
-                        current = db[line["chrom"]][line["position"]]
-                        current += 1
-                        db[line["chrom"]][line["position"]] = current
-                    else:
-                        db[line["chrom"]][line["position"]] = 1
-                else:
-                    db[line["chrom"]] = {}
-                    db[line["chrom"]][line["position"]] = 1
 
-        for chr in db:
-            for pos in db[chr]:
-                af = db[chr][pos] / allele_count
-                output_writer.write(chr + "\t" + str(pos) + "\t" + str(af) + "\n")
+        frame = pandas.read_csv(
+            file,
+            sep="\t",
+            header=0)
+        is_pos = frame["prob_Y"] >= score_threshold
+        frame = frame[is_pos][["chrom", "position"]]
+        data.append(frame)
+
+    data_joined = pandas.concat(data)
+    data_joined["coord"] = data_joined["chrom"].astype(str) + "_" + data_joined["position"].astype(str)
+
+    counts = data_joined["coord"].value_counts()
+
+    final_frame = pandas.DataFrame()
+
+    final_frame["coord"] = counts.index.values
+    final_frame["counts"] = counts.values
+
+    split = final_frame["coord"].str.split("_", n=1, expand=True)
+    final_frame["chrom"] = split[0]
+    final_frame["pos"] = split[1]
+
+    final_frame = final_frame.drop(["coord"], axis=1)
+
+    final_frame["pos"] = final_frame["pos"].astype(int)
+    final_frame = final_frame.sort_values(by=["chrom", "pos"])
+
+    final_frame["pct"] = final_frame["counts"] / allele_count
+
+    final_frame["tot"] = allele_count
+
+    header = ["chrom", "pos", "pct", "counts", "tot"]
+    csv_obj = final_frame.to_csv(sep="\t", index=False, header=False, columns=header)
+
+    output_writer.write(csv_obj)

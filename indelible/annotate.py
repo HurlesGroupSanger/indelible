@@ -34,6 +34,7 @@ def create_exac_constraint_hash(config):
 
 def find_protein_coding_ensembl_exon(chrom,pos,ensembl_exons):
 
+	# This is simply because of a weird scenario where SRs can be found at the beginning of a contig/chromosome...
 	if pos == 0:
 		query = bedtools.Interval(chrom, int(0), int(pos + 1))
 	else:
