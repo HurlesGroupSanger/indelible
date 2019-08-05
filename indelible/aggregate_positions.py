@@ -138,9 +138,6 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 	splitwriter = csv.DictWriter(outputfile,fieldnames=header,delimiter="\t",lineterminator="\n")
 	splitwriter.writeheader()
 
-	count = 0
-
-
 	for row in splitreader:
 		if not row['chr'] in CHROMOSOMES:
 			continue
@@ -149,10 +146,14 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 		if not row['split_position'] in chr_dict[row['chr']]:
 			chr_dict[row['chr']][row['split_position']] = []
 
-		chr_dict[row['chr']][row['split_position']].append(row)
+        chr_dict[row['chr']][row['split_position']].append(row)
+
+	countint = 0
+	count = 0
 
 	for chrom in chr_dict:
 		for position in chr_dict[chrom]:
+			countint += 1
 			pos = int(position)
 			if len(chr_dict[chrom][position]) >= config["MINIMUM_SR_COVERAGE"]:
 				sr_reads = chr_dict[chrom][position]
@@ -192,4 +193,5 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 				# splitwriter.writerow(res)
 				# outputfile.flush()
 
+    print "Total Init Reads " + str(countint)
 	print "Total Reads " + str(count)
