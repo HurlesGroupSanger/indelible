@@ -148,7 +148,7 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 			chr_dict[row['chr']][row['split_position']] = []
 
 		chr_dict[row['chr']][row['split_position']].append(row)
-		print len(chr_dict[row['chr'][row['split_position']]])
+		print len(chr_dict[row['chr']][row['split_position']])
 
 	countint = 0
 	count = 0
