@@ -9,6 +9,7 @@ import numpy
 import re
 from indelible.indelible_lib import *
 from coverage_calculator import CoverageCalculator
+import time
 
 """
 Author: Alejandro Sifrim
@@ -33,6 +34,8 @@ File with stats for each position
 
 #CONSTANTS
 #=========
+
+current_milli_time = lambda: int(round(time.time() * 1000))
 
 def dedup(sr_reads = []):
     tmp = {"3":{},"5":{}}
@@ -162,15 +165,26 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
                 res["position"] = pos
                 print "Testing..." + chrom + ":" + str(pos)
 
+                start = current_milli_time
                 covFE = cov_calc.calculate_coverage(chrom, pos)
+                end = current_milli_time
+                print "cov took: " + str(end - start)
 
                 res["coverage"] = covFE
 
-                # indel_counts = cov_calc.reads_with_indels_in_neighbourhood(chrom,pos)
-                #
-                # res["insertion_context"] = indel_counts["insertions"]
-                # res["deletion_context"] = indel_counts["deletions"]
+                start = current_milli_time
+                indel_counts = cov_calc.reads_with_indels_in_neighbourhood(chrom,pos)
+                end = current_milli_time
+                print "indel context took: " + str(end - start)
+
+                res["insertion_context"] = indel_counts["insertions"]
+                res["deletion_context"] = indel_counts["deletions"]
+
+                start = current_milli_time
                 sr_cov = sr_coverage(sr_reads,config["SHORT_SR_CUTOFF"])
+                end = current_milli_time
+                print "sr coverage took: " + str(end - start)
+
                 res["sr_total"] = sr_cov[0]
                 res["sr_total_long"] = sr_cov[1]
                 res["sr_total_short"] = sr_cov[2]
