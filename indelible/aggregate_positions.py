@@ -192,6 +192,5 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 				# res["seq_longest"] = seq_longest(sr_reads)
 				# splitwriter.writerow(res)
 				# outputfile.flush()
-
-    print "Total Init Reads " + str(countint)
+	print "Total Init Reads " + str(countint)
 	print "Total Reads " + str(count)
