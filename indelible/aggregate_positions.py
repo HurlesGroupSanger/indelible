@@ -8,7 +8,7 @@ import swalign
 import numpy
 import re
 from indelible.indelible_lib import *
-from calculate_coverage import CoverageCalculator
+from coverage_calculator import CoverageCalculator
 
 """
 Author: Alejandro Sifrim

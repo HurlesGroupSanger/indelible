@@ -29,11 +29,11 @@ class CoverageCalculator:
         self.chr_dict = chr_dict
         self.input_bam = input_bam
         self.__bam_file = bam_open(self.input_bam)
-        self.__tabix_file = self.input_bam + "bg.gz"
+        self.__tabix_file = self.input_bam + ".bg.gz"
         self.config = config
         self.__use_bam = True
 
-        self.__decide_coverage_method()
+        # self.__decide_coverage_method()
 
     def __decide_coverage_method(self):
 
@@ -48,7 +48,7 @@ class CoverageCalculator:
         if count <= 10:
             self.__use_bam = True
         else:
-            print "Using tabix method..."
+            print "Excessive numbers of reads... Using bedtools + tabix method to calculate per-site coverage..."
             self.__use_bam = False
             output_file = self.input_bam + ".bg"
             self.__calculate_coverage_bam(output_file)
@@ -57,7 +57,7 @@ class CoverageCalculator:
 
         bt = bedtools.BedTool(self.input_bam)
         bg_file = bt.genome_coverage(bg=True)
-        bg_file.saveas(output_file)
+        bg_file.moveto(output_file)
 
         # bgzip
         sigint = subprocess.call(["bgzip", output_file])
