@@ -47,13 +47,14 @@ class CoverageCalculator:
                 if len(self.chr_dict[chrom][position]) >= self.config["MINIMUM_SR_COVERAGE"]:
                     count += 1
 
-        if count <= 10:
+        if count <= 30000:
+            print "Low-ish number of reads (" + str(count) + ")... Using pysam to extract coverage..."
             self.__use_bam = True
         else:
             print "Excessive numbers of reads... Using bedtools + tabix method to calculate per-site coverage..."
             self.__use_bam = False
             output_file = self.input_bam + ".bg"
-            # self.__calculate_coverage_bam(output_file)
+            self.__calculate_coverage_bam(output_file)
 
     def __calculate_coverage_bam(self, output_file):
 

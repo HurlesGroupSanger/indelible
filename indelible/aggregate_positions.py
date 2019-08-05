@@ -163,28 +163,15 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
                 res = {}
                 res["chrom"] = chrom
                 res["position"] = pos
-                print "Testing..." + chrom + ":" + str(pos)
 
-                start = current_milli_time()
                 covFE = cov_calc.calculate_coverage(chrom, pos)
-                end = current_milli_time()
-                print "cov took: " + str(end - start)
-
                 res["coverage"] = covFE
 
-                start = current_milli_time()
                 indel_counts = cov_calc.reads_with_indels_in_neighbourhood(chrom,pos)
-                end = current_milli_time()
-                print "indel context took: " + str(end - start)
-
                 res["insertion_context"] = indel_counts["insertions"]
                 res["deletion_context"] = indel_counts["deletions"]
 
-                start = current_milli_time()
                 sr_cov = sr_coverage(sr_reads,config["SHORT_SR_CUTOFF"])
-                end = current_milli_time()
-                print "sr coverage took: " + str(end - start)
-
                 res["sr_total"] = sr_cov[0]
                 res["sr_total_long"] = sr_cov[1]
                 res["sr_total_short"] = sr_cov[2]
@@ -194,6 +181,7 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
                 res["sr_short_3"] = sr_cov[6]
                 res["pct_double_split"] = float(sr_cov[7]) / float(res["sr_total"])
                 res["sr_entropy"] = entropy_longest_sr(sr_reads)
+
                 seq_context = reference[str(chrom)][pos-20:pos+20]
                 res["context_entropy"] = entropy(seq_context)
                 res["entropy_upstream"] = entropy(seq_context[0:20])
@@ -202,5 +190,6 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
                 res["avg_mapq"] = avg_mapq(sr_reads)
                 res["avg_avg_sr_qual"] = avg_avg_sr_qual(sr_reads)
                 res["seq_longest"] = seq_longest(sr_reads)
+
                 splitwriter.writerow(res)
                 outputfile.flush()
