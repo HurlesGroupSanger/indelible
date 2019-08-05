@@ -119,7 +119,6 @@ def avg_avg_sr_qual(sr_reads=[]):
 def aggregate_positions(input_path, input_bam, output_path, reference_path, config):
 
 	chr_dict = dict([(chrom,{}) for chrom in CHROMOSOMES])
-	result_dict = dict([(chrom,{}) for chrom in CHROMOSOMES])
 
 	#ARGUMENTS ARE 1) sr_reads file 2) BAM file 3) reference fasta file
 
@@ -138,6 +137,10 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 	outputfile = open(output_path,'w')
 	splitwriter = csv.DictWriter(outputfile,fieldnames=header,delimiter="\t",lineterminator="\n")
 	splitwriter.writeheader()
+
+	count = 0
+
+
 	for row in splitreader:
 		if not row['chr'] in CHROMOSOMES:
 			continue
@@ -154,35 +157,39 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 			if len(chr_dict[chrom][position]) >= config["MINIMUM_SR_COVERAGE"]:
 				sr_reads = chr_dict[chrom][position]
 
-				res = {}
-				res["chrom"] = chrom
-				res["position"] = pos
+				count += 1
 
-				# covPU = coverage_at_position_pileup(bam_file, chrom, pos)
-				covFE = coverage_at_position_pileup(bam_file, chrom, pos)
+				# res = {}
+				# res["chrom"] = chrom
+				# res["position"] = pos
+				#
+				# # covPU = coverage_at_position_pileup(bam_file, chrom, pos)
+				# covFE = coverage_at_position_pileup(bam_file, chrom, pos)
+				#
+				# res["coverage"] = covFE
+				#
+				# indel_counts = reads_with_indels_in_neighbourhood(bam_file,chrom,pos,config)
+				# res["insertion_context"] = indel_counts["insertions"]
+				# res["deletion_context"] = indel_counts["deletions"]
+				# sr_cov = sr_coverage(sr_reads,config["SHORT_SR_CUTOFF"])
+				# res["sr_total"] = sr_cov[0]
+				# res["sr_total_long"] = sr_cov[1]
+				# res["sr_total_short"] = sr_cov[2]
+				# res["sr_long_5"] = sr_cov[3]
+				# res["sr_short_5"] = sr_cov[4]
+				# res["sr_long_3"] = sr_cov[5]
+				# res["sr_short_3"] = sr_cov[6]
+				# res["pct_double_split"] = float(sr_cov[7]) / float(res["sr_total"])
+				# res["sr_entropy"] = entropy_longest_sr(sr_reads)
+				# seq_context = reference[str(chrom)][pos-20:pos+20]
+				# res["context_entropy"] = entropy(seq_context)
+				# res["entropy_upstream"] = entropy(seq_context[0:20])
+				# res["entropy_downstream"] = entropy(seq_context[20:])
+				# res["sr_sw_similarity"] = sequence_similarity_score(sr_reads)
+				# res["avg_mapq"] = avg_mapq(sr_reads)
+				# res["avg_avg_sr_qual"] = avg_avg_sr_qual(sr_reads)
+				# res["seq_longest"] = seq_longest(sr_reads)
+				# splitwriter.writerow(res)
+				# outputfile.flush()
 
-				res["coverage"] = covFE
-
-				indel_counts = reads_with_indels_in_neighbourhood(bam_file,chrom,pos,config)
-				res["insertion_context"] = indel_counts["insertions"]
-				res["deletion_context"] = indel_counts["deletions"]
-				sr_cov = sr_coverage(sr_reads,config["SHORT_SR_CUTOFF"])
-				res["sr_total"] = sr_cov[0]
-				res["sr_total_long"] = sr_cov[1]
-				res["sr_total_short"] = sr_cov[2]
-				res["sr_long_5"] = sr_cov[3]
-				res["sr_short_5"] = sr_cov[4]
-				res["sr_long_3"] = sr_cov[5]
-				res["sr_short_3"] = sr_cov[6]
-				res["pct_double_split"] = float(sr_cov[7]) / float(res["sr_total"])
-				res["sr_entropy"] = entropy_longest_sr(sr_reads)
-				seq_context = reference[str(chrom)][pos-20:pos+20]
-				res["context_entropy"] = entropy(seq_context)
-				res["entropy_upstream"] = entropy(seq_context[0:20])
-				res["entropy_downstream"] = entropy(seq_context[20:])
-				res["sr_sw_similarity"] = sequence_similarity_score(sr_reads)
-				res["avg_mapq"] = avg_mapq(sr_reads)
-				res["avg_avg_sr_qual"] = avg_avg_sr_qual(sr_reads)
-				res["seq_longest"] = seq_longest(sr_reads)
-				splitwriter.writerow(res)
-				outputfile.flush()
+	print "Total Reads " + str(count)

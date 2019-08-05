@@ -6,20 +6,17 @@
 
     Parameters
     ----------
-    1)
-	2) mother bam
-	3) father bam
+    1) input fof of all *.scored files from dataset
+	2) output coordinate file
+	3) score threshold from the config.yml file
 
     Returns
     -------
-	1) File with putative denovo calls
+	1) Coordinate file with allele frequencies
 
 """
 
 import pandas
-import glob
-
-from indelible.indelible_lib import *
 
 
 def build_database(score_files, output_file, score_threshold):
