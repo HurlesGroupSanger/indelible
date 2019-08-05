@@ -156,6 +156,7 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 		for position in chr_dict[chrom]:
 			countint += 1
 			pos = int(position)
+			print len(chr_dict[chrom][position])
 			if len(chr_dict[chrom][position]) >= config["MINIMUM_SR_COVERAGE"]:
 				sr_reads = chr_dict[chrom][position]
 
