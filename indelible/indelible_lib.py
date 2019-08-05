@@ -22,19 +22,10 @@ def bam_open(bam_file):
 
 	return bam_reader
 
-def coverage_at_position_fetch(bam_file,chr,pos):
-
-	tot = 0
-
-	arrays_bases = bam_file.count_coverage(chr, pos, pos + 1, quality_threshold=13, read_callback="nofilter")
-
-	coverage = arrays_bases[0][0] + arrays_bases[1][0] + arrays_bases[2][0] + arrays_bases[3][0]
-
-	return coverage
-
 def coverage_at_position_pileup(bam_file,chr,pos):
 
-	for pileupcolumn in bam_file.pileup(chr,pos,pos+1):
+	for pileupcolumn in bam_file.pileup(chr,pos,pos+1,max_depth=100):
+		print "Pileup..." + chr + ":" + str(pileupcolumn.pos)
 		if pileupcolumn.pos == pos:
 			return pileupcolumn.n
 	else:

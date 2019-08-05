@@ -161,12 +161,12 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 
 				count += 1
 
-				# res = {}
-				# res["chrom"] = chrom
-				# res["position"] = pos
-				#
-				# # covPU = coverage_at_position_pileup(bam_file, chrom, pos)
-				# covFE = coverage_at_position_pileup(bam_file, chrom, pos)
+				res = {}
+				res["chrom"] = chrom
+				res["position"] = pos
+				print "Testing..." + chrom + ":" + str(pos)
+
+				covFE = coverage_at_position_pileup(bam_file, chrom, pos)
 				#
 				# res["coverage"] = covFE
 				#
