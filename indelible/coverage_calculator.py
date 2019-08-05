@@ -51,7 +51,7 @@ class CoverageCalculator:
             print "Low-ish number of reads (" + str(count) + ")... Using pysam to extract coverage..."
             self.__use_bam = True
         else:
-            print "Excessive numbers of reads... Using bedtools + tabix method to calculate per-site coverage..."
+            print "Excessive numbers of reads (" + str(count) + ")... Using bedtools + tabix method to calculate per-site coverage..."
             self.__use_bam = False
             output_file = self.input_bam + ".bg"
             self.__calculate_coverage_bam(output_file)
