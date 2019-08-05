@@ -142,6 +142,7 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 		if re.search("N",row['seq']):
 			continue
 		if not row['chr'] in chr_dict:
+			chr_dict[row['chr']] = {}
 			chr_dict[row['chr']][row['split_position']] = []
 		if not row['split_position'] in chr_dict[row['chr']]:
 			chr_dict[row['chr']][row['split_position']] = []
