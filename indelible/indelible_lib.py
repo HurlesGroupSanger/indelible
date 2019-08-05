@@ -22,21 +22,6 @@ def bam_open(bam_file):
 
     return bam_reader
 
-def reads_with_indels_in_neighbourhood(bam_file,chrom,pos,config):
-    counts = {"insertions": 0, "deletions": 0}
-    window_size = config['WINDOW_SIZE']
-    fetch_start = pos-(window_size/2)
-    fetch_end = pos+(window_size/2)
-    if fetch_start <= 0:
-        fetch_start = 0
-
-    for alignedread in bam_file.fetch(chrom,fetch_start,fetch_end):
-        cigar = alignedread.cigar
-        cigar_types = [c[0] for c in cigar]
-        if 1 in cigar_types: counts["insertions"] += 1
-        if 2 in cigar_types: counts["deletions"] += 1
-    return counts
-
 def hard_clip(seq,qual,threshold=10):
     res_seq = ""
     res_qual = ""

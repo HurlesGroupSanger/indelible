@@ -124,8 +124,6 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 
     splitfile = open(input_path,'r')
 
-    bam_file = bam_open(input_bam)
-
     reference = Fasta(reference_path,as_raw=True)
     splitreader = csv.DictReader(splitfile,delimiter="\t",quoting=csv.QUOTE_NONE)
     header = ("chrom","position","coverage","insertion_context","deletion_context",
@@ -151,7 +149,7 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 
         chr_dict[row['chr']][row['split_position']].append(row)
 
-    cov_calc = CoverageCalculator(chr_dict, bam_file, config)
+    cov_calc = CoverageCalculator(chr_dict, input_bam, config)
 
     for chrom in chr_dict:
         for position in chr_dict[chrom]:
@@ -164,11 +162,11 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
                 res["position"] = pos
                 print "Testing..." + chrom + ":" + str(pos)
 
-                covFE = cov_calc(chrom, pos)
+                covFE = cov_calc.calculate_coverage(chrom, pos)
 
                 res["coverage"] = covFE
 
-                indel_counts = reads_with_indels_in_neighbourhood(bam_file,chrom,pos,config)
+                indel_counts = cov_calc.reads_with_indels_in_neighbourhood(chrom,pos)
                 res["insertion_context"] = indel_counts["insertions"]
                 res["deletion_context"] = indel_counts["deletions"]
                 sr_cov = sr_coverage(sr_reads,config["SHORT_SR_CUTOFF"])

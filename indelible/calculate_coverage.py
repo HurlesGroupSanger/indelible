@@ -21,25 +21,19 @@ import subprocess
 from indelible.indelible_lib import *
 import pysam
 
+
 class CoverageCalculator:
 
-    def __init__ (self, chr_dict, bam_file, config):
+    def __init__ (self, chr_dict, input_bam, config):
 
         self.chr_dict = chr_dict
-        self.bam_file = bam_file
-        self.__tabix_file = bam_file + "bg.gz"
+        self.input_bam = input_bam
+        self.bam_file = bam_open(self.input_bam)
+        self.__tabix_file = self.input_bam + "bg.gz"
         self.config = config
         self.use_bam
 
         self.__decide_coverage_method()
-
-
-    def calculate_coverage(self, chr, pos):
-
-        if self.use_bam is True:
-            return self.__coverage_at_position_pileup(chr, pos)
-        else:
-            return self.__coverage_at_position_tabix(chr, pos)
 
     def __decide_coverage_method(self):
 
@@ -56,41 +50,60 @@ class CoverageCalculator:
         else:
             print "Using tabix method..."
             self.use_bam = False
-            output_file = self.bam_file + ".bg"
+            output_file = self.input_bam + ".bg"
             self.__calculate_coverage_bam(output_file)
 
-
-    def __calculate_coverage_bam (self, output_file):
+    def __calculate_coverage_bam(self, output_file):
 
         bt = bedtools.BedTool(self.bam_file)
         bg_file = bt.genome_coverage(bg=True)
         bg_file.saveas(output_file)
 
         # bgzip
-        sigint = subprocess.call(["bgzip",output_file])
+        sigint = subprocess.call(["bgzip", output_file])
         if sigint != 0:
             raise Exception("bgzip on the file " + output_file + " did not run properly... Exiting!")
         # tabix index
-        sigint = subprocess.call(["tabix","-p","bed",output_file + ".gz"])
+        sigint = subprocess.call(["tabix", "-p", "bed", output_file + ".gz"])
         if sigint != 0:
             raise Exception("tabix on the file " + output_file + ".gz did not run properly... Exiting!")
 
+    def calculate_coverage(self, chr, pos):
+
+        if self.use_bam is True:
+            return self.__coverage_at_position_pileup(chr, pos)
+        else:
+            return self.__coverage_at_position_tabix(chr, pos)
 
     def __coverage_at_position_pileup(self, chr, pos):
 
-        for pileupcolumn in CoverageCalculator.bam_file.pileup(chr,pos-1,pos+1,max_depth=100,truncate=True):
+        for pileupcolumn in self.bam_file.pileup(chr,pos-1,pos+1,max_depth=100,truncate=True):
             if pileupcolumn.pos == pos:
                 return pileupcolumn.n
         else:
             return 0
 
-
-    def __coverage_at_position_tabix(tabix_file, chr, pos):
+    def __coverage_at_position_tabix(self, chr, pos):
 
         cov = 0
 
-        tbx = pysam.TabixFile(tabix_file)
+        tbx = pysam.TabixFile(self.tabix_file)
         for row in tbx.fetch(chr,pos,pos):
             cov = row[0]
 
         return cov
+
+    def reads_with_indels_in_neighbourhood (self, chrom, pos):
+        counts = {"insertions": 0, "deletions": 0}
+        window_size = self.config['WINDOW_SIZE']
+        fetch_start = pos - (window_size / 2)
+        fetch_end = pos + (window_size / 2)
+        if fetch_start <= 0:
+            fetch_start = 0
+
+        for alignedread in self.bam_file.fetch(chrom, fetch_start, fetch_end):
+            cigar = alignedread.cigar
+            cigar_types = [c[0] for c in cigar]
+            if 1 in cigar_types: counts["insertions"] += 1
+            if 2 in cigar_types: counts["deletions"] += 1
+        return counts
