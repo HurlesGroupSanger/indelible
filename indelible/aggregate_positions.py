@@ -166,9 +166,10 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 
                 res["coverage"] = covFE
 
-                indel_counts = cov_calc.reads_with_indels_in_neighbourhood(chrom,pos)
-                res["insertion_context"] = indel_counts["insertions"]
-                res["deletion_context"] = indel_counts["deletions"]
+                # indel_counts = cov_calc.reads_with_indels_in_neighbourhood(chrom,pos)
+                #
+                # res["insertion_context"] = indel_counts["insertions"]
+                # res["deletion_context"] = indel_counts["deletions"]
                 sr_cov = sr_coverage(sr_reads,config["SHORT_SR_CUTOFF"])
                 res["sr_total"] = sr_cov[0]
                 res["sr_total_long"] = sr_cov[1]
@@ -189,5 +190,3 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
                 res["seq_longest"] = seq_longest(sr_reads)
                 splitwriter.writerow(res)
                 outputfile.flush()
-    print "Total Init Reads " + str(countint)
-    print "Total Reads " + str(count)
