@@ -31,7 +31,7 @@ class CoverageCalculator:
         self.bam_file = bam_open(self.input_bam)
         self.__tabix_file = self.input_bam + "bg.gz"
         self.config = config
-        self.use_bam
+        self.__use_bam = True
 
         self.__decide_coverage_method()
 
@@ -46,10 +46,10 @@ class CoverageCalculator:
                     count += 1
 
         if count <= 10:
-            self.use_bam = True
+            self.__use_bam = True
         else:
             print "Using tabix method..."
-            self.use_bam = False
+            self.__use_bam = False
             output_file = self.input_bam + ".bg"
             self.__calculate_coverage_bam(output_file)
 
@@ -70,7 +70,7 @@ class CoverageCalculator:
 
     def calculate_coverage(self, chr, pos):
 
-        if self.use_bam is True:
+        if self.__use_bam is True:
             return self.__coverage_at_position_pileup(chr, pos)
         else:
             return self.__coverage_at_position_tabix(chr, pos)
