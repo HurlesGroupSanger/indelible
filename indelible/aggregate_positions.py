@@ -137,7 +137,7 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 	splitwriter.writeheader()
 
 	for row in splitreader:
-		if row['chr'] is "hs37d5":
+		if row['chr'] == "hs37d5":
 			continue
 		if re.search("N",row['seq']):
 			continue
