@@ -144,12 +144,11 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 		if not row['chr'] in chr_dict:
 			chr_dict[row['chr']] = {}
 			chr_dict[row['chr']][row['split_position']] = []
-			print row
 		if not row['split_position'] in chr_dict[row['chr']]:
 			chr_dict[row['chr']][row['split_position']] = []
-			print row
 
-        chr_dict[row['chr']][row['split_position']].append(row)
+		chr_dict[row['chr']][row['split_position']].append(row)
+		print len(chr_dict[row['chr'][row['split_position']]])
 
 	countint = 0
 	count = 0
