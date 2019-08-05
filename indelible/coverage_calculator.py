@@ -33,7 +33,7 @@ class CoverageCalculator:
         self.config = config
         self.__use_bam = True
 
-        # self.__decide_coverage_method()
+        self.__decide_coverage_method()
 
     def __decide_coverage_method(self):
 
@@ -51,7 +51,7 @@ class CoverageCalculator:
             print "Excessive numbers of reads... Using bedtools + tabix method to calculate per-site coverage..."
             self.__use_bam = False
             output_file = self.input_bam + ".bg"
-            self.__calculate_coverage_bam(output_file)
+            # self.__calculate_coverage_bam(output_file)
 
     def __calculate_coverage_bam(self, output_file):
 
