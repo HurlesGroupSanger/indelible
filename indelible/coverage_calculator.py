@@ -35,6 +35,8 @@ class CoverageCalculator:
 
         self.__decide_coverage_method()
 
+        print self.__use_bam
+
     def __decide_coverage_method(self):
 
         count = 0
@@ -88,7 +90,7 @@ class CoverageCalculator:
         cov = 0
 
         tbx = pysam.TabixFile(self.__tabix_file)
-        for row in tbx.fetch(chr,pos,pos):
+        for row in tbx.fetch(chr,pos,pos+1):
             print row
             cov = row[0]
 
