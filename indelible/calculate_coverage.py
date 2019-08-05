@@ -28,7 +28,7 @@ class CoverageCalculator:
 
         self.chr_dict = chr_dict
         self.input_bam = input_bam
-        self.bam_file = bam_open(self.input_bam)
+        self.__bam_file = bam_open(self.input_bam)
         self.__tabix_file = self.input_bam + "bg.gz"
         self.config = config
         self.__use_bam = True
@@ -55,7 +55,7 @@ class CoverageCalculator:
 
     def __calculate_coverage_bam(self, output_file):
 
-        bt = bedtools.BedTool(self.bam_file)
+        bt = bedtools.BedTool(self.input_bam)
         bg_file = bt.genome_coverage(bg=True)
         bg_file.saveas(output_file)
 
@@ -77,7 +77,7 @@ class CoverageCalculator:
 
     def __coverage_at_position_pileup(self, chr, pos):
 
-        for pileupcolumn in self.bam_file.pileup(chr,pos-1,pos+1,max_depth=100,truncate=True):
+        for pileupcolumn in self.__bam_file.pileup(chr,pos-1,pos+1,max_depth=100,truncate=True):
             if pileupcolumn.pos == pos:
                 return pileupcolumn.n
         else:
@@ -87,8 +87,9 @@ class CoverageCalculator:
 
         cov = 0
 
-        tbx = pysam.TabixFile(self.tabix_file)
+        tbx = pysam.TabixFile(self.__tabix_file)
         for row in tbx.fetch(chr,pos,pos):
+            print row
             cov = row[0]
 
         return cov
@@ -101,7 +102,7 @@ class CoverageCalculator:
         if fetch_start <= 0:
             fetch_start = 0
 
-        for alignedread in self.bam_file.fetch(chrom, fetch_start, fetch_end):
+        for alignedread in self.__bam_file.fetch(chrom, fetch_start, fetch_end):
             cigar = alignedread.cigar
             cigar_types = [c[0] for c in cigar]
             if 1 in cigar_types: counts["insertions"] += 1
