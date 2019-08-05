@@ -32,8 +32,6 @@ File with stats for each position
 #CONSTANTS
 #=========
 
-CHROMOSOMES = list(map(str,range(1,23)))+["X","Y"]
-
 def dedup(sr_reads = []):
 	tmp = {"3":{},"5":{}}
 	for read in sr_reads:
@@ -118,9 +116,9 @@ def avg_avg_sr_qual(sr_reads=[]):
 
 def aggregate_positions(input_path, input_bam, output_path, reference_path, config):
 
-	chr_dict = dict([(chrom,{}) for chrom in CHROMOSOMES])
-
 	#ARGUMENTS ARE 1) sr_reads file 2) BAM file 3) reference fasta file
+
+	chr_dict = {}
 
 	splitfile = open(input_path,'r')
 
@@ -139,10 +137,12 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 	splitwriter.writeheader()
 
 	for row in splitreader:
-		if not row['chr'] in CHROMOSOMES:
+		if row['chr'] is "hs37d5":
 			continue
 		if re.search("N",row['seq']):
 			continue
+		if not row['chr'] in chr_dict:
+			chr_dict[row['chr']][row['split_position']] = []
 		if not row['split_position'] in chr_dict[row['chr']]:
 			chr_dict[row['chr']][row['split_position']] = []
 
