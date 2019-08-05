@@ -24,7 +24,7 @@ def bam_open(bam_file):
 
 def coverage_at_position_pileup(bam_file,chr,pos):
 
-	for pileupcolumn in bam_file.pileup(chr,pos,pos+1,max_depth=100,truncate=True):
+	for pileupcolumn in bam_file.pileup(chr,pos-1,pos+1,max_depth=100,truncate=True):
 		print "Pileup..." + chr + ":" + str(pileupcolumn.pos)
 		if pileupcolumn.pos == pos:
 			print "\t" + str(pileupcolumn.n)
