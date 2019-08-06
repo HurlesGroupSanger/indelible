@@ -50,11 +50,8 @@ class CoverageCalculator:
         # relatively low
 
         if count <= 30000:
-            print "Low-ish number of reads (" + str(count) + ")... Using pysam to extract coverage..."
             self.__use_bam = True
         else:
-            print "Excessive numbers of reads (" + str(
-                count) + ")... Using bedtools + tabix method to calculate per-site coverage..."
             self.__use_bam = False
             output_file = self.input_bam + ".bg"
             self.__calculate_coverage_bam(output_file)
@@ -66,11 +63,11 @@ class CoverageCalculator:
         bg_file.moveto(output_file)
 
         # bgzip
-        sigint = subprocess.call(["bgzip", output_file])
+        sigint = subprocess.call(["bgzip", "-f", output_file])
         if sigint != 0:
             raise Exception("bgzip on the file " + output_file + " did not run properly... Exiting!")
         # tabix index
-        sigint = subprocess.call(["tabix", "-p", "bed", output_file + ".gz"])
+        sigint = subprocess.call(["tabix", "-f", "-p", "bed", output_file + ".gz"])
         if sigint != 0:
             raise Exception("tabix on the file " + output_file + ".gz did not run properly... Exiting!")
 
@@ -183,6 +180,6 @@ class CoverageCalculator:
                         sr["mapq"] = s.mapq
                         sr["avg_sr_qual"] = average_quality(sr["qual"])
             if sr:
-                if sr['length'] > config['MINIMUM_LENGTH_SPLIT_READ']:
+                if sr['length'] > self.__config['MINIMUM_LENGTH_SPLIT_READ']:
                     count += 1
         return count

@@ -25,6 +25,8 @@ TBD
 
 ### Required Software Dependencies
 
+Indelible is written for Python2.7.*
+
 Indelible requires the following software to be installed and in `$PATH`:
 
 * bedtools v2.17 or greater

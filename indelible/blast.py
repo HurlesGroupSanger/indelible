@@ -76,7 +76,6 @@ def blast_fasta(fasta_file, output_path, db, WINDOWMASKERdb=None):
 
     for seq in hits:
         msg = 'query {} has {} hits'.format(seq, len(hits[seq]))
-        # print msg
         if len(hits[seq]) < 10:
             for result in hits[seq]:
                 res = {}
