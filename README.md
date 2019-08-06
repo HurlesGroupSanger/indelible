@@ -244,6 +244,11 @@ The **database** command will generate the database required for the step [Annot
 * `--f` : file of files to merge to generate split read "allele frequencies"
 * `--o` : output file to generate
 
+```
+ls indelible_files/*.scored > fofn.txt
+./indelible.py database --f fofn.txt --o indelible_db.tsv
+```
+
 #### Train
 
 _To Be Added..._
