@@ -2,7 +2,7 @@
     Author: Eugene Gardner
     Affiliation: Wellcome Sanger Institute
 
-    Object which handles various coverage calculations for aggregate_positions.py
+    Object which handles various coverage calculations for aggregate_positions.py and trio_caller.py
 
     ----------
     Parameters
@@ -21,18 +21,16 @@ import pysam
 
 class CoverageCalculator:
 
-    def __init__ (self, chr_dict, input_bam, config):
+    def __init__(self, chr_dict, input_bam, config):
 
         self.chr_dict = chr_dict
         self.input_bam = input_bam
         self.__bam_file = bam_open(self.input_bam)
         self.__tabix_file = self.input_bam + ".bg.gz"
-        self.config = config
+        self.__config = config
         self.__use_bam = True
 
         self.__decide_coverage_method()
-
-        print self.__use_bam
 
     def __decide_coverage_method(self):
 
@@ -41,7 +39,7 @@ class CoverageCalculator:
         for chrom in self.chr_dict:
             for position in self.chr_dict[chrom]:
                 pos = int(position)
-                if len(self.chr_dict[chrom][position]) >= self.config["MINIMUM_SR_COVERAGE"]:
+                if len(self.chr_dict[chrom][position]) >= self.__config["MINIMUM_SR_COVERAGE"]:
                     count += 1
 
         # It is much faster to calculate bam-wide coverage all at once:
@@ -55,7 +53,8 @@ class CoverageCalculator:
             print "Low-ish number of reads (" + str(count) + ")... Using pysam to extract coverage..."
             self.__use_bam = True
         else:
-            print "Excessive numbers of reads (" + str(count) + ")... Using bedtools + tabix method to calculate per-site coverage..."
+            print "Excessive numbers of reads (" + str(
+                count) + ")... Using bedtools + tabix method to calculate per-site coverage..."
             self.__use_bam = False
             output_file = self.input_bam + ".bg"
             self.__calculate_coverage_bam(output_file)
@@ -100,14 +99,14 @@ class CoverageCalculator:
         cov = 0
 
         tbx = pysam.TabixFile(self.__tabix_file)
-        for row in tbx.fetch(chr,pos,pos+1):
+        for row in tbx.fetch(chr, pos, pos + 1):
             cov = row[0]
 
         return cov
 
-    def reads_with_indels_in_neighbourhood (self, chrom, pos):
+    def reads_with_indels_in_neighbourhood(self, chrom, pos):
         counts = {"insertions": 0, "deletions": 0}
-        window_size = self.config['WINDOW_SIZE']
+        window_size = self.__config['WINDOW_SIZE']
         fetch_start = pos - (window_size / 2)
         fetch_end = pos + (window_size / 2)
         if fetch_start <= 0:
@@ -119,3 +118,71 @@ class CoverageCalculator:
             if 1 in cigar_types: counts["insertions"] += 1
             if 2 in cigar_types: counts["deletions"] += 1
         return counts
+
+    def split_reads_in_neighbourhood(self, chrom, pos):
+        count = 0
+        window_size = self.__config["WINDOW_SIZE"]
+
+        for s in self.__bam_file.fetch(chrom, pos - (window_size / 2), pos + (window_size / 2)):
+
+            cigar = s.cigar
+            sr = {}
+            if len(cigar) == 2:
+                # 5' Split Reads
+                if cigar[0][0] == 4 and cigar[1][0] == 0:  # 4 = SOFT CLIP/ 0 = MATCH
+
+                    sr["chr"] = self.__bam_file.getrname(s.tid)
+                    sr["split_position"] = s.pos
+                    sr["prime"] = 5
+                    sr["seq"], sr["qual"] = hard_clip(s.seq[0:cigar[0][1]], s.qual[0:cigar[0][1]],
+                                                      self.__config['HC_THRESHOLD'])
+                    sr["length"] = len(sr["seq"])
+                    sr["mapq"] = s.mapq
+                    sr["avg_sr_qual"] = average_quality(sr["qual"])
+
+                # 3' Split Reads
+                if cigar[0][0] == 0 and cigar[1][0] == 4:
+                    sr["chr"] = self.__bam_file.getrname(s.tid)
+                    sr["split_position"] = s.pos + cigar[0][1]
+                    sr["prime"] = 3
+                    seq = s.seq[-cigar[1][1]:]
+                    qual = s.qual[-cigar[1][1]:]
+                    seq, qual = hard_clip(seq[::-1], qual[::-1], self.__config['HC_THRESHOLD'])
+                    sr["seq"] = seq[::-1]
+                    sr["qual"] = qual[::-1]
+                    sr["length"] = len(sr["seq"])
+                    sr["mapq"] = s.mapq
+                    sr["avg_sr_qual"] = average_quality(sr["qual"])
+
+            elif len(cigar) == 3:
+
+                # These are reads with Soft-clips on both sides, likely due to dropped quality at the end
+                if cigar[0][0] == 4 and cigar[1][0] == 0 and cigar[2][0] == 4:
+                    # 1st split-segment
+                    if cigar[0][1] >= cigar[2][1]:
+                        sr["chr"] = self.__bam_file.getrname(s.tid)
+                        sr["split_position"] = s.pos
+                        sr["prime"] = 5
+                        sr["seq"], sr["qual"] = hard_clip(s.seq[0:cigar[0][1]], s.qual[0:cigar[0][1]],
+                                                          self.__config['HC_THRESHOLD'])
+                        sr["length"] = len(sr["seq"])
+                        sr["mapq"] = s.mapq
+                        sr["avg_sr_qual"] = average_quality(sr["qual"])
+                    # 2nd split segment
+                    else:
+                        sr["chr"] = self.__bam_file.getrname(s.tid)
+                        sr["split_position"] = s.pos + cigar[1][
+                            1]  # alignment_start + length of matching segment = start of 3' split segment
+                        sr["prime"] = 3
+                        seq = s.seq[-cigar[2][1]:]
+                        qual = s.qual[-cigar[2][1]:]
+                        seq, qual = hard_clip(seq[::-1], qual[::-1], self.__config['HC_THRESHOLD'])
+                        sr["seq"] = seq[::-1]
+                        sr["qual"] = qual[::-1]
+                        sr["length"] = len(sr["seq"])
+                        sr["mapq"] = s.mapq
+                        sr["avg_sr_qual"] = average_quality(sr["qual"])
+            if sr:
+                if sr['length'] > config['MINIMUM_LENGTH_SPLIT_READ']:
+                    count += 1
+        return count
