@@ -2,17 +2,14 @@
     Author: Eugene Gardner
     Affiliation: Wellcome Sanger Institute
 
-    Script to build to AF database necessary for annotation:
+    Object which handles various coverage calculations for aggregate_positions.py
 
-    Parameters
     ----------
-    1) input fof of all *.scored files from dataset
-	2) output coordinate file
-	3) score threshold from the config.yml file
+    Parameters
+    1.) chr_dictionary of split reads from fetch
+    2.) input bam path
+    3.) config file of parameters for all of Indelible
 
-    Returns
-    -------
-	1) Coordinate file with allele frequencies
 
 """
 
@@ -47,6 +44,13 @@ class CoverageCalculator:
                 if len(self.chr_dict[chrom][position]) >= self.config["MINIMUM_SR_COVERAGE"]:
                     count += 1
 
+        # It is much faster to calculate bam-wide coverage all at once:
+        # (__calculate_coverage_bam + __coverage_at_position_tabix)
+        # than doing the bam iterator method (__coverage_at_position_pileup) individual for each coordinant if the
+        # number of reads is excessive. I haven't exactly pinpointed when the number of coordinates to examine reaches
+        # this threshold, but I don't think it does too much damage anyway as the time to calculate WES coverage is
+        # relatively low
+
         if count <= 30000:
             print "Low-ish number of reads (" + str(count) + ")... Using pysam to extract coverage..."
             self.__use_bam = True
@@ -80,7 +84,12 @@ class CoverageCalculator:
 
     def __coverage_at_position_pileup(self, chr, pos):
 
-        for pileupcolumn in self.__bam_file.pileup(chr,pos-1,pos+1,max_depth=100,truncate=True):
+        if pos <= 0:
+            pileup = self.__bam_file.pileup(chr, 0, pos + 1, truncate=True)
+        else:
+            pileup = self.__bam_file.pileup(chr, pos - 1, pos + 1, truncate=True)
+
+        for pileupcolumn in pileup:
             if pileupcolumn.pos == pos:
                 return pileupcolumn.n
         else:
@@ -92,7 +101,6 @@ class CoverageCalculator:
 
         tbx = pysam.TabixFile(self.__tabix_file)
         for row in tbx.fetch(chr,pos,pos+1):
-            print row
             cov = row[0]
 
         return cov
