@@ -7,3 +7,4 @@ results/*
 venv/*
 test_data_full/*
 config.yml
+indelible/*.pyc
