@@ -5,13 +5,15 @@
 
 Alejandro Sifrim (Creator, Developer)
 
+Eugene Gardner (Developer)
+
 Diana Rajan (Experimental validation)
 
 Elena Prigmore (Experimental validation)
 
 Matthew Hurles (Group Leader)
 
-We are affiliated with the [Wellcome Trust Sanger Institute](http://www.sanger.ac.uk/science/groups/hurles-group), Cambridge, United Kingdom
+We are affiliated with the [Wellcome Sanger Institute](http://www.sanger.ac.uk/science/groups/hurles-group), Cambridge, United Kingdom
 
 ## Abstract
 
@@ -20,7 +22,6 @@ TBD
 ## Installation
 
 ### Required Software Dependencies
-
 
 
 To install Indelible:
@@ -118,7 +119,7 @@ The Indelible variant calling process follows several steps:
 
 These different steps can be performed by the different sub-commands:
 
-####1. Fetch
+#### 1. Fetch
 
 The **fetch** command extracts the reads from the BAM file, it takes 2 arguments:
 
@@ -129,7 +130,7 @@ The **fetch** command extracts the reads from the BAM file, it takes 2 arguments
 ./indelible.py fetch --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.sc_reads
 ```
 
-####2. Aggregate
+#### 2. Aggregate
 
 The **aggregate** merges information across reads towards a position-level view of the data:
 
@@ -142,7 +143,7 @@ The **aggregate** merges information across reads towards a position-level view 
 ./indelible.py aggregate --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.sc_reads --b test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts --r /lustre/scratch113/projects/ddd/resources/v1.2/hs37d5.fasta
 ```
 
-####3. Score
+#### 3. Score
 
 The **score** command scores positions based on the read information and sequence context:
 
@@ -153,7 +154,7 @@ The **score** command scores positions based on the read information and sequenc
 ./indelible.py score --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored
 ```
 
-####4. Blast
+#### 4. Blast
 
 The **blast** command blasts longer clipped segments (20+ bp) to find matches elsewhere in the human genome and/or repeat database:
 * `--i` :  path to the input file (the output of the *score* command from previous step).
@@ -164,7 +165,7 @@ This will automatically generate 3 files: a fasta file with the sequences to be 
 ./indelible.py blast --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored
 ```
 
-####5. Annotate
+#### 5. Annotate
 
 The **annotate** command enriches the result with gene/exon annotations and merges the blast results with the position file:
 
@@ -175,7 +176,7 @@ The **annotate** command enriches the result with gene/exon annotations and merg
 ./indelible.py annotate --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored.annotated
 ```
 
-####6. Denovo
+#### 6. Denovo
 
 One can then look for *de novo* mutation events using the **denovo** command:
 
