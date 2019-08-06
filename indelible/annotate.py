@@ -44,8 +44,8 @@ def find_protein_coding_ensembl_exon(chrom, pos, ensembl_exons):
     for v in ensembl_exons.all_hits(query):
         res_exons.append(v.attrs)
     if res_exons != []:
-        return [map(lambda x: x["transcript_id"].strip("\""), res_exons),
-                map(lambda x: x["exon_number"].strip("\""), res_exons)]
+        return [[x["transcript_id"].strip("\"") for x in res_exons],
+                [x["exon_number"].strip("\"") for x in res_exons]]
         # return res_exons
     else:
         return None
@@ -92,7 +92,7 @@ def find_hgnc_genes(chrom, start, end, config):
     for row in csv.DictReader(open(config['hgnc_file'], 'r'), delimiter="\t"):
         HGNC_COORDS[row['HGNC']] = {"chrom": row['CHROM'], "start": int(row["START"]), "end": int(row["END"])}
 
-    for (gene, coords) in HGNC_COORDS.items():
+    for (gene, coords) in list(HGNC_COORDS.items()):
         if chrom == coords["chrom"]:
             if interval_overlap(start, end, coords["start"], coords["end"]):
                 res.append(gene)

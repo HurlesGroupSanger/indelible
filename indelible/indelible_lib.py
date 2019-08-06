@@ -5,7 +5,6 @@ import csv
 import math
 from collections import defaultdict
 from pyfaidx import Fasta
-import swalign
 import numpy
 import re
 
@@ -49,7 +48,7 @@ def average_quality(qual):
 
 def entropy(s):
     p, lns = Counter(s), float(len(s))
-    return -sum(count / lns * math.log(count / lns, 2) for count in p.values())
+    return -sum(count / lns * math.log(count / lns, 2) for count in list(p.values()))
 
 
 def read_database(path):

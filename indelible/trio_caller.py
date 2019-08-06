@@ -23,7 +23,7 @@ import csv
 from indelible.indelible_lib import *
 import scipy.stats as sp
 import math
-from coverage_calculator import CoverageCalculator
+from .coverage_calculator import CoverageCalculator
 
 
 def compute_stats(cov_calc, chrom, position):

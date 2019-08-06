@@ -23,19 +23,25 @@ usage_text = """
 
 Indelible
 =========
-Alejandro Sifrim - Wellcome Trust Sanger Institute
+Alejandro Sifrim - Wellcome Sanger Institute
 as33@sanger.ac.uk
+Eugene Gardner - Wellcome Sanger Institute
+eg15@sanger.ac.uk
 
 Usage:
 ./indelible command
 
 Where command can be:
 
-fetch - fetches reads from BAM file
-aggregate - aggregate information per position
-score - score positions using Random Forest model
-annotate - annotate positions with additional information
-denovo - searches for de novo events
+fetch     fetch reads from BAM file
+aggregate aggregate information per position
+score     score positions using Random Forest model
+blast     blast clipped sequences
+annotate  annotate positions with additional information
+denovo    searches for de novo events
+complete  Performs the complete Indelible analysis
+database  build SR allele frequency database
+train     trains the Random Forest model on a bunch of examples
 
 """
 parser = argparse.ArgumentParser(prog='indelible')
@@ -92,7 +98,7 @@ args = parser.parse_args()
 Read config file
 """
 config_path = os.path.join(os.path.dirname(__file__), 'config.yml')
-config = yaml.load(open(config_path))
+config = yaml.load(open(config_path), Loader=yaml.SafeLoader)
 
 required = ["MINIMUM_SR_COVERAGE","SHORT_SR_CUTOFF",
 "MINIMUM_LENGTH_SPLIT_READ","MINIMUM_MAPQ",
@@ -201,21 +207,21 @@ if args.command == "complete":
     annotated_path = counts_path+".annotated"
     final_path = args.output_path+"/"+os.path.basename(args.input_path)+".indelible.tsv"
     denovo_path = args.output_path+"/"+os.path.basename(args.input_path)+".indelible.denovo.tsv"
-    print("%s: Fetching reads..." % timestamp())
+    print(("%s: Fetching reads..." % timestamp()))
     indelible.fetch_reads(args.input_path, reads_path, config)
-    print("%s: Aggregating across positions..." % timestamp())
+    print(("%s: Aggregating across positions..." % timestamp()))
     indelible.aggregate_positions(reads_path, args.input_path, counts_path, args.reference_path, config)
-    print("%s: Scoring positions..." % timestamp())
+    print(("%s: Scoring positions..." % timestamp()))
     indelible.score_positions(counts_path, scored_path, config)
-    print("%s: Blasting soft-clipped segments..." % timestamp())
+    print(("%s: Blasting soft-clipped segments..." % timestamp()))
     indelible.blast(scored_path, config)
-    print("%s: Annotating positions..." % timestamp())
+    print(("%s: Annotating positions..." % timestamp()))
     indelible.annotate(scored_path, annotated_path, args.database, config)
     shutil.copy(annotated_path,final_path)
-    print("%s: Calling de novo variants..." % timestamp())
+    print(("%s: Calling de novo variants..." % timestamp()))
     indelible.denovo_caller_trio(final_path,args.mother_bam, args.father_bam, denovo_path)
     if args.keep_tmp != True:
-        print("%s: Removing temporary files..." % timestamp())
+        print(("%s: Removing temporary files..." % timestamp()))
         os.remove(reads_path)
         os.remove(counts_path)
         os.remove(scored_path)

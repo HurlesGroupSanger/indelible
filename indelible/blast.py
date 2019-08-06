@@ -17,7 +17,7 @@ Returns
 import csv
 import time
 from Bio.Blast.Applications import NcbiblastnCommandline
-import StringIO
+import io
 
 today = time.strftime('%Y%m%d')
 
@@ -51,7 +51,7 @@ def run_blast(fasta_file, db, WINDOWMASKERdb=None):
         blastn_clin.set_parameter("window_masker_db", WINDOWMASKERdb)
 
     stdout, stderr = blastn_clin()
-    input = StringIO.StringIO(stdout)
+    input = io.StringIO(stdout)
 
     hits = {}
 
