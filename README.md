@@ -48,7 +48,7 @@ cd Indelible/
 
 ```
 virtualenv venv
-source venv/vin/activate
+source venv/bin/activate
 ```
 
 3. Install cython and other required packages:
@@ -59,6 +59,8 @@ pip install -r requirements.txt
 ```
 
 **Note**: If you get error(s) about pysam not being able to load specific libraries (like openssl, libbz2, etc.) that is a pysam problem. Please see the pysam website to get help.
+
+**Note**: Scikit-learn has a potential install issue in the version Indelible uses. See [this github issue](https://github.com/scikit-learn/scikit-learn/issues/5489) for instructions on how to install.
 
 4. Unzip required data files:
 
