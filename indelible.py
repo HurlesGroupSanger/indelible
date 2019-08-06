@@ -17,7 +17,7 @@ import shutil
 today = time.strftime('%Y%m%d')
 
 def timestamp():
-	return time.strftime('%d/%m/%y - %H:%M:%S')
+    return time.strftime('%d/%m/%y - %H:%M:%S')
 
 usage_text = """
 
@@ -55,16 +55,13 @@ subparser = subparsers.add_parser('score', help='score positions using Random Fo
 subparser.add_argument('--i', help='input file (output of aggregate command)', metavar="<input_path>", required=True, dest="input_path")
 subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 
-subparser = subparsers.add_parser('database', help='build allele frequency database')
-subparser.add_argument('--f', help='File of files from the score command representing a complete dataset', metavar="<fof>", required=True, dest="fof")
-subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
-
 subparser = subparsers.add_parser('blast', help='blast clipped sequences')
 subparser.add_argument('--i', help='input file (output of score command)', metavar="<input_path>", required=True, dest="input_path")
 
 subparser = subparsers.add_parser('annotate', help='annotate positions with additional information')
 subparser.add_argument('--i', help='input file (output of score command)', metavar="<input_path>", required=True, dest="input_path")
 subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
+subparser.add_argument('--d', help='path to indelible frequency database', metavar="<database>", required=True, dest="database")
 
 subparser = subparsers.add_parser('denovo', help='searches for de novo events')
 subparser.add_argument('--c', help='path to scored/annotated calls in the child', metavar="<child_indelible_path>", required=True, dest="child_input")
@@ -72,15 +69,22 @@ subparser.add_argument('--m', help='path to maternal BAM file', metavar="<mother
 subparser.add_argument('--p', help='path to paternal BAM file', metavar="<father_bam_path>", required=False, dest="father_bam")
 subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 
-subparser = subparsers.add_parser('train', help='trains the Random Forest model on a bunch of examples')
-subparser.add_argument('--i', help='Input file with labeled examples', metavar="<input_path>", required=True, dest="input_path")
-subparser.add_argument('--o', help='Output path for RF model', metavar="<output_path>", required=True, dest="output_path")
-
 subparser = subparsers.add_parser('complete', help='Performs the complete Indelible analysis')
 subparser.add_argument('--i', help='path to input BAM file', metavar="<input_path>", required=True, dest="input_path")
 subparser.add_argument('--o', help='path to output directory', metavar="<output_path>", required=True, dest="output_path")
 subparser.add_argument('--r', help='path to reference genome', metavar="<reference_path>", required=True, dest="reference_path")
+subparser.add_argument('--d', help='path to indelible frequency database', metavar="<database>", required=True, dest="database")
+subparser.add_argument('--m', help='path to maternal BAM file', metavar="<mother_bam_path>", required=False, dest="mother_bam")
+subparser.add_argument('--p', help='path to paternal BAM file', metavar="<father_bam_path>", required=False, dest="father_bam")
 subparser.add_argument('--keeptmp', action='store_const', const=True,  dest="keep_tmp")
+
+subparser = subparsers.add_parser('database', help='build SR allele frequency database')
+subparser.add_argument('--f', help='File of files from the score command representing a complete dataset', metavar="<fof>", required=True, dest="fof")
+subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
+
+subparser = subparsers.add_parser('train', help='trains the Random Forest model on a bunch of examples')
+subparser.add_argument('--i', help='Input file with labeled examples', metavar="<input_path>", required=True, dest="input_path")
+subparser.add_argument('--o', help='Output path for RF model', metavar="<output_path>", required=True, dest="output_path")
 
 args = parser.parse_args()
 
@@ -95,124 +99,127 @@ required = ["MINIMUM_SR_COVERAGE","SHORT_SR_CUTOFF",
 "MININUM_AVERAGE_BASE_QUALITY_SR","HC_THRESHOLD",'random_forest_model']
 
 for r in required:
-	if r not in config:
-		print("ERROR: %s not specified in config file!")
-		exit(1)
+    if r not in config:
+        print("ERROR: %s not specified in config file!")
+        exit(1)
 
 """
 FETCH command
 """
 if args.command == "fetch":
-	indelible.fetch_reads(args.input_path, args.output_path, config)
+    indelible.fetch_reads(args.input_path, args.output_path, config)
 
 """
 AGGREGATE command
 """
 
 if args.command == "aggregate":
-	if not os.path.isfile(args.input_path):
-		print("ERROR: Input file does not exist or cannot be accessed!")
-		exit(1)
-	if not os.path.isfile(args.input_bam):
-		print("ERROR: Input BAM does not exist or cannot be accessed!")
-		exit(1)
-	if not os.path.isfile(args.reference_path):
-		print("ERROR: Reference path does not exist or cannot be accessed!")
-		exit(1)
-	indelible.aggregate_positions(args.input_path, args.input_bam, args.output_path, args.reference_path, config)
+    if not os.path.isfile(args.input_path):
+        print("ERROR: Input file does not exist or cannot be accessed!")
+        exit(1)
+    if not os.path.isfile(args.input_bam):
+        print("ERROR: Input BAM does not exist or cannot be accessed!")
+        exit(1)
+    if not os.path.isfile(args.reference_path):
+        print("ERROR: Reference path does not exist or cannot be accessed!")
+        exit(1)
+    indelible.aggregate_positions(args.input_path, args.input_bam, args.output_path, args.reference_path, config)
 
 """
 SCORE command
 """
 if args.command == "score":
-	if not os.path.isfile(config['random_forest_model']):
-		print("ERROR: The path specified for random_forest_model in config does not exist!")
-		exit(1)
-	if not os.path.isfile(args.input_path):
-		print("ERROR: Input file does not exist!")
-		exit(1)
-	indelible.score_positions(args.input_path, args.output_path, config)
+    if not os.path.isfile(config['random_forest_model']):
+        print("ERROR: The path specified for random_forest_model in config does not exist!")
+        exit(1)
+    if not os.path.isfile(args.input_path):
+        print("ERROR: Input file does not exist!")
+        exit(1)
+    indelible.score_positions(args.input_path, args.output_path, config)
 
 """
 DATABASE command
 """
 if args.command == "database":
-	indelible.build_database(args.fof, args.output_path, config['SCORE_THRESHOLD'])
+    indelible.build_database(args.fof, args.output_path, config['SCORE_THRESHOLD'])
 
 """
 BLAST
 """
 if args.command == "blast":
-	if not os.path.isfile(args.input_path):
-		print("ERROR: Input file does not exist!")
-		exit(1)
-	indelible.blast(args.input_path,config)
+    if not os.path.isfile(args.input_path):
+        print("ERROR: Input file does not exist!")
+        exit(1)
+    indelible.blast(args.input_path,config)
 
 """
 ANNOTATE command
 """
 if args.command == "annotate":
-	if not os.path.isfile(args.input_path):
-		print("ERROR: Input file does not exist!")
-		exit(1)
-	indelible.annotate(args.input_path, args.output_path, config)
+    if not os.path.isfile(args.input_path):
+        print("ERROR: Input file does not exist!")
+        exit(1)
+    indelible.annotate(args.input_path, args.output_path, args.database, config)
 
 """
 DENOVO command
 """
 if args.command == "denovo":
 
-	if not os.path.isfile(args.child_input):
-		print("ERROR: Input file does not exist!")
-		exit(1)
+    if not os.path.isfile(args.child_input):
+        print("ERROR: Input file does not exist!")
+        exit(1)
 
-	indelible.denovo_caller_trio(args.child_input, args.mother_bam, args.father_bam, args.output_path, config)
+    indelible.denovo_caller_trio(args.child_input, args.mother_bam, args.father_bam, args.output_path, config)
 
 """
 TRAIN command
 """
 if args.command == "train":
-	if not os.path.isfile(args.input_path):
-		print("ERROR: Input file does not exist!")
-		exit(1)
-	indelible.train(args.input_path, args.output_path)
+    if not os.path.isfile(args.input_path):
+        print("ERROR: Input file does not exist!")
+        exit(1)
+    indelible.train(args.input_path, args.output_path)
 
 """
 COMPLETE command
 """
 if args.command == "complete":
-	if not os.path.isfile(args.input_path):
-		print("ERROR: Input file does not exist!")
-		exit(1)
-	if not os.path.isfile(args.reference_path):
-		print("ERROR: Reference path does not exist or cannot be accessed!")
-		exit(1)
-	if not os.path.isdir(args.output_path):
-		print("ERROR: Output directory does not exist!")
-		exit(1)
+    if not os.path.isfile(args.input_path):
+        print("ERROR: Input file does not exist!")
+        exit(1)
+    if not os.path.isfile(args.reference_path):
+        print("ERROR: Reference path does not exist or cannot be accessed!")
+        exit(1)
+    if not os.path.isdir(args.output_path):
+        print("ERROR: Output directory does not exist!")
+        exit(1)
 
-	reads_path = args.output_path+"/"+os.path.basename(args.input_path)+".sc_reads"
-	counts_path = reads_path+".aggregated"
-	scored_path = counts_path+".scored"
-	annotated_path = counts_path+".annotated"
-	final_path = args.output_path+"/"+os.path.basename(args.input_path)+".indelible.tsv"
-	print("%s: Fetching reads..." % timestamp())
-	indelible.fetch_reads(args.input_path, reads_path, config)
-	print("%s: Aggregating across positions..." % timestamp())
-	indelible.aggregate_positions(reads_path, args.input_path, counts_path, args.reference_path, config)
-	print("%s: Scoring positions..." % timestamp())
-	indelible.score_positions(counts_path, scored_path, config)
-	print("%s: Blasting soft-clipped segments..." % timestamp())
-	indelible.blast(scored_path, config)
-	print("%s: Annotating positions..." % timestamp())
-	indelible.annotate(scored_path, annotated_path, config)
-	shutil.copy(annotated_path,final_path)
-	if args.keep_tmp != True:
-		print("%s: Removing temporary files..." % timestamp())
-		os.remove(reads_path)
-		os.remove(counts_path)
-		os.remove(scored_path)
-		os.remove(annotated_path)
-		os.remove(scored_path+".fasta.hits_nonrepeats")
-		os.remove(scored_path+".fasta.hits_repeats")
-		os.remove(scored_path+".fasta")
+    reads_path = args.output_path+"/"+os.path.basename(args.input_path)+".sc_reads"
+    counts_path = reads_path+".aggregated"
+    scored_path = counts_path+".scored"
+    annotated_path = counts_path+".annotated"
+    final_path = args.output_path+"/"+os.path.basename(args.input_path)+".indelible.tsv"
+    denovo_path = args.output_path+"/"+os.path.basename(args.input_path)+".indelible.denovo.tsv"
+    print("%s: Fetching reads..." % timestamp())
+    indelible.fetch_reads(args.input_path, reads_path, config)
+    print("%s: Aggregating across positions..." % timestamp())
+    indelible.aggregate_positions(reads_path, args.input_path, counts_path, args.reference_path, config)
+    print("%s: Scoring positions..." % timestamp())
+    indelible.score_positions(counts_path, scored_path, config)
+    print("%s: Blasting soft-clipped segments..." % timestamp())
+    indelible.blast(scored_path, config)
+    print("%s: Annotating positions..." % timestamp())
+    indelible.annotate(scored_path, annotated_path, args.database, config)
+    shutil.copy(annotated_path,final_path)
+    print("%s: Calling de novo variants..." % timestamp())
+    indelible.denovo_caller_trio(final_path,args.mother_bam, args.father_bam, denovo_path)
+    if args.keep_tmp != True:
+        print("%s: Removing temporary files..." % timestamp())
+        os.remove(reads_path)
+        os.remove(counts_path)
+        os.remove(scored_path)
+        os.remove(annotated_path)
+        os.remove(scored_path+".fasta.hits_nonrepeats")
+        os.remove(scored_path+".fasta.hits_repeats")
+        os.remove(scored_path+".fasta")

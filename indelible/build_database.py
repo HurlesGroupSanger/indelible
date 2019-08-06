@@ -7,12 +7,12 @@
     Parameters
     ----------
     1) input fof of all *.scored files from dataset
-	2) output coordinate file
-	3) score threshold from the config.yml file
+    2) output coordinate file
+    3) score threshold from the config.yml file
 
     Returns
     -------
-	1) Coordinate file with allele frequencies
+    1) Coordinate file with allele frequencies
 
 """
 
@@ -20,7 +20,6 @@ import pandas
 
 
 def build_database(score_files, output_file, score_threshold):
-
     output_writer = open(output_file, "w")
 
     data = []
