@@ -29,9 +29,11 @@ Indelible is written for Python2.7.*
 
 Indelible requires the following software to be installed and in `$PATH`:
 
-* bedtools v2.17 or greater
-* tabix v1.0.0 or greater
-* bgzip v1.0.0 or greater
+* [bedtools](https://bedtools.readthedocs.io/en/latest/)
+* [tabix](http://www.htslib.org/download/) 
+* [bgzip](http://www.htslib.org/download/)
+
+The package Biopython requires a local install of [blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download) in `$PATH` in order to function. This needs to be installed prior to [installing Indelible](#installing-indelible).
 
 ### Installing Indelible
 
