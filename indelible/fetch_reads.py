@@ -37,17 +37,35 @@ def print_if_ok(sr, config):
         return ""
 
 
+def print_indels (read):
+    cigar_types = [c[0] for c in cigar]
+
+    insertion = 0
+    deletion = 0
+
+    if 1 in cigar_types: insertion += 1
+    if 2 in cigar_types: deletion += 1
+
+    return(insertion + "\t" + deletion)
+
+
 def fetch_reads(input_path, output_path, config):
     infile = bam_open(input_path)
 
     outfile = open(output_path, 'w')
     outfile.write("chr\tsplit_position\tprime\tsplit_length\tseq\tqual\tmapq\tavg_sr_qual\treverse_strand\tis_double\n")
 
+    indeloutfile = open(output_path + ".indel", 'w')
+
     for s in infile:
         cigar = s.cigartuples
         if cigar is not None:
             refname = infile.getrname(s.tid)
             if refname is not "hs37d5":
+
+                # Print here to file that will be used later to index InDels if necessary:
+                indeloutfile.write(refname + "\t" + s.reference_start + "\t" + s.reference_end + "\t" + print_indels(cigar) + "\n")
+
                 if len(cigar) == 2:
                     # 5' Split Reads
                     if cigar[0][0] == 4 and cigar[1][0] == 0:  # 4 = SOFT CLIP/ 0 = MATCH

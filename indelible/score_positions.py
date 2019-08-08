@@ -33,8 +33,9 @@ def trainForest(training_file_path):
 
 
 def score_file(forest_path, testing_file_path):
+
     df = pd.read_csv(testing_file_path, sep="\t")
-    values = df.ix[:, df.columns.difference(["chrom", "position", "seq_longest", "pct_double_split"])]
+    values = df.loc[:, df.columns.difference(["chrom", "position", "seq_longest", "pct_double_split"])]
     clf = loadForest(forest_path)
     predicted_class = clf.predict(values)
     df["predicted"] = predicted_class
