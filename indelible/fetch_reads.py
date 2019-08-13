@@ -37,7 +37,8 @@ def print_if_ok(sr, config):
         return ""
 
 
-def print_indels (read):
+def print_indels (cigar):
+
     cigar_types = [c[0] for c in cigar]
 
     insertion = 0
@@ -46,7 +47,7 @@ def print_indels (read):
     if 1 in cigar_types: insertion += 1
     if 2 in cigar_types: deletion += 1
 
-    return(insertion + "\t" + deletion)
+    return str(insertion) + "\t" + str(deletion)
 
 
 def fetch_reads(input_path, output_path, config):
@@ -64,7 +65,7 @@ def fetch_reads(input_path, output_path, config):
             if refname is not "hs37d5":
 
                 # Print here to file that will be used later to index InDels if necessary:
-                indeloutfile.write(refname + "\t" + s.reference_start + "\t" + s.reference_end + "\t" + print_indels(cigar) + "\n")
+                indeloutfile.write(refname + "\t" + str(s.reference_start) + "\t" + str(s.reference_end) + "\t" + print_indels(cigar) + "\n")
 
                 if len(cigar) == 2:
                     # 5' Split Reads
@@ -131,3 +132,6 @@ def fetch_reads(input_path, output_path, config):
                         sr["strand"] = s.is_reverse
                         sr["is_double"] = True
                         outfile.write(print_if_ok(sr, config))
+
+    indeloutfile.close()
+    bgzip_and_tabix(indeloutfile)

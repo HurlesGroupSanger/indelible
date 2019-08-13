@@ -63,14 +63,7 @@ class CoverageCalculator:
         bg_file = bt.genome_coverage(bg=True)
         bg_file.moveto(output_file)
 
-        # bgzip
-        sigint = subprocess.call(["bgzip", "-f", output_file])
-        if sigint != 0:
-            raise Exception("bgzip on the file " + output_file + " did not run properly... Exiting!")
-        # tabix index
-        sigint = subprocess.call(["tabix", "-f", "-p", "bed", output_file + ".gz"])
-        if sigint != 0:
-            raise Exception("tabix on the file " + output_file + ".gz did not run properly... Exiting!")
+        bgzip_and_tabix(output_file)
 
     def calculate_coverage(self, chr, pos):
 
