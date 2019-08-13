@@ -134,4 +134,4 @@ def fetch_reads(input_path, output_path, config):
                         outfile.write(print_if_ok(sr, config))
 
     indeloutfile.close()
-    bgzip_and_tabix(indeloutfile)
+    bgzip_and_tabix(output_path + ".indel")
