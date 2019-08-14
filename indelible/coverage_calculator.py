@@ -51,7 +51,7 @@ class CoverageCalculator:
         # this threshold, but I don't think it does too much damage anyway as the time to calculate WES coverage is
         # relatively low
 
-        if count <= 30000:
+        if count <= 100:
             self.__use_bam = True
         else:
             self.__use_bam = False
@@ -80,20 +80,21 @@ class CoverageCalculator:
         else:
             pileup = self.__bam_file.pileup(chr, pos - 1, pos + 1, truncate=True)
 
+        cov = 0
+
         for pileupcolumn in pileup:
             if pileupcolumn.pos == pos:
-                return pileupcolumn.n
-        else:
-            return 0
+                cov = pileupcolumn.n
+                break
+
+        return cov
 
     def __coverage_at_position_tabix(self, chr, pos):
 
         cov = 0
-
         tbx = pysam.TabixFile(self.__tabix_file)
-        for row in tbx.fetch(chr, pos, pos + 1):
-            cov = row[0]
-
+        for row in tbx.fetch(chr, pos-1, pos, parser=pysam.asTuple()):
+            cov = row[3]
         return cov
 
     def reads_with_indels_in_neighbourhood(self, chrom, pos):

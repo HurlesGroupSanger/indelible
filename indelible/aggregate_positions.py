@@ -163,7 +163,6 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
                 res["coverage"] = covFE
 
                 indel_counts = cov_calc.reads_with_indels_in_neighbourhood(chrom, pos)
-
                 res["insertion_context"] = indel_counts["insertions"]
                 res["deletion_context"] = indel_counts["deletions"]
 
