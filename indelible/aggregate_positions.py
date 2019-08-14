@@ -159,30 +159,10 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
                 res["chrom"] = chrom
                 res["position"] = pos
 
-                start = time.time() * 1000
-                print("cov-tbx calc")
                 covFE = cov_calc.calculate_coverage(chrom, pos)
-                end = time.time() * 1000
-                print (end - start)
-
-                start = time.time() * 1000
-                print("cov-bam calc")
-                covFE = cov_calc.coverage_at_position_bam(chrom, pos)
-                end = time.time() * 1000
-                print(end - start)
                 res["coverage"] = covFE
 
-                start = time.time() * 1000
-                print("indel-tbx calc")
                 indel_counts = cov_calc.reads_with_indels_in_neighbourhood(chrom, pos)
-                end = time.time() * 1000
-                print(end - start)
-
-                start = time.time() * 1000
-                print("indel-bam calc")
-                indel_counts = cov_calc.reads_with_indels_in_neighbourhood_bam(chrom, pos)
-                end = time.time() * 1000
-                print(end - start)
 
                 res["insertion_context"] = indel_counts["insertions"]
                 res["deletion_context"] = indel_counts["deletions"]

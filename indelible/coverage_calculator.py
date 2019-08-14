@@ -29,7 +29,6 @@ class CoverageCalculator:
         self.__input_path = input_path
         self.__bam_file = bam_open(self.input_bam)
         self.__tabix_file = self.__input_path + ".bg.gz"
-        self.__indel_file = self.__input_path + ".indel.gz"
         self.__config = config
         self.__use_bam = True
 
@@ -52,7 +51,7 @@ class CoverageCalculator:
         # this threshold, but I don't think it does too much damage anyway as the time to calculate WES coverage is
         # relatively low
 
-        if count <= 1000:
+        if count <= 30000:
             self.__use_bam = True
         else:
             self.__use_bam = False
@@ -98,27 +97,6 @@ class CoverageCalculator:
         return cov
 
     def reads_with_indels_in_neighbourhood(self, chrom, pos):
-        counts = {"insertions": 0, "deletions": 0}
-        window_size = self.__config['WINDOW_SIZE']
-        fetch_start = pos - (window_size / 2)
-        fetch_end = pos + (window_size / 2)
-        if fetch_start < 0:
-            fetch_start = 0
-
-        tbx = pysam.TabixFile(self.__indel_file)
-        for row in tbx.fetch(chrom, fetch_start, fetch_end):
-            if int(row[3]) > 0: counts["insertions"] += 1
-            if int(row[4]) > 0: counts["deletions"] += 1
-        return counts
-
-    def coverage_at_position_bam(self, chr, pos):
-        for pileupcolumn in self.__bam_file.pileup(chr, pos, pos + 1):
-            if pileupcolumn.pos == pos:
-                return pileupcolumn.n
-        else:
-            return 0
-
-    def reads_with_indels_in_neighbourhood_bam(self, chrom, pos):
         counts = {"insertions": 0, "deletions": 0}
         window_size = self.__config['WINDOW_SIZE']
         fetch_start = pos - (window_size / 2)
