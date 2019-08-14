@@ -51,12 +51,12 @@ class CoverageCalculator:
         # this threshold, but I don't think it does too much damage anyway as the time to calculate WES coverage is
         # relatively low
 
-        if count <= 100:
+        if count <= 30000:
             self.__use_bam = True
         else:
             self.__use_bam = False
             output_file = self.__input_path + ".bg"
-            # self.__calculate_coverage_bam(output_file)
+            self.__calculate_coverage_bam(output_file)
 
     def __calculate_coverage_bam(self, output_file):
 
