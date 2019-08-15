@@ -93,7 +93,13 @@ class CoverageCalculator:
 
         cov = 0
         tbx = pysam.TabixFile(self.__tabix_file)
-        for row in tbx.fetch(chr, pos-1, pos, parser=pysam.asTuple()):
+
+        if pos <= 1:
+            itr = tbx.fetch(chr, 1, 2, parser=pysam.asTuple())
+        else:
+            itr = tbx.fetch(chr, pos - 1, pos, parser=pysam.asTuple())
+
+        for row in itr:
             cov = row[3]
         return cov
 
