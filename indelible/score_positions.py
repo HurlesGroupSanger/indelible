@@ -38,14 +38,16 @@ def score_dataframe(clf, df):
 
     values = df.loc[:, df.columns.difference(["chrom", "position", "seq_longest", "pct_double_split"])]
 
-    predicted_class = clf.predict(values)
-    print ("Prediction Done")
-
-    df["predicted"] = predicted_class
     df["prob_N"] = clf.predict_proba(values).T[0]
     df["prob_Y"] = clf.predict_proba(values).T[1]
     return df
 
+def calculate_prediction_column(row):
+
+    if row.prob_N > row.prob_Y:
+        return "N"
+    else:
+        return "Y"
 
 def saveForest(clf, output_path):
     with bz2.BZ2File(output_path, 'wb') as fid:
@@ -82,6 +84,7 @@ def score_positions(input_path, output_path, config):
 
             df_final = df_final.append(score_dataframe(clf,df_chunk), ignore_index=True)
 
+    df_final["predicted"] = df.apply(lambda row: calculate_prediction(row), axis=1)
     df_final.to_csv(output_path, sep="\t", index=False)
 
 
