@@ -75,7 +75,6 @@ def score_positions(input_path, output_path, config):
     else:
         # Need to run df as chunks through the file:
         for i in range(0,df_length,20000):
-            print (i)
             if i + 20000 > df_length:
                 df_chunk = df[i:df_length]
                 df_chunk = df_chunk.copy()
