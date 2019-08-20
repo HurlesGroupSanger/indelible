@@ -84,7 +84,7 @@ def score_positions(input_path, output_path, config):
 
             df_final = df_final.append(score_dataframe(clf,df_chunk), ignore_index=True)
 
-    df_final["predicted"] = df.apply(lambda row: calculate_prediction(row), axis=1)
+    df_final["predicted"] = df.apply(lambda row: calculate_prediction_column(row), axis=1)
     df_final.to_csv(output_path, sep="\t", index=False)
 
 
