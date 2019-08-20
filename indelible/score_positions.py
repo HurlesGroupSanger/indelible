@@ -60,23 +60,24 @@ def loadForest(path):
 
 
 def score_positions(input_path, output_path, config):
+
     clf = loadForest(config['random_forest_model'])
 
     df = pd.read_csv(input_path, sep="\t")
     df_length = len(df.index)
     df_final = pd.DataFrame()
 
-    if df_length < 20000:
+    if df_length <= 20000:
         df_final = score_dataframe(clf, df)
     else:
         # Need to run df as chunks through the file:
         for i in range(0,df_length,20000):
             print (i)
-            if i + 19999 > df_length:
+            if i + 20000 > df_length:
                 df_chunk = df[i:df_length]
                 df_chunk = df_chunk.copy()
             else:
-                df_chunk = df[i:i+19999]
+                df_chunk = df[i:i+20000]
                 df_chunk = df_chunk.copy()
 
             df_final = df_final.append(score_dataframe(clf,df_chunk), ignore_index=True)
