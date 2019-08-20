@@ -78,7 +78,8 @@ def score_positions(input_path, output_path, config):
             else:
                 df_chunk = df[i:i+19999]
                 df_chunk = df_chunk.copy()
-        df_final = df_final.append(score_dataframe(clf,df_chunk), ignore_index=True)
+
+            df_final = df_final.append(score_dataframe(clf,df_chunk), ignore_index=True)
 
     df_final.to_csv(output_path, sep="\t", index=False)
 
