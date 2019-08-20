@@ -17,6 +17,8 @@
 
 """
 import sys
+import timeit
+
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 import pickle
@@ -32,14 +34,13 @@ def trainForest(training_file_path):
     return clf
 
 
-def score_file(forest_path, testing_file_path):
+def score_dataframe(clf, df):
 
-    df = pd.read_csv(testing_file_path, sep="\t")
     values = df.loc[:, df.columns.difference(["chrom", "position", "seq_longest", "pct_double_split"])]
-    clf = loadForest(forest_path)
-
 
     predicted_class = clf.predict(values)
+    print ("Prediction Done")
+
     df["predicted"] = predicted_class
     df["prob_N"] = clf.predict_proba(values).T[0]
     df["prob_Y"] = clf.predict_proba(values).T[1]
@@ -59,8 +60,27 @@ def loadForest(path):
 
 
 def score_positions(input_path, output_path, config):
-    df = score_file(config['random_forest_model'], input_path)
-    df.to_csv(output_path, sep="\t", index=False)
+    clf = loadForest(config['random_forest_model'])
+
+    df = pd.read_csv(input_path, sep="\t")
+    df_length = len(df.index)
+    df_final = []
+
+    if df_length < 20000:
+        df_final = score_dataframe(clf, df)
+    else:
+        # Need to run df as chunks through the file:
+        for i in range(0,df_length,20000):
+            if i + 19999 > df_length:
+                df_chunk = df[i:df_length-1]
+                # This is to ensure that we don't make changes to the original df
+                df_chunk = df_chunk.copy()
+            else:
+                df_chunk = df[i:i+19999]
+                df_chunk = df_chunk.copy()
+        df_final.append(score_dataframe(clf,df_chunk))
+
+    df_final.to_csv(output_path, sep="\t", index=False)
 
 
 def train(input_path, output_path):
