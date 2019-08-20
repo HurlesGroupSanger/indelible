@@ -38,11 +38,11 @@ def score_file(forest_path, testing_file_path):
     values = df.loc[:, df.columns.difference(["chrom", "position", "seq_longest", "pct_double_split"])]
     clf = loadForest(forest_path)
 
-    # for line in values:
-    #     predicted_class = clf.predict(line)
-    # df["predicted"] = predicted_class
-    # df["prob_N"] = clf.predict_proba(values).T[0]
-    # df["prob_Y"] = clf.predict_proba(values).T[1]
+
+    predicted_class = clf.predict(values)
+    df["predicted"] = predicted_class
+    df["prob_N"] = clf.predict_proba(values).T[0]
+    df["prob_Y"] = clf.predict_proba(values).T[1]
     return df
 
 
