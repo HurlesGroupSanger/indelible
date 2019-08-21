@@ -39,7 +39,7 @@ def build_database(score_files, output_file, score_threshold):
         data.append(frame)
 
     data_joined = pandas.concat(data)
-    data_joined["coord"] = data_joined["chrom"].astype(str) + "_" + data_joined["position"].astype(str)
+    data_joined["coord"] = data_joined["chrom"].astype(str) + ":" + data_joined["position"].astype(str)
 
     counts = data_joined["coord"].value_counts()
 
@@ -48,7 +48,7 @@ def build_database(score_files, output_file, score_threshold):
     final_frame["coord"] = counts.index.values
     final_frame["counts"] = counts.values
 
-    split = final_frame["coord"].str.split("_", n=1, expand=True)
+    split = final_frame["coord"].str.split(":", n=1, expand=True)
     final_frame["chrom"] = split[0]
     final_frame["pos"] = split[1]
 
