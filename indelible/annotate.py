@@ -77,11 +77,14 @@ def read_ddg2p(ddg2p_bed):
 
 def find_ddg2p_gene(chrom, start, end, ddg2p_db):
     res = []
-    for d in ddg2p_db[chrom]:
-        if interval_overlap(start, end, d["start"], d["end"]):
-            res.append(d["gene"])
-    if res != []:
-        return res
+    if chrom in ddg2p_db:
+        for d in ddg2p_db[chrom]:
+            if interval_overlap(start, end, d["start"], d["end"]):
+                res.append(d["gene"])
+        if res != []:
+            return res
+        else:
+            return None
     else:
         return None
 
