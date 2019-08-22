@@ -6,7 +6,6 @@ from indelible.indelible_lib import *
 
 CHROMOSOMES = [str(x) for x in range(1, 23)] + ["X", "Y"]
 
-
 def create_gene_synonym_hash(hgnc_synonyms):
     syn_hash = {}
     syn_file = hgnc_synonyms
@@ -89,13 +88,16 @@ def find_ddg2p_gene(chrom, start, end, ddg2p_db):
         return None
 
 
-def find_hgnc_genes(chrom, start, end, config):
-    res = []
-    HGNC_COORDS = {}
-    for row in csv.DictReader(open(config['hgnc_file'], 'r'), delimiter="\t"):
-        HGNC_COORDS[row['HGNC']] = {"chrom": row['CHROM'], "start": int(row["START"]), "end": int(row["END"])}
+def read_hgnc_genes(hgnc_bed):
+    hgnc_db = {}
+    for row in csv.DictReader(open(hgnc_bed, 'r'), delimiter="\t"):
+        hgnc_db[row['HGNC']] = {"chrom": row['CHROM'], "start": int(row["START"]), "end": int(row["END"])}
+    return hgnc_db
 
-    for (gene, coords) in list(HGNC_COORDS.items()):
+
+def find_hgnc_genes(chrom, start, end, hgnc_db):
+    res = []
+    for (gene, coords) in list(hgnc_db.items()):
         if chrom == coords["chrom"]:
             if interval_overlap(start, end, coords["start"], coords["end"]):
                 res.append(gene)
@@ -140,7 +142,7 @@ def create_blast_hash(scored_file):
 
 
 # THIS IS POSSIBLY THE UGLIEST CODE I'VE EVER WRITTEN
-def annotate_blast(hit, blast_hash, ddg2p_db, constraint_hash, config):
+def annotate_blast(hit, blast_hash, ddg2p_db, constraint_hash, hgnc_db):
     key = hit["chrom"] + "_" + hit["position"] + "_" + str(len(hit["seq_longest"]))
     if key in blast_hash:
         blast_hit = blast_hash[key]
@@ -160,10 +162,10 @@ def annotate_blast(hit, blast_hash, ddg2p_db, constraint_hash, config):
                     if abs(int(hit["position"]) - int(blast_hit["target_start"])) > abs(
                             int(hit["position"]) - int(blast_hit["target_end"])):
                         hit["blast_hgnc"] = find_hgnc_genes(hit["chrom"], hit["position"], blast_hit["target_end"],
-                                                            config)
+                                                            hgnc_db)
                     else:
                         hit["blast_hgnc"] = find_hgnc_genes(hit["chrom"], hit["position"], blast_hit["target_start"],
-                                                            config)
+                                                            hgnc_db)
                     if hit["blast_hgnc"] != None:
                         hit["blast_hgnc"] = ";".join(hit["blast_hgnc"])
                 else:
@@ -205,12 +207,16 @@ def annotate(input_path, output_path, database, config):
     bhash = create_blast_hash(input_path)
     constraint_hash = create_exac_constraint_hash(config)
     ddg2p_db = read_ddg2p(config['ddg2p_bed'])
+    hgnc_db = read_hgnc_genes(config['hgnc_file'])
 
     for v in scored_file:
-        v = annotate_blast(v, bhash, ddg2p_db, constraint_hash, config)
+
+        v = annotate_blast(v, bhash, ddg2p_db, constraint_hash, hgnc_db)
+
         chrom = v["chrom"]
         pos = int(v["position"])
-        hgnc_genes = find_hgnc_genes(chrom, pos, pos + 1, config)
+        hgnc_genes = find_hgnc_genes(chrom, pos, pos + 1, hgnc_db)
+
         ddg2p_genes = find_ddg2p_gene(chrom, pos, pos + 1, ddg2p_db)
 
         if hgnc_genes != None:
@@ -226,6 +232,7 @@ def annotate(input_path, output_path, database, config):
             v["ddg2p"] = "NA"
 
         exons = find_protein_coding_ensembl_exon(chrom, pos, ensembl_exons)
+
         if exons == None:
             v["exonic"] = False
             v["transcripts"] = "NA"

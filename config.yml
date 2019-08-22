@@ -1,5 +1,5 @@
 #PATHS:
-ddg2p_bed: "Users/eg15/PycharmProjects/Indelible/data/DDG2P_18112014.bed"
+ddg2p_bed: "/Users/eg15/PycharmProjects/Indelible/data/DDG2P_18112014.bed"
 ensembl_exons: "/Users/eg15/PycharmProjects/Indelible/data/protein_coding_ensembl_exons_gencode17.gff"
 random_forest_model: "/Users/eg15/PycharmProjects/Indelible/data/random_forest.pkl"
 exac_constraint: "/Users/eg15/PycharmProjects/Indelible/data/cleaned_exac_with_pLI_march16_anno.txt"
