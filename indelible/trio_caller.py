@@ -41,8 +41,8 @@ def compute_stats(cov_calc, chrom, position):
 
 def denovo_caller_trio(child_input, mother_bam, father_bam, output_path, config):
 
-    mum_cov = CoverageCalculator({}, mother_bam, config)
-    dad_cov = CoverageCalculator({}, father_bam, config)
+    mum_cov = CoverageCalculator({}, mother_bam, None, config)
+    dad_cov = CoverageCalculator({}, father_bam, None, config)
 
     scored_file = csv.DictReader(open(child_input, 'r'), delimiter="\t")
     new_fieldnames = scored_file.fieldnames
