@@ -5,9 +5,9 @@ import csv
 import math
 from collections import defaultdict
 from pyfaidx import Fasta
-import swalign
 import numpy
 import re
+import subprocess
 
 BASE_QUALITIES = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 
@@ -49,7 +49,7 @@ def average_quality(qual):
 
 def entropy(s):
     p, lns = Counter(s), float(len(s))
-    return -sum(count / lns * math.log(count / lns, 2) for count in p.values())
+    return -sum(count / lns * math.log(count / lns, 2) for count in list(p.values()))
 
 
 def read_database(path):
@@ -57,3 +57,14 @@ def read_database(path):
     for v in csv.DictReader(open(path, 'r'), fieldnames=("chrom", "position", "maf", "count", "total"), delimiter="\t"):
         db[v["chrom"]][int(v["position"])] = float(v["maf"])
     return db
+
+def bgzip_and_tabix(path):
+
+    # bgzip
+    sigint = subprocess.call(["bgzip", "-f", path])
+    if sigint != 0:
+        raise Exception("bgzip on the file " + path + " did not run properly... Exiting!")
+    # tabix index
+    sigint = subprocess.call(["tabix", "-f", "-p", "bed", path + ".gz"])
+    if sigint != 0:
+        raise Exception("tabix on the file " + path + ".gz did not run properly... Exiting!")

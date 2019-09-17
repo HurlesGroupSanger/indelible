@@ -17,16 +17,18 @@ import pybedtools as bedtools
 import subprocess
 from indelible.indelible_lib import *
 import pysam
+from Bio import SeqIO
 
 
 class CoverageCalculator:
 
-    def __init__(self, chr_dict, input_bam, config):
+    def __init__(self, chr_dict, input_bam, input_path, config):
 
         self.chr_dict = chr_dict
         self.input_bam = input_bam
+        self.__input_path = input_path
         self.__bam_file = bam_open(self.input_bam)
-        self.__tabix_file = self.input_bam + ".bg.gz"
+        self.__tabix_file = self.__input_path + ".bg.gz"
         self.__config = config
         self.__use_bam = True
 
@@ -53,23 +55,16 @@ class CoverageCalculator:
             self.__use_bam = True
         else:
             self.__use_bam = False
-            output_file = self.input_bam + ".bg"
+            output_file = self.__input_path + ".bg"
             self.__calculate_coverage_bam(output_file)
 
     def __calculate_coverage_bam(self, output_file):
 
         bt = bedtools.BedTool(self.input_bam)
         bg_file = bt.genome_coverage(bg=True)
-        bg_file.moveto(output_file)
+        bg_file.moveto(self.__input_path + ".bg")
 
-        # bgzip
-        sigint = subprocess.call(["bgzip", "-f", output_file])
-        if sigint != 0:
-            raise Exception("bgzip on the file " + output_file + " did not run properly... Exiting!")
-        # tabix index
-        sigint = subprocess.call(["tabix", "-f", "-p", "bed", output_file + ".gz"])
-        if sigint != 0:
-            raise Exception("tabix on the file " + output_file + ".gz did not run properly... Exiting!")
+        bgzip_and_tabix(output_file)
 
     def calculate_coverage(self, chr, pos):
 
@@ -85,20 +80,27 @@ class CoverageCalculator:
         else:
             pileup = self.__bam_file.pileup(chr, pos - 1, pos + 1, truncate=True)
 
+        cov = 0
+
         for pileupcolumn in pileup:
             if pileupcolumn.pos == pos:
-                return pileupcolumn.n
-        else:
-            return 0
+                cov = pileupcolumn.n
+                break
+
+        return cov
 
     def __coverage_at_position_tabix(self, chr, pos):
 
         cov = 0
-
         tbx = pysam.TabixFile(self.__tabix_file)
-        for row in tbx.fetch(chr, pos, pos + 1):
-            cov = row[0]
 
+        if pos <= 1:
+            itr = tbx.fetch(chr, 1, 2, parser=pysam.asTuple())
+        else:
+            itr = tbx.fetch(chr, pos - 1, pos, parser=pysam.asTuple())
+
+        for row in itr:
+            cov = row[3]
         return cov
 
     def reads_with_indels_in_neighbourhood(self, chrom, pos):

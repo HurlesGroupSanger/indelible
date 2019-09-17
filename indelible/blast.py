@@ -17,7 +17,7 @@ Returns
 import csv
 import time
 from Bio.Blast.Applications import NcbiblastnCommandline
-import StringIO
+import io
 
 today = time.strftime('%Y%m%d')
 
@@ -46,12 +46,12 @@ def generate_fasta(scored_file):
 def run_blast(fasta_file, db, WINDOWMASKERdb=None):
     blastn_clin = NcbiblastnCommandline(query=fasta_file, db=db, word_size=15,
                                         max_target_seqs=100, penalty=-3, evalue=0.001, reward=1,
-                                        outfmt="\'6 " + " ".join(BLAST_FIELDS) + "\'")
+                                        outfmt='6 ' + " ".join(BLAST_FIELDS))
     if WINDOWMASKERdb is not None:
         blastn_clin.set_parameter("window_masker_db", WINDOWMASKERdb)
 
     stdout, stderr = blastn_clin()
-    input = StringIO.StringIO(stdout)
+    input = io.BytesIO(stdout)
 
     hits = {}
 

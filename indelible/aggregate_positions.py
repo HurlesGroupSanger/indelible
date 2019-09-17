@@ -4,11 +4,11 @@ import csv
 import math
 from collections import Counter
 from pyfaidx import Fasta
-import swalign
 import numpy
 import re
 from indelible.indelible_lib import *
-from coverage_calculator import CoverageCalculator
+from .coverage_calculator import CoverageCalculator
+from Bio import Align
 import time
 
 """
@@ -37,8 +37,8 @@ def dedup(sr_reads=[]):
     for read in sr_reads:
         tmp[read["prime"]][read["split_length"]] = read
     res = []
-    res.extend(tmp["3"].values())
-    res.extend(tmp["5"].values())
+    res.extend(list(tmp["3"].values()))
+    res.extend(list(tmp["5"].values()))
     return res
 
 
@@ -86,20 +86,21 @@ def seq_longest(sr_reads=[]):
 
 
 def sequence_similarity_score(sr_reads=[]):
-    match = 2
-    mismatch = -1
-    scoring = swalign.NucleotideScoringMatrix(match, mismatch)
-    sw = swalign.LocalAlignment(scoring)
     sequences = [x["seq"] for x in sr_reads]
     sequences = sorted(sequences, key=len, reverse=True)
     aln_scores = []
+
+    aligner = Align.PairwiseAligner()
+    aligner.match_score = 2
+    aligner.mismatch_score = -1
+
     for seq1_idx in range(len(sequences)):
         for seq2_idx in range(len(sequences)):
             if seq1_idx != seq2_idx:
                 seq1 = sequences[seq1_idx]
                 seq2 = sequences[seq2_idx]
                 min_length = min(len(seq1), len(seq2))
-                matches = sw.align(seq1, seq2).matches
+                matches = aligner.align(seq1, seq2).score
                 aln_scores.append(float(matches) / min_length)
     return numpy.mean(aln_scores)
 
@@ -146,7 +147,7 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
 
         chr_dict[row['chr']][row['split_position']].append(row)
 
-    cov_calc = CoverageCalculator(chr_dict, input_bam, config)
+    cov_calc = CoverageCalculator(chr_dict, input_bam, input_path, config)
 
     for chrom in chr_dict:
         for position in chr_dict[chrom]:
