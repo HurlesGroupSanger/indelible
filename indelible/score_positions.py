@@ -84,7 +84,4 @@ def score_positions(input_path, output_path, config):
 def train(input_path, output_path, k, stop_parameter):
     forest_trainer = ForestTrainer(input_path, k, stop_parameter)
     clf = forest_trainer.get_forest()
-
-
-
     save_forest(clf, output_path)
