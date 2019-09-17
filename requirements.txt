@@ -4,6 +4,6 @@ pybedtools
 pyfaidx
 pysam
 scipy
-scikit-learn==0.17.1
+scikit-learn
 PyYAML
 Biopython

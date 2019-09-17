@@ -20,26 +20,18 @@ import sys
 import timeit
 
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
 import pickle
 import bz2
-
-
-def trainForest(training_file_path):
-    df = pd.read_csv(training_file_path, sep="\t")
-    values = df.ix[:, df.columns - ["chrom", "position", "annotation", "sample", "seq_longest", "pct_double_split"]]
-    outcome = df["annotation"]
-    clf = RandomForestClassifier(n_estimators=10000)
-    clf.fit(values, outcome)
-    return clf
+from .forest_trainer import ForestTrainer
 
 
 def score_dataframe(clf, df):
 
-    values = df.loc[:, df.columns.difference(["chrom", "position", "seq_longest", "pct_double_split"])]
+    values = df[df.columns[2:19]]
+    predictions = clf.predict_proba(values)
 
-    df["prob_N"] = clf.predict_proba(values).T[0]
-    df["prob_Y"] = clf.predict_proba(values).T[1]
+    df["prob_N"] = predictions.T[0]
+    df["prob_Y"] = predictions.T[1]
     return df
 
 
@@ -50,13 +42,14 @@ def calculate_prediction_column(row):
     else:
         return "Y"
 
-def saveForest(clf, output_path):
+
+def save_forest(clf, output_path):
     with bz2.BZ2File(output_path, 'wb') as fid:
         pickle.dump(clf, fid)
     return True
 
 
-def loadForest(path):
+def load_forest(path):
     with bz2.BZ2File(path, 'rb') as fid:
         clf = pickle.load(fid)
     return clf
@@ -64,7 +57,7 @@ def loadForest(path):
 
 def score_positions(input_path, output_path, config):
 
-    clf = loadForest(config['random_forest_model'])
+    clf = load_forest(config['random_forest_model'])
 
     df = pd.read_csv(input_path, sep="\t")
     df_length = len(df.index)
@@ -88,6 +81,10 @@ def score_positions(input_path, output_path, config):
     df_final.to_csv(output_path, sep="\t", index=False)
 
 
-def train(input_path, output_path):
-    clf = trainForest(input_path)
-    saveForest(clf, output_path)
+def train(input_path, output_path, k, stop_parameter):
+    forest_trainer = ForestTrainer(input_path, k, stop_parameter)
+    clf = forest_trainer.get_forest()
+
+
+
+    save_forest(clf, output_path)

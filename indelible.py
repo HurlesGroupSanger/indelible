@@ -91,6 +91,8 @@ subparser.add_argument('--o', help='path to output file', metavar="<output_path>
 subparser = subparsers.add_parser('train', help='trains the Random Forest model on a bunch of examples')
 subparser.add_argument('--i', help='Input file with labeled examples', metavar="<input_path>", required=True, dest="input_path")
 subparser.add_argument('--o', help='Output path for RF model', metavar="<output_path>", required=True, dest="output_path")
+subparser.add_argument('--k', help='value of k hyperparameter for training the Random Forest [50].', metavar="<k>", required=False, default=50, type=int, dest="k")
+subparser.add_argument('--s', help='value of the stop parameter for training the Random Forest [0.01].', metavar="<stop_parameter>", required=False, default=0.01, type=float, dest="stop_parameter")
 
 args = parser.parse_args()
 
@@ -135,6 +137,7 @@ if args.command == "aggregate":
 SCORE command
 """
 if args.command == "score":
+
     if not os.path.isfile(config['random_forest_model']):
         print("ERROR: The path specified for random_forest_model in config does not exist!")
         exit(1)
@@ -185,7 +188,7 @@ if args.command == "train":
     if not os.path.isfile(args.input_path):
         print("ERROR: Input file does not exist!")
         exit(1)
-    indelible.train(args.input_path, args.output_path)
+    indelible.train(args.input_path, args.output_path, args.k, args.stop_parameter)
 
 """
 COMPLETE command
