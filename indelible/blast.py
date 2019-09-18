@@ -51,7 +51,7 @@ def run_blast(fasta_file, db, WINDOWMASKERdb=None):
         blastn_clin.set_parameter("window_masker_db", WINDOWMASKERdb)
 
     stdout, stderr = blastn_clin()
-    input = io.BytesIO(stdout)
+    input = io.StringIO(stdout)
 
     hits = {}
 
