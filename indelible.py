@@ -94,6 +94,11 @@ subparser.add_argument('--o', help='Output path for RF model', metavar="<output_
 subparser.add_argument('--k', help='value of k hyperparameter for training the Random Forest [75].', metavar="<k>", required=False, default=50, type=int, dest="k")
 subparser.add_argument('--s', help='value of the stop parameter for training the Random Forest [0.01].', metavar="<stop_parameter>", required=False, default=0.01, type=float, dest="stop_parameter")
 
+subparser = subparsers.add_parser('split', help='gets percent split')
+subparser.add_argument('--sr', help='Input sr file', metavar="<sr_path>", required=True, dest="sr_path")
+subparser.add_argument('--agg', help='Input agg file', metavar="<agg_path>", required=True, dest="agg_path")
+subparser.add_argument('--o', help='Output path annotated file', metavar="<output_path>", required=True, dest="output_path")
+
 args = parser.parse_args()
 
 """
@@ -232,3 +237,13 @@ if args.command == "complete":
         os.remove(scored_path+".fasta.hits_nonrepeats")
         os.remove(scored_path+".fasta.hits_repeats")
         os.remove(scored_path+".fasta")
+
+"""""        
+SPLIT command
+"""""
+if args.command == "split":
+    if not os.path.isfile(args.sr_path) and not os.path.isfile(args.agg_path):
+        print("ERROR: Input file(s) does not exist!")
+        exit(1)
+
+    indelible.split_positions(args.sr_path, args.agg_path, args.output_path, config)
