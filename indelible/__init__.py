@@ -7,3 +7,4 @@ from indelible.blast import blast
 from indelible.trio_caller import denovo_caller_trio
 from indelible.indelible_lib import *
 from indelible.build_database import build_database
+from indelible.pct_double_split import split_positions
