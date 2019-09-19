@@ -30,11 +30,11 @@ Indelible is written for Python2.7.* or Python3.7.*
 Indelible requires the following software to be installed and in `$PATH`:
 
 * [bedtools](https://bedtools.readthedocs.io/en/latest/)
-** *Note*: If using CRAM formated files with InDelible, you need to have bedtools v2.28 or later.
+  * **Note**: If using CRAM formated files with InDelible, bedtools v2.28 or later is required.
 * [tabix](http://www.htslib.org/download/) 
 * [bgzip](http://www.htslib.org/download/)
 
-The package Biopython requires a local install of [blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download) in `$PATH` in order to function. This needs to be installed prior to [installing Indelible](#installing-indelible).
+The required python package Biopython requires a local install of [blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download) in `$PATH` in order to function. This needs to be installed prior to [installing Indelible](#installing-indelible).
 
 ### Installing Indelible
 
