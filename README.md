@@ -30,6 +30,7 @@ Indelible is written for Python2.7.* or Python3.7.*
 Indelible requires the following software to be installed and in `$PATH`:
 
 * [bedtools](https://bedtools.readthedocs.io/en/latest/)
+** *Note*: If using CRAM formated files with InDelible, you need to have bedtools v2.28 or later.
 * [tabix](http://www.htslib.org/download/) 
 * [bgzip](http://www.htslib.org/download/)
 
@@ -151,7 +152,7 @@ These different steps can be performed by the different sub-commands:
 
 The **fetch** command extracts the reads from the BAM file, it takes 2 arguments:
 
-* `--i` : path to the input BAM file.
+* `--i` : path to the input CRAM/BAM file.
 * `--o` : path to output the clipped reads to.
 
 ```
@@ -163,7 +164,7 @@ The **fetch** command extracts the reads from the BAM file, it takes 2 arguments
 The **aggregate** merges information across reads towards a position-level view of the data:
 
 * `--i` : path to the input file (the output of the *fetch* command from previous step).
-* `--b` : path to the BAM file used to generate the input file.
+* `--b` : path to the CRAM/BAM file used to generate the input file.
 * `--o` : the path to the output file.
 * `--r` : path to reference genome 
 
@@ -216,8 +217,8 @@ One can then look for *de novo* mutation events using the **denovo** command:
 ***Note***: If maternal and/or paternal bam files are not supplied, *denovo* filtering will not be performed. This behaviour is intended to format non-trio data identically to trio data. If one of maternal **or** paternal bam is provided, Indelible will count coverage within that sample.
 
 * `--c` : path to scored/annotated calls in the proband.
-* `--m` : path to maternal BAM file. [optional]
-* `--p` : path to paternal BAM file. [optional]
+* `--m` : path to maternal CRAM/BAM file. [optional]
+* `--p` : path to paternal CRAM/BAM file. [optional]
 * `--o` : path to output file.
 
 ```
@@ -232,12 +233,12 @@ Indelible also includes several helper commands:
 
 All steps in the InDelible calling pipeline can be performed in succession automatically with the **complete** command:
 
-* `--i` : path to the input BAM file.
+* `--i` : path to the input CRAM/BAM file.
 * `--o` : path to directory where output files will be generated.
 * `--r` : path to reference genome
 * `--d` : path to the indelible frequency [database](#database).
-* `--m` : path to maternal BAM file. [optional]
-* `--p` : path to paternal BAM file. [optional]
+* `--m` : path to maternal CRAM/BAM file. [optional]
+* `--p` : path to paternal CRAM/BAM file. [optional]
 * `--keeptmp` : If this flag is given, intermediate files are kept. Otherwise these files will be removed once the analysis is finished.
 
 ```

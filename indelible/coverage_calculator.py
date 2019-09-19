@@ -27,7 +27,9 @@ class CoverageCalculator:
         self.chr_dict = chr_dict
         self.input_bam = input_bam
         self.__input_path = input_path
-        self.__bam_file = bam_open(self.input_bam)
+        opener = bam_open(self.input_bam)
+        self.__bam_file = opener["reader"]
+        self.__is_cram = opener["is_cram"]
         self.__tabix_file = self.__input_path + ".bg.gz"
         self.__config = config
         self.__use_bam = True
@@ -51,7 +53,7 @@ class CoverageCalculator:
         # this threshold, but I don't think it does too much damage anyway as the time to calculate WES coverage is
         # relatively low
 
-        if count <= 30000:
+        if count <= 30000 or self.__is_cram is True:
             self.__use_bam = True
         else:
             self.__use_bam = False
@@ -61,6 +63,7 @@ class CoverageCalculator:
     def __calculate_coverage_bam(self, output_file):
 
         bt = bedtools.BedTool(self.input_bam)
+        bt._isbam = True ## This is ugly and is only required because pybedtools does not check for cram!
         bg_file = bt.genome_coverage(bg=True)
         bg_file.moveto(self.__input_path + ".bg")
 

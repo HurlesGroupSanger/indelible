@@ -13,14 +13,18 @@ BASE_QUALITIES = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\
 
 
 def bam_open(bam_file):
+
+    is_cram = False
+
     if bam_file is None:
         bam_reader = None
     elif 'bam' in bam_file:
         bam_reader = pysam.Samfile(bam_file, 'rb')
     elif 'cram' in bam_file:
         bam_reader = pysam.Samfile(bam_file, 'rc')
+        is_cram = True
 
-    return bam_reader
+    return {"reader":bam_reader, "is_cram": is_cram}
 
 
 def hard_clip(seq, qual, threshold=10):

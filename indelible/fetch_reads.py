@@ -51,8 +51,9 @@ def print_indels (cigar):
 
 
 def fetch_reads(input_path, output_path, config):
-    infile = bam_open(input_path)
 
+    opener = bam_open(input_path)
+    infile = opener["reader"]
     outfile = open(output_path, 'w')
     outfile.write("chr\tsplit_position\tprime\tsplit_length\tseq\tqual\tmapq\tavg_sr_qual\treverse_strand\tis_double\n")
 
