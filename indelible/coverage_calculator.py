@@ -79,9 +79,9 @@ class CoverageCalculator:
     def __coverage_at_position_pileup(self, chr, pos):
 
         if pos <= 0:
-            pileup = self.__bam_file.pileup(chr, 0, pos + 1, truncate=True)
+            pileup = self.__bam_file.pileup(chr, 0, pos + 1, truncate=True, multiple_iterators=False)
         else:
-            pileup = self.__bam_file.pileup(chr, pos - 1, pos + 1, truncate=True)
+            pileup = self.__bam_file.pileup(chr, pos - 1, pos + 1, truncate=True, multiple_iterators=False)
 
         cov = 0
 
