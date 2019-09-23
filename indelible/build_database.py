@@ -29,7 +29,7 @@ def build_database(score_files, output_file, score_threshold):
     for file in open(score_files, 'r'):
         allele_count += 1
         file = file.rstrip()
-
+        print(file)
         frame = pandas.read_csv(
             file,
             sep="\t",
