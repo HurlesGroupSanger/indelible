@@ -125,7 +125,13 @@ class CoverageCalculator:
         count = 0
         window_size = self.__config["WINDOW_SIZE"]
 
-        for s in self.__bam_file.fetch(chrom, pos - (window_size / 2), pos + (window_size / 2)):
+        start = pos - (window_size / 2)
+        end = pos + (window_size / 2)
+
+        if start <= 0:
+            start = 1
+
+        for s in self.__bam_file.fetch(chrom, start, end):
 
             cigar = s.cigar
             sr = {}

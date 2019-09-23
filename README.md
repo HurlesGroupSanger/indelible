@@ -34,7 +34,7 @@ Indelible requires the following software to be installed and in `$PATH`:
 * [tabix](http://www.htslib.org/download/) 
 * [bgzip](http://www.htslib.org/download/)
 
-The required python package Biopython requires a local install of [blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download) in `$PATH` in order to function. This needs to be installed prior to [installing Indelible](#installing-indelible).
+The python package Biopython requires a local install of [blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download) in `$PATH` in order to function. This needs to be installed prior to [installing Indelible](#installing-indelible).
 
 ### Installing Indelible
 
@@ -82,7 +82,13 @@ unzip data.zip
 5. Download required blast resources:
 
 ```
-## To be completed
+## Download windowmasker:
+wget ftp://ftp.ncbi.nlm.nih.gov/blast/windowmasker_files/9606/wmasker.obinary
+
+## Download the GRCh37 human reference and create the blast db:
+wget ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz
+wget ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz.fai
+makeblastdb -in hs37d5.fa -dbtype nucl
 ```
 
 6. Edit the config file to point to required data files and edit any default parameters:
@@ -109,7 +115,7 @@ COV_THRESHOLD: Minimum parental coverage to be able to call event as denovo
 WINDOW_SIZE: window around position to look for indels/clipped reads (window_size/2 to the left and to the right)
 ```
 
-**Note**: The above data resources will only work if you run Indelible using the the human GRCh37 reference. Instructions for rebuilding these resources for other genome builds is below.
+**Note**: The above data resources will only work if you run Indelible using the the human GRCh37 reference. 
 
 ## Usage
 

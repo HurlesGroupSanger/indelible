@@ -95,6 +95,7 @@ def blast(input_path, config):
     BLASTdb = config['blastdb']
     WINDOWMASKERdb = config['windowmaskerdb']
     REPEATdb = config['repeatdb']
+
     fasta_path = generate_fasta(input_path)
     blast_fasta(fasta_path, fasta_path + ".hits_nonrepeats", BLASTdb, WINDOWMASKERdb)
     blast_fasta(fasta_path, fasta_path + ".hits_repeats", REPEATdb)
