@@ -58,8 +58,7 @@ def find_protein_coding_ensembl_exon(chrom, pos, blast_hit, ensembl_exons):
         res_exons.append(v.fields)
 
     if res_exons != []:
-        return [[x[6] for x in res_exons],
-                ["NA" for x in res_exons]]
+        return [[x[6] for x in res_exons]]
     else:
         return None
 
@@ -250,11 +249,10 @@ def annotate(input_path, output_path, database, config):
         if exons == None:
             v["exonic"] = False
             v["transcripts"] = "NA"
-            v["exon_numbers"] = "NA"
         else:
             v["exonic"] = True
             v["transcripts"] = ";".join(exons[0])
-            v["exon_numbers"] = ";".join(exons[1])
+
         if pos in db[chrom]:
             v["maf"] = db[chrom][pos]
         else:
