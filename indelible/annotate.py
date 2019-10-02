@@ -56,7 +56,7 @@ def find_protein_coding_ensembl_exon(chrom, pos, blast_hit, ensembl_exons):
     res_exons = []
     for v in search_coord.intersect(ensembl_exons, split = True, wb = True):
         res_exons.append(v.fields)
-    print(res_exons)
+
     if res_exons != []:
         return [[x[6] for x in res_exons],
                 ["NA" for x in res_exons]]
