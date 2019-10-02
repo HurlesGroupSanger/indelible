@@ -218,7 +218,7 @@ def annotate(input_path, output_path, database, config):
     output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=scored_file.fieldnames, delimiter="\t", lineterminator="\n")
     output_file.writeheader()
     # Prepare searchable hashes
-    bhash = create_blast_hash(input_path)
+    # bhash = create_blast_hash(input_path)
     constraint_hash = create_exac_constraint_hash(config)
     ddg2p_db = read_ddg2p(config['ddg2p_bed'])
     hgnc_db = read_hgnc_genes(config['hgnc_file'])
