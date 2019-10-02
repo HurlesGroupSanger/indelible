@@ -3,6 +3,7 @@ import pybedtools as bedtools
 import re
 import sys
 from indelible.indelible_lib import *
+import re
 
 CHROMOSOMES = [str(x) for x in range(1, 23)] + ["X", "Y"]
 
@@ -33,19 +34,32 @@ def create_exac_constraint_hash(config):
     return constraint_hash
 
 
-def find_protein_coding_ensembl_exon(chrom, pos, ensembl_exons):
+def find_protein_coding_ensembl_exon(chrom, pos, blast_hit, ensembl_exons):
+
     # This is simply because of a weird scenario where SRs can be found at the beginning of a contig/chromosome...
     if pos == 0:
-        query = bedtools.Interval(chrom, int(0), int(pos + 1))
+        pos = 1
     else:
-        query = bedtools.Interval(chrom, int(pos - 1), int(pos + 1))
+        pos = pos
+
+    p = re.compile('(\S+):(\d+)\-(\d+)')
+    m = p.match(blast_hit)
+
+    if m:
+        if int(m.group(2)) < pos:
+            search_coord = bedtools.BedTool(chrom + ' ' + m.group(2) + ' ' + str(pos), from_string=True)
+        else:
+            search_coord = bedtools.BedTool(chrom + ' ' + str(pos) + ' ' + m.group(2), from_string=True)
+    else:
+        search_coord = bedtools.BedTool(chrom + ' ' + str(pos) + ' ' + str(pos), from_string=True)
+
     res_exons = []
-    for v in ensembl_exons.all_hits(query):
-        res_exons.append(v.attrs)
+    for v in search_coord.intersect(ensembl_exons, split = True, wb = True):
+        res_exons.append(v.fields)
+    print(res_exons)
     if res_exons != []:
-        return [[x["transcript_id"].strip("\"") for x in res_exons],
-                [x["exon_number"].strip("\"") for x in res_exons]]
-        # return res_exons
+        return [[x[6] for x in res_exons],
+                ["NA" for x in res_exons]]
     else:
         return None
 
@@ -195,7 +209,7 @@ def annotate_blast(hit, blast_hash, ddg2p_db, constraint_hash, hgnc_db):
 
 def annotate(input_path, output_path, database, config):
     scored_file = csv.DictReader(open(input_path), delimiter="\t")
-    ensembl_exons = bedtools.IntervalFile(config['ensembl_exons'])
+    ensembl_exons = bedtools.BedTool(config['ensembl_exons'])
     db = read_database(database)
     # Prepare outputfile
     new_fieldnames = scored_file.fieldnames
@@ -231,7 +245,7 @@ def annotate(input_path, output_path, database, config):
         else:
             v["ddg2p"] = "NA"
 
-        exons = find_protein_coding_ensembl_exon(chrom, pos, ensembl_exons)
+        exons = find_protein_coding_ensembl_exon(chrom, pos, v["blast_hit"], ensembl_exons)
 
         if exons == None:
             v["exonic"] = False

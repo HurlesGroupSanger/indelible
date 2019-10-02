@@ -1,4 +1,4 @@
-# Indelible
+# InDelible
 #### Genomic Structural Variant Caller by Adaptive Training
 
 ## Authors
@@ -17,28 +17,34 @@ Matthew Hurles (Group Leader)
 
 We are affiliated with the [Wellcome Sanger Institute](http://www.sanger.ac.uk/science/groups/hurles-group), Cambridge, United Kingdom
 
-## Abstract
+## About InDelible
+
+### Abstract
 
 TBD
+
+### What is InDelible for?
+
+### What is InDelible not for?
 
 ## Installation
 
 ### Required Software Dependencies
 
-Indelible is written for Python2.7.* or Python3.7.*
+InDelible is written for Python2.7.* or Python3.7.*
 
-Indelible requires the following software to be installed and in `$PATH`:
+InDelible requires the following software to be installed and in `$PATH`:
 
 * [bedtools](https://bedtools.readthedocs.io/en/latest/)
   * **Note**: If using CRAM formated files with InDelible, bedtools v2.28 or later is required.
 * [tabix](http://www.htslib.org/download/) 
 * [bgzip](http://www.htslib.org/download/)
 
-The python package Biopython requires a local install of [blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download) in `$PATH` in order to function. This needs to be installed prior to [installing Indelible](#installing-indelible).
+The python package Biopython requires a local install of [blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download) in `$PATH` in order to function. This needs to be installed prior to [installing InDelible](#installing-InDelible).
 
-### Installing Indelible
+### Installing InDelible
 
-To install Indelible:
+To install InDelible:
 
 1. Clone the git repo:
 
@@ -77,7 +83,7 @@ cd data/
 unzip data.zip
 ```
 
-**Note**: The provided random_forest model will only work with v0.17.1 of scikit-learn. It is thus necessary to re-train the model with the provided test set included in the `data/` directory if installing a newer version. Please see documentation below on how to run the Indelible random forest.
+**Note**: The provided random_forest model will only work with v0.17.1 of scikit-learn. It is thus necessary to re-train the model with the provided test set included in the `data/` directory if installing a newer version. Please see documentation below on how to run the InDelible random forest.
 
 5. Download required blast resources:
 
@@ -109,17 +115,17 @@ MINIMUM_MAPQ: Minimum mapping quality for read to be included
 MININUM_AVERAGE_BASE_QUALITY_SR: Minimum average base quality for the soft-clipped segment for read to be included
 SHORT_SR_CUTOFF: The cutoff at which a soft-clipped segment is considered "short".
 MINIMUM_SR_COVERAGE: Minimum number of reads with soft-clipped segments at a position for that position to be outputted.
-SCORE_THRESHOLD: Minimum Indelible score to be considered for denovo calling
+SCORE_THRESHOLD: Minimum InDelible score to be considered for denovo calling
 SR_THRESHOLD: Maximum number of clipped reads in parental samples to be considered inherited
 COV_THRESHOLD: Minimum parental coverage to be able to call event as denovo
 WINDOW_SIZE: window around position to look for indels/clipped reads (window_size/2 to the left and to the right)
 ```
 
-**Note**: The above data resources will only work if you run Indelible using the the human GRCh37 reference. 
+**Note**: The above data resources will only work if you run InDelible using the the human GRCh37 reference. 
 
 ## Usage
 
-The main help page of the program can be accessed by executing the indelible script with the `-h` flag as follows:
+The main help page of the program can be accessed by executing the InDelible script with the `-h` flag as follows:
 
 ```
 ./indelible.py -h
@@ -133,7 +139,7 @@ positional arguments:
     blast     blast clipped sequences
     annotate  annotate positions with additional information
     denovo    searches for de novo events
-    complete  Performs the complete Indelible analysis
+    complete  Performs the complete InDelible analysis
     database  build SR allele frequency database
     train     trains the Random Forest model on a bunch of examples
 
@@ -143,7 +149,7 @@ optional arguments:
 
 ### Primary SV Calling Pipeline
 
-The Indelible variant calling process follows several steps:
+The InDelible variant calling process follows several steps:
 
 1. [Fetch](#1-fetch) – Soft-clipped reads are extracted from the BAM files 
 2. [Aggregate](#2-aggregate) - Information is aggregated across reads to find positions where multiple reads are clipped.
@@ -191,7 +197,7 @@ The **score** command scores positions based on the read information and sequenc
 ./indelible.py score --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored
 ```
 
-**Note**: It is highly recommended if analysing a large amount of data at once to rebuild the indelible frequency database. Please see the [Database](#database) command below for instructions.
+**Note**: It is highly recommended if analysing a large amount of data at once to rebuild the InDelible frequency database. Please see the [Database](#database) command below for instructions.
 
 #### 4. Blast
 
@@ -210,17 +216,17 @@ The **annotate** command enriches the result with gene/exon annotations and merg
 
 * `--i` : path to the input file (output of score command after running the blast command).
 * `--o` : path to output the annotated file.
-* `--d` : path to the indelible frequency database. A default frequency database from the Deciphering Developmental Disorders WES data is availible at `./Indelible/data/indelible_db_10k.bed`. 
+* `--d` : path to the InDelible frequency database. A default frequency database from the Deciphering Developmental Disorders WES data is availible at `./InDelible/data/InDelible_db_10k.bed`. 
 
 ```
-./indelible.py annotate --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored.annotated --d data/indelible_db_10k.bed
+./indelible.py annotate --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored.annotated --d data/InDelible_db_10k.bed
 ```
 
 #### 6. Denovo
 
 One can then look for *de novo* mutation events using the **denovo** command:
 
-***Note***: If maternal and/or paternal bam files are not supplied, *denovo* filtering will not be performed. This behaviour is intended to format non-trio data identically to trio data. If one of maternal **or** paternal bam is provided, Indelible will count coverage within that sample.
+***Note***: If maternal and/or paternal bam files are not supplied, *denovo* filtering will not be performed. This behaviour is intended to format non-trio data identically to trio data. If one of maternal **or** paternal bam is provided, InDelible will count coverage within that sample.
 
 * `--c` : path to scored/annotated calls in the proband.
 * `--m` : path to maternal CRAM/BAM file. [optional]
@@ -228,21 +234,21 @@ One can then look for *de novo* mutation events using the **denovo** command:
 * `--o` : path to output file.
 
 ```
-./indelible.py denovo --c test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.indelible.tsv --m maternal.bam --p paternal.bam --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.indelible.denovo.tsv
+./indelible.py denovo --c test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.InDelible.tsv --m maternal.bam --p paternal.bam --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.InDelible.denovo.tsv
 ```
 
 ### Additional Commands
 
-Indelible also includes several helper commands:
+InDelible also includes several helper commands:
 
-#### Indelible Complete
+#### InDelible Complete
 
 All steps in the InDelible calling pipeline can be performed in succession automatically with the **complete** command:
 
 * `--i` : path to the input CRAM/BAM file.
 * `--o` : path to directory where output files will be generated.
 * `--r` : path to reference genome
-* `--d` : path to the indelible frequency [database](#database).
+* `--d` : path to the InDelible frequency [database](#database).
 * `--m` : path to maternal CRAM/BAM file. [optional]
 * `--p` : path to paternal CRAM/BAM file. [optional]
 * `--keeptmp` : If this flag is given, intermediate files are kept. Otherwise these files will be removed once the analysis is finished.
@@ -251,7 +257,7 @@ All steps in the InDelible calling pipeline can be performed in succession autom
 ./indelible.py complete --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o test_data/ --r hs37d5.fasta --keeptmp --m maternal.bam --p paternal.bam
 ```
 
-For Indelible _de novo_ discovery behaviour when not providing maternal or paternal bams, please see [de novo](#6-denovo).
+For InDelible _de novo_ discovery behaviour when not providing maternal or paternal bams, please see [de novo](#6-denovo).
 
 #### Database
 
@@ -261,8 +267,8 @@ The **database** command will generate the database required for the step [Annot
 * `--o` : output file to generate
 
 ```
-ls indelible_files/*.scored > fofn.txt
-./indelible.py database --f fofn.txt --o indelible_db.tsv
+ls InDelible_files/*.scored > fofn.txt
+./indelible.py database --f fofn.txt --o InDelible_db.tsv
 ```
 
 #### Train
