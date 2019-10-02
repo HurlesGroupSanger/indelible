@@ -1,13 +1,14 @@
 #PATHS:
 ddg2p_bed: "/Users/eg15/PycharmProjects/Indelible/data/DDG2P_18112014.bed"
-ensembl_exons: "/Users/eg15/PycharmProjects/Indelible/data/protein_coding_ensembl_exons_gencode17.gff"
-random_forest_model: "/Users/eg15/PycharmProjects/Indelible/output.rf"
+ensembl_exons: "/Users/eg15/PycharmProjects/Indelible/data/hg19.ensemblv19.sorted.bed"
+random_forest_model: "/Users/eg15/PycharmProjects/Indelible/data/random_forest.17IX2019.pkl"
 exac_constraint: "/Users/eg15/PycharmProjects/Indelible/data/cleaned_exac_with_pLI_march16_anno.txt"
 hgnc_synonyms: "/Users/eg15/PycharmProjects/Indelible/data/hgnc_gene_synonyms.txt"
 hgnc_file: "/Users/eg15/PycharmProjects/Indelible/data/hgnc_genes.tsv"
 
 #BLASTPATHS:
-blastdb: "/Users/eg15/PycharmProjects/Indelible/resources_striped/hs37d5.fa"
+#blastdb: "/Users/eg15/PycharmProjects/Indelible/resources_striped/hs37d5.fa"
+blastdb: "/Users/eg15/Desktop/test/hs37d5.fa"
 windowmaskerdb: "/Users/eg15/PycharmProjects/Indelible/resources_striped/wmasker.obinary"
 repeatdb: "/Users/eg15/PycharmProjects/Indelible/resources_striped/repbase_fixed.fasta"
 

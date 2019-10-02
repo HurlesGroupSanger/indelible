@@ -212,7 +212,7 @@ def annotate(input_path, output_path, database, config):
     db = read_database(database)
     # Prepare outputfile
     new_fieldnames = scored_file.fieldnames
-    new_fieldnames.extend(("ddg2p", 'hgnc', 'hgnc_constrained', "exonic", "transcripts", "exon_numbers", "maf",
+    new_fieldnames.extend(("ddg2p", 'hgnc', 'hgnc_constrained', "exonic", "transcripts", "maf",
                            "blast_hit", "blast_strand", "blast_identity", "blast_dist", "blast_hgnc"))
     output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=new_fieldnames, delimiter="\t", lineterminator="\n")
     output_file.writeheader()
