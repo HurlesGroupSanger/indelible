@@ -83,7 +83,6 @@ def read_ddg2p(ddg2p_bed):
     for d in open(ddg2p_bed, 'r'):
         data = d.rstrip().split("\t")
         if data[0] in CHROMOSOMES:
-            print(data)
             ddg2p_db[data[0]].append({"start": int(data[1]), "end": int(data[2]), "gene": data[3]})
     return ddg2p_db
 
@@ -92,6 +91,7 @@ def find_ddg2p_gene(chrom, start, end, ddg2p_db):
     res = []
     if chrom in ddg2p_db:
         for d in ddg2p_db[chrom]:
+            print(str(chrom + ":" + str(d["start"]) + "-" + str(d["end"]) + "\t" + d["gene"]))
             if interval_overlap(start, end, d["start"], d["end"]):
                 res.append(d["gene"])
         if res != []:
