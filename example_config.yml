@@ -7,7 +7,6 @@ hgnc_synonyms: "./data/hgnc_gene_synonyms.txt"
 hgnc_file: "./data/hgnc_genes.tsv"
 
 #BLASTPATHS:
-#blastdb: "/Users/eg15/PycharmProjects/Indelible/resources_striped/hs37d5.fa"
 blastdb: "./data/hs37d5.fa"
 windowmaskerdb: "./data/wmasker.obinary"
 repeatdb: "./data/repeats.fasta"
