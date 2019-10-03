@@ -99,14 +99,20 @@ makeblastdb -in hs37d5.fa -dbtype nucl
 
 6. Edit the config file to point to required data files and edit any default parameters:
 
+An example config.yml file (`example_config.yml`) is included in the top level directory. Edit this and save as `config.yml`.
+
 ```
 cd ..
-vim config.yml
+
 ## Provide the path to each required file at the top of the config.yml
 ## Edit parameters at bottom of file.
+vim example_config.yml
+
+## cp/mv to config.yml
+cp example_config.yml config.yml
 ```
 
-Default parameters in `config.yml` are as follows:
+Parameters in `config.yml` are as follows:
 
 ```
 HC_THRESHOLD: Quality threshold at which to hard clip from the ends
