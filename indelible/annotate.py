@@ -91,8 +91,8 @@ def find_ddg2p_gene(chrom, start, end, ddg2p_db):
     res = []
     if chrom in ddg2p_db:
         for d in ddg2p_db[chrom]:
+            print(str(chrom + ":" + str(d["start"]) + "-" + str(d["end"]) + "\t" + d["gene"] + "\t" + str(start) + "-" + str(end)))
             if interval_overlap(start, end, d["start"], d["end"]):
-                print(str(chrom + ":" + str(d["start"]) + "-" + str(d["end"]) + "\t" + d["gene"]))
                 res.append(d["gene"])
         if res != []:
             return res
