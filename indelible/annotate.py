@@ -47,11 +47,11 @@ def find_protein_coding_ensembl_exon(chrom, pos, blast_hit, ensembl_exons):
 
     if m:
         if int(m.group(2)) < pos:
-            search_coord = bedtools.BedTool(chrom + ' ' + m.group(2) + ' ' + str(pos), from_string=True)
+            search_coord = bedtools.BedTool(chrom + ' ' + m.group(2) + ' ' + str(pos + 10), from_string=True)
         else:
-            search_coord = bedtools.BedTool(chrom + ' ' + str(pos) + ' ' + m.group(2), from_string=True)
+            search_coord = bedtools.BedTool(chrom + ' ' + str(pos - 10) + ' ' + m.group(2), from_string=True)
     else:
-        search_coord = bedtools.BedTool(chrom + ' ' + str(pos) + ' ' + str(pos), from_string=True)
+        search_coord = bedtools.BedTool(chrom + ' ' + str(pos - 10) + ' ' + str(pos + 10), from_string=True)
 
     res_exons = []
     for v in search_coord.intersect(ensembl_exons, split = True, wb = True):
@@ -211,21 +211,21 @@ def annotate(input_path, output_path, database, config):
     ensembl_exons = bedtools.BedTool(config['ensembl_exons'])
     db = read_database(database)
     # Prepare outputfile
-    # new_fieldnames = scored_file.fieldnames
-    # new_fieldnames.extend(("ddg2p", 'hgnc', 'hgnc_constrained', "exonic", "transcripts", "maf",
-    #                        "blast_hit", "blast_strand", "blast_identity", "blast_dist", "blast_hgnc"))
-    # output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=new_fieldnames, delimiter="\t", lineterminator="\n")
+    new_fieldnames = scored_file.fieldnames
+    new_fieldnames.extend(("ddg2p", 'hgnc', 'hgnc_constrained', "exonic", "transcripts", "maf",
+                           "blast_hit", "blast_strand", "blast_identity", "blast_dist", "blast_hgnc"))
+    output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=new_fieldnames, delimiter="\t", lineterminator="\n")
     output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=scored_file.fieldnames, delimiter="\t", lineterminator="\n")
     output_file.writeheader()
     # Prepare searchable hashes
-    # bhash = create_blast_hash(input_path)
+    bhash = create_blast_hash(input_path)
     constraint_hash = create_exac_constraint_hash(config)
     ddg2p_db = read_ddg2p(config['ddg2p_bed'])
     hgnc_db = read_hgnc_genes(config['hgnc_file'])
 
     for v in scored_file:
 
-        # v = annotate_blast(v, bhash, ddg2p_db, constraint_hash, hgnc_db)
+        v = annotate_blast(v, bhash, ddg2p_db, constraint_hash, hgnc_db)
 
         chrom = v["chrom"]
         pos = int(v["position"])
