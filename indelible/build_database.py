@@ -81,7 +81,7 @@ def get_patient_ids(coords, data_joined):
 
         samples = data_joined.loc[data_joined["coord"] == coord]["sample"].tolist()
 
-        if len(samples) <= 5:
+        if len(samples) <= 8:
             samples = ";".join(samples)
         else:
             samples = ""
