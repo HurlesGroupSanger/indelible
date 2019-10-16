@@ -92,8 +92,9 @@ def find_protein_coding_ensembl_exon(chrom, pos, blast_hit, ensembl_exons):
         end_coord = pos + 10
 
     res_exons = []
-    for v in ensembl_exons[chrom].overlap(start_coord, end_coord):
-        res_exons.append(v)
+    if chrom in ensembl_exons:
+        for v in ensembl_exons[chrom].overlap(start_coord, end_coord):
+            res_exons.append(v)
 
     if res_exons != []:
         return [[x[2] for x in res_exons]]
