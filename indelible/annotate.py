@@ -81,7 +81,7 @@ def find_protein_coding_ensembl_exon(chrom, pos, blast_hit, ensembl_exons):
     m = p.match(blast_hit)
 
     if m:
-        if m.group(1) is chrom:
+        if m.group(1) == chrom:
             if int(m.group(2)) < pos:
                 start_coord = int(m.group(2))
                 end_coord = pos + 10
