@@ -7,3 +7,4 @@ scipy
 scikit-learn
 PyYAML
 Biopython
+intervaltree

@@ -4,8 +4,43 @@ import re
 import sys
 from indelible.indelible_lib import *
 import re
+from intervaltree import Interval, IntervalTree
 
 CHROMOSOMES = [str(x) for x in range(1, 23)] + ["X", "Y"]
+
+
+def create_exon_intervaltree(exon_file):
+
+    exons = {}
+
+    header = ['chr','start','stop','transcript','score','strand','coding_start','coding_stop','score','num_exons','exon_lengths','exon_starts']
+    exon_intervals = csv.DictReader(open(exon_file), delimiter="\t", fieldnames=header)
+
+    for transcript in exon_intervals:
+
+        lengths_array = transcript['exon_lengths'].split(",")
+        lengths_array.pop()
+        starts_array = transcript['exon_starts'].split(",")
+        starts_array.pop()
+
+        exon_starts = []
+        exon_stops = []
+
+        for i in range(0, len(lengths_array), 1):
+            current_start = (int(transcript['start']) + int(starts_array[i])) + 1 ## +1 is to correct for 0-based bed format
+            current_stop = current_start + (int(lengths_array[i]))
+
+            if transcript['chr'] in exons:
+
+                exons.get(transcript['chr']).addi(current_start, current_stop, transcript['transcript'])
+
+            else:
+                current_tree = IntervalTree()
+                current_tree.addi(current_start, current_stop, i)
+                exons[transcript['chr']] = current_tree
+
+    return exons
+
 
 def create_gene_synonym_hash(hgnc_synonyms):
     syn_hash = {}
@@ -47,18 +82,21 @@ def find_protein_coding_ensembl_exon(chrom, pos, blast_hit, ensembl_exons):
 
     if m:
         if int(m.group(2)) < pos:
-            search_coord = bedtools.BedTool(chrom + ' ' + m.group(2) + ' ' + str(pos + 10), from_string=True)
+            start_coord = int(m.group(2))
+            end_coord = pos + 10
         else:
-            search_coord = bedtools.BedTool(chrom + ' ' + str(pos - 10) + ' ' + m.group(2), from_string=True)
+            start_coord = pos + 10
+            end_coord = int(m.group(2))
     else:
-        search_coord = bedtools.BedTool(chrom + ' ' + str(pos - 10) + ' ' + str(pos + 10), from_string=True)
+        start_coord = pos - 10
+        end_coord = pos + 10
 
     res_exons = []
-    for v in search_coord.intersect(ensembl_exons, split = True, wb = True):
-        res_exons.append(v.fields)
+    for v in ensembl_exons[chrom].overlap(start_coord, end_coord):
+        res_exons.append(v)
 
     if res_exons != []:
-        return [[x[6] for x in res_exons]]
+        return [[x[2] for x in res_exons]]
     else:
         return None
 
@@ -219,7 +257,7 @@ def annotate(input_path, output_path, database, config):
     output_file.writeheader()
     # Prepare searchable hashes
     # bhash = create_blast_hash(input_path)
-    ensembl_exons = bedtools.BedTool(config['ensembl_exons'])
+    ensembl_exons = create_exon_intervaltree(config['ensembl_exons'])
     db = read_database(database)
     constraint_hash = create_exac_constraint_hash(config)
     ddg2p_db = read_ddg2p(config['ddg2p_bed'])

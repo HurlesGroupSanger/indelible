@@ -89,6 +89,7 @@ Indelible was tested with the following version of the packages in requirements.
   - **Note**: The random forest model provided in `data.zip` will likely only work with v0.21.3 of scikit-learn (see [this](https://scikit-learn.org/stable/modules/model_persistence.html#security-maintainability-limitations) link for an explanation why). Thus, if using a different version of scikit-learn, it is necessary to re-train the model with the provided test set included with this repository (`data/observation_data.DDD.17IX2019.txt`). Please see documentation [below](#_train) on how to train the random forest used by InDelible.
 - PyYAML v5.1.2
 - Biopython v1.74
+- intervaltree v3.0.2
 
 4. Unzip required data files:
 
