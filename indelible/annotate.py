@@ -53,13 +53,9 @@ def find_protein_coding_ensembl_exon(chrom, pos, blast_hit, ensembl_exons):
     else:
         search_coord = bedtools.BedTool(chrom + ' ' + str(pos - 10) + ' ' + str(pos + 10), from_string=True)
 
-    print(search_coord)
-
     res_exons = []
     for v in search_coord.intersect(ensembl_exons, split = True, wb = True):
         res_exons.append(v.fields)
-
-    print(res_exons)
 
     if res_exons != []:
         return [[x[6] for x in res_exons]]
@@ -234,8 +230,6 @@ def annotate(input_path, output_path, database, config):
         # v = annotate_blast(v, bhash, ddg2p_db, constraint_hash, hgnc_db)
         chrom = v["chrom"]
         pos = int(v["position"])
-
-        print(chrom + ":" + str(pos) + "\t" + v["blast_hit"])
 
         hgnc_genes = find_hgnc_genes(chrom, pos, pos + 1, hgnc_db)
 
