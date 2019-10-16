@@ -94,10 +94,10 @@ def find_protein_coding_ensembl_exon(chrom, pos, blast_hit, ensembl_exons):
     res_exons = []
     if chrom in ensembl_exons:
         for v in ensembl_exons[chrom].overlap(start_coord, end_coord):
-            res_exons.append(v)
+            res_exons.append(v[2])
 
     if res_exons != []:
-        return [[x[2] for x in res_exons]]
+        return res_exons
     else:
         return None
 
@@ -287,13 +287,12 @@ def annotate(input_path, output_path, database, config):
             v["ddg2p"] = "NA"
 
         exons = find_protein_coding_ensembl_exon(chrom, pos, v["blast_hit"], ensembl_exons)
-
         if exons == None:
             v["exonic"] = False
             v["transcripts"] = "NA"
         else:
             v["exonic"] = True
-            v["transcripts"] = ";".join(exons[0])
+            v["transcripts"] = ";".join(str(x) for x in exons)
 
         if pos in db[chrom]:
             v["maf"] = db[chrom][pos]
