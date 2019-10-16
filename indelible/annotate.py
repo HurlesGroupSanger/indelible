@@ -81,20 +81,24 @@ def find_protein_coding_ensembl_exon(chrom, pos, blast_hit, ensembl_exons):
     m = p.match(blast_hit)
 
     if m:
-        if int(m.group(2)) < pos:
-            start_coord = int(m.group(2))
-            end_coord = pos + 10
+        if m.group(1) is chrom:
+            if int(m.group(2)) < pos:
+                start_coord = int(m.group(2))
+                end_coord = pos + 10
+            else:
+                start_coord = pos - 10
+                end_coord = int(m.group(2))
         else:
-            start_coord = pos + 10
-            end_coord = int(m.group(2))
+            start_coord = pos - 10
+            end_coord = pos + 10
     else:
         start_coord = pos - 10
         end_coord = pos + 10
 
-    res_exons = []
+    res_exons = set()
     if chrom in ensembl_exons:
         for v in ensembl_exons[chrom].overlap(start_coord, end_coord):
-            res_exons.append(v[2])
+            res_exons.add(v[2])
 
     if res_exons != []:
         return res_exons
