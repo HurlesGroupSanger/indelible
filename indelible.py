@@ -19,32 +19,9 @@ today = time.strftime('%Y%m%d')
 def timestamp():
     return time.strftime('%d/%m/%y - %H:%M:%S')
 
-usage_text = """
+version = "1.0.0"
 
-Indelible
-=========
-Alejandro Sifrim - Wellcome Sanger Institute
-as33@sanger.ac.uk
-Eugene Gardner - Wellcome Sanger Institute
-eg15@sanger.ac.uk
-
-Usage:
-./indelible command
-
-Where command can be:
-
-fetch     fetch reads from BAM file
-aggregate aggregate information per position
-score     score positions using Random Forest model
-blast     blast clipped sequences
-annotate  annotate positions with additional information
-denovo    searches for de novo events
-complete  Performs the complete Indelible analysis
-database  build SR allele frequency database
-train     trains the Random Forest model on a bunch of examples
-
-"""
-parser = argparse.ArgumentParser(prog='indelible')
+parser = argparse.ArgumentParser(prog='indelible',description="InDelible v" + version + " -- Structural variant discovery with split reads.\n\n")
 subparsers = parser.add_subparsers(help='One of the following commands:',dest="command",metavar="<command>")
 
 subparser = subparsers.add_parser('fetch', help='fetch reads from BAM file')
@@ -110,6 +87,11 @@ for r in required:
     if r not in config:
         print("ERROR: %s not specified in config file!")
         exit(1)
+
+if args.command is None:
+    print("\nMust specify one of 'fetch', 'aggregate', 'score', 'blast', 'annotate', 'denovo', 'complete', 'database', 'train'\n")
+    parser.print_help()
+    exit(1)
 
 """
 FETCH command
