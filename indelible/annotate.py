@@ -23,9 +23,6 @@ def create_exon_intervaltree(exon_file):
         starts_array = transcript['exon_starts'].split(",")
         starts_array.pop()
 
-        exon_starts = []
-        exon_stops = []
-
         for i in range(0, len(lengths_array), 1):
             current_start = (int(transcript['start']) + int(starts_array[i])) + 1 ## +1 is to correct for 0-based bed format
             current_stop = current_start + (int(lengths_array[i]))
@@ -254,14 +251,15 @@ def annotate(input_path, output_path, database, config):
     scored_file = csv.DictReader(open(input_path), delimiter="\t")
 
     # Prepare outputfile
-    # new_fieldnames = scored_file.fieldnames
-    # new_fieldnames.extend(("ddg2p", 'hgnc', 'hgnc_constrained', "exonic", "transcripts", "maf",
-    #                        "blast_hit", "blast_strand", "blast_identity", "blast_dist", "blast_hgnc"))
-    # output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=new_fieldnames, delimiter="\t", lineterminator="\n")
+    new_fieldnames = scored_file.fieldnames
+    new_fieldnames.extend(("ddg2p", 'hgnc', 'hgnc_constrained', "exonic", "transcripts", "maf",
+                           "blast_hit", "blast_strand", "blast_identity", "blast_dist", "blast_hgnc"))
+    output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=new_fieldnames, delimiter="\t", lineterminator="\n")
     output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=scored_file.fieldnames, delimiter="\t", lineterminator="\n")
     output_file.writeheader()
+
     # Prepare searchable hashes
-    # bhash = create_blast_hash(input_path)
+    bhash = create_blast_hash(input_path)
     ensembl_exons = create_exon_intervaltree(config['ensembl_exons'])
     db = read_database(database)
     constraint_hash = create_exac_constraint_hash(config)
@@ -270,7 +268,8 @@ def annotate(input_path, output_path, database, config):
 
     for v in scored_file:
 
-        # v = annotate_blast(v, bhash, ddg2p_db, constraint_hash, hgnc_db)
+        v = annotate_blast(v, bhash, ddg2p_db, constraint_hash, hgnc_db)
+
         chrom = v["chrom"]
         pos = int(v["position"])
 

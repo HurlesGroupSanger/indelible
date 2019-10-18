@@ -40,7 +40,6 @@ def build_database(score_files, output_file, score_threshold):
             header=0)
         is_pos = frame["prob_Y"] >= score_threshold
         frame = frame[is_pos][["chrom", "position"]]
-        frame["sample"] = sample_id
         data.append(frame)
 
     data_joined = pandas.concat(data)
@@ -56,7 +55,6 @@ def build_database(score_files, output_file, score_threshold):
     split = final_frame["coord"].str.split(":", n=1, expand=True)
     final_frame["chrom"] = split[0]
     final_frame["pos"] = split[1]
-    final_frame["samples"] = get_patient_ids(final_frame["coord"], data_joined)
 
     final_frame = final_frame.drop(["coord"], axis=1)
 
@@ -67,25 +65,7 @@ def build_database(score_files, output_file, score_threshold):
 
     final_frame["tot"] = allele_count
 
-    header = ["chrom", "pos", "pct", "counts", "tot", "samples"]
+    header = ["chrom", "pos", "pct", "counts", "tot"]
     csv_obj = final_frame.to_csv(sep="\t", index=False, header=False, columns=header)
 
     output_writer.write(csv_obj)
-
-
-def get_patient_ids(coords, data_joined):
-
-    samples_list = []
-
-    for coord in coords:
-
-        samples = data_joined.loc[data_joined["coord"] == coord]["sample"].tolist()
-
-        if len(samples) <= 8:
-            samples = ";".join(samples)
-        else:
-            samples = ""
-
-        samples_list.append(samples)
-
-    return samples_list
