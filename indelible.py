@@ -68,7 +68,7 @@ subparser.add_argument('--o', help='path to output file', metavar="<output_path>
 subparser = subparsers.add_parser('train', help='trains the Random Forest model on a bunch of examples')
 subparser.add_argument('--i', help='Input file with labeled examples', metavar="<input_path>", required=True, dest="input_path")
 subparser.add_argument('--o', help='Output path for RF model', metavar="<output_path>", required=True, dest="output_path")
-subparser.add_argument('--k', help='value of k hyperparameter for training the Random Forest [75].', metavar="<k>", required=False, default=50, type=int, dest="k")
+subparser.add_argument('--k', help='value of k hyperparameter for training the Random Forest [75].', metavar="<k>", required=False, default=75, type=int, dest="k")
 subparser.add_argument('--s', help='value of the stop parameter for training the Random Forest [0.01].', metavar="<stop_parameter>", required=False, default=0.01, type=float, dest="stop_parameter")
 
 args = parser.parse_args()
