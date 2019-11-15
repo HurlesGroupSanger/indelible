@@ -204,7 +204,7 @@ if args.command == "complete":
     indelible.annotate(scored_path, annotated_path, args.database, config)
     shutil.copy(annotated_path,final_path)
     print(("%s: Calling de novo variants..." % timestamp()))
-    indelible.denovo_caller_trio(final_path,args.mother_bam, args.father_bam, denovo_path)
+    indelible.denovo_caller_trio(args.child_input, args.mother_bam, args.father_bam, args.output_path, config)
     if args.keep_tmp != True:
         print(("%s: Removing temporary files..." % timestamp()))
         os.remove(reads_path)
