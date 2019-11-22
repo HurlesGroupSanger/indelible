@@ -293,6 +293,9 @@ def annotate(input_path, output_path, database, config):
         if exons == None:
             v["exonic"] = False
             v["transcripts"] = "NA"
+        elif len(exons) > 10:
+            v["exonic"] = True
+            v["transcripts"] = "multiple_transcripts"
         else:
             v["exonic"] = True
             v["transcripts"] = ";".join(str(x) for x in exons)
