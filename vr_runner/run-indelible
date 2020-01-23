@@ -1,0 +1,276 @@
+#!/usr/bin/env perl
+#
+# Author: eugene.gardner@sanger
+#
+
+use strict;
+use warnings;
+use Carp;
+
+my $runner = myRunner->new();
+$runner->run();
+
+exit;
+
+#--------------------------------
+
+package myRunner;
+use base qw(Runner);
+use strict;
+use warnings;
+
+sub new
+{
+    my ($class,@args) = @_;
+    my $self = $class->SUPER::new(@args);
+
+    $$self{verbose} = 1;
+    $$self{bams} = undef;
+	$$self{ref} = '/lustre/scratch115/projects/ddd/users/eg15/WXS_10K/ref/hs37d5.fa';
+	$$self{indelible} = '/lustre/scratch115/projects/ddd/users/eg15/indelible/Indelible/indelible.py';
+	$$self{limits}   = { memory=>10_000};
+    $$self{config_version} = '1427807557';
+    $$self{_sampleconf} = q[
+            # For sanity checking that your config file is not obsolete. Update
+            # the version key in your config file to get rid of the warnings.
+            version  => '] .$$self{config_version}. q[',
+
+            # List of bams
+            bams => undef,
+
+            # Path to reference genome
+            ref => '] .$$self{ref}. q[',
+
+            # Path to indelible
+            indelible => '] .$$self{indelible}. q[',
+
+            limits => { memory=>10_000 },
+
+    ]."\n";
+
+    $$self{usage} .= 
+        "About: Run InDelible software\n" .
+        "Usage: run-indelible\n" .
+        "Options:\n" .
+        "   -b, --bams-list <file>      File with bam files\n" .
+        "   -o, --outdir <dir>                  Output directory\n" .
+        "\n";
+
+    return $self;
+}
+
+sub parse_args
+{
+    my ($self) = @_;
+    while (defined(my $arg=shift(@ARGV)))
+    {
+        if ( $arg eq '-b' or $arg eq '--bams-list' ) { $$self{bams}=shift(@ARGV); next; }
+        if ( $arg eq '-o' or $arg eq '--outdir' ) { $$self{outdir}=shift(@ARGV); next; }
+        $self->throw();
+    }
+    if ( !defined($$self{bams}) ) { $self->throw("Expected the -b option."); }
+    if ( !defined($$self{outdir}) ) { $self->throw("Expected the -o option."); }
+
+	$self->set_temp_dir($$self{outdir});
+
+}
+
+sub main
+{
+    my ($self) = @_;
+    $self->parse_args();
+    $self->save_config("config.txt");
+    
+    `mkdir -p $$self{outdir}`;
+
+    my $jobs = $self->read_jobs();
+
+    $self->set_limits(%{$$self{limits}}) unless !exists($$self{limits});
+
+    # Run Indelible fetch
+    for my $job (@$jobs) {
+	    $self->spawn('run_fetch',$$job{bam} . ".sc_reads",$$job{bam});
+    }
+    $self->wait;
+
+    # Run Indelible aggregate
+    for my $job (@$jobs) {
+	    $self->spawn('run_aggregate',$$job{bam} . ".counts",$$job{bam});
+    }
+    $self->wait;
+
+   # Run Indelible score
+   for my $job (@$jobs) {
+   	   $self->spawn('run_score',$$job{bam} . ".counts.scored",$$job{bam});
+   }
+   $self->wait;
+
+    # Rebuild the database
+    #This part prints the fofn.txt file that is necessary for building the db...
+    open(my $fh,'<',$$self{bams}) or $self->throw("$$self{bams}: $!");
+    my $dir = "./indelible_db/";
+    if (! -e $dir) {
+	    system("mkdir $dir");
+    }
+
+    my $fofn_file = $dir . "fofn.txt";
+    open (my $fofn, '>', $fofn_file);
+	
+    while (my $line=<$fh>) {
+     	    chomp $line;
+	    my @data = split("\t",$line);
+	    my $bam = $data[0];
+	    if (-e $bam . ".counts.scored") { 
+		    print $fofn $bam . ".counts.scored\n";
+	    }
+    }
+    close($fh) or $self->throw("close failed: $$self{bams}");
+    close($fofn) or $self->throw("close failed on fofn.txt file");
+
+    my $db_file = $dir . "indelible_db.tsv";
+    $self->spawn('run_db', $db_file, $fofn_file);
+    $self->wait;
+    
+    # Run Indelible blast
+    for my $job (@$jobs) {
+	    $self->spawn('run_blast',$$job{bam} . ".counts.scored.fasta.blast_done",$$job{bam});
+    }
+    $self->wait;
+
+    # Run Indelible annotate
+    for my $job (@$jobs) {
+	    $self->spawn('run_annotate',$$job{bam} . ".counts.scored.annotated",$$job{bam}, $db_file);
+    }
+    $self->wait;
+	
+    # Run Indelible denovo
+    for my $job (@$jobs) {
+	    $self->spawn('run_denovo',$$job{bam} . ".indelible.denovo.tsv", $$job{bam}, $$job{mum}, $$job{dad})
+    }
+    $self->wait;
+    $self->all_done;
+}
+
+sub save_config
+{
+    my ($self,$name) = @_;
+    my $src = $$self{_config} ? $$self{_config} : undef;
+    my $dst = "$$self{outdir}/$name";
+    if ( -e $dst && (!defined($src) or (stat($src))[9] <= (stat($dst))[9]) ) { return; }
+    if ( !-d $$self{outdir} ) { $self->cmd("mkdir -p $$self{outdir}"); }
+    open(my $fh,'>',$dst) or $self->throw("$dst: $!");
+    my $about = $$self{_about};
+    $about =~ s/\n/\n# /g;
+    print $fh "# $about";
+    close($fh);
+    if ( defined $src ) { $self->cmd("cat $src >> $dst"); }
+}
+
+sub read_jobs
+{
+    my ($self) = @_;
+    my @jobs = ();
+    open(my $fh,'<',$$self{bams}) or $self->throw("$$self{bams}: $!");
+    while (my $line=<$fh>)
+    {
+        chomp $line;
+		my @data = split("\t",$line);
+		my $bam = $data[0];
+		if ( !($bam=~m{([^/]+)\.[^\.]+$}) ) { $self->throw("Could not parse: $bam"); }
+        my $bname = $1;
+		
+		push @jobs, { bam=>$bam, bname=>$bname, mum=>$data[1], dad=>$data[2]};
+
+        if ( exists($$self{bam2bname}{$bam}) ) { $self->throw("Improve me: the bam basenames are not unique .. $bname\n"); }
+        $$self{bam2bname}{$bam} = $bname;
+    }
+    close($fh) or $self->throw("close failed: $$self{bams}");
+    return \@jobs;
+}
+
+sub run_fetch 
+{
+	
+	my ($self,$outfile,$bam) = @_;
+	my $cmd = $$self{indelible} . " fetch --i " . $bam . " --o $outfile.part";
+	$self->cmd($cmd);
+	$cmd = "mv $outfile.part $outfile";
+	$self->cmd($cmd);
+	
+}
+
+sub run_aggregate
+{
+	
+	my ($self,$outfile,$bam) = @_;
+	my $cmd = $$self{indelible} . " aggregate --i " . $bam . ".sc_reads --b $bam --r $$self{ref} --o $outfile.part";
+	$self->cmd($cmd);
+	$cmd = "mv $outfile.part $outfile";
+	$self->cmd($cmd);
+}
+
+sub run_score
+{
+	
+	my ($self,$outfile,$bam) = @_;
+	my $cmd = $$self{indelible} . " score --i " . $bam . ".counts --o $outfile.part";
+	$self->cmd($cmd);
+	$cmd = "mv $outfile.part $outfile";
+	$self->cmd($cmd);
+
+}	
+
+sub run_db
+{
+	
+	my ($self, $outfile, $fofn) = @_;
+	
+	my $cmd = $$self{indelible} . " database --f " . $fofn . " --o " . $outfile . ".part";
+	$self->cmd($cmd);
+	$cmd = "mv $outfile.part $outfile";
+	$self->cmd($cmd);
+
+}
+
+sub run_blast
+{
+	
+	my ($self,$outfile,$bam) = @_;
+	my $cmd = $$self{indelible} . " blast --i " . $bam . ".counts.scored";
+	$self->cmd($cmd);
+	$cmd = "touch $outfile";
+	$self->cmd($cmd);
+
+}
+
+sub run_annotate
+{
+	
+	my ($self,$outfile,$bam,$db_file) = @_;
+	my $cmd = $$self{indelible} . " annotate --i " . $bam . ".counts.scored --o $outfile.part --d " . $db_file;
+	$self->cmd($cmd);
+	$cmd = "mv $outfile.part $outfile";
+	$self->cmd($cmd);
+
+}
+
+sub run_denovo
+{
+
+	my ($self,$outfile,$bam,$mum,$dad) = @_;
+	
+	my $cmd;
+	if ($mum eq "-" && $dad eq "-") {
+		$cmd = $$self{indelible} . " denovo --c " . $bam . ".counts.scored.annotated --o $outfile.part";
+	} elsif ($mum ne "-" && $dad eq "-") {
+		$cmd = $$self{indelible} . " denovo --c " . $bam . ".counts.scored.annotated --m " . $mum . " --o $outfile.part";
+	} elsif ($mum eq "-" && $dad ne "-") {
+		$cmd = $$self{indelible} . " denovo --c " . $bam . ".counts.scored.annotated --p " . $dad . " --o $outfile.part";
+	} else {
+		$cmd = $$self{indelible} . " denovo --c " . $bam . ".counts.scored.annotated --m " . $mum . " --p " . $dad . " --o $outfile.part";
+	}
+	$self->cmd($cmd);
+	$cmd = "mv $outfile.part $outfile";
+	$self->cmd($cmd);
+
+}
