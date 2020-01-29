@@ -141,7 +141,7 @@ sub main
 
     # Run Indelible blast
     for my $job (@$jobs) {
-	    $self->spawn('run_blast',$$self{outdir} . "/" . $$job{basename} . ".counts.scored.fasta.blast_done", $$self{outdir} . "/" . $$job{basename} . ".counts.scored);
+	    $self->spawn('run_blast',$$self{outdir} . "/" . $$job{basename} . ".counts.scored.fasta.blast_done", $$self{outdir} . "/" . $$job{basename} . ".counts.scored");
     }
     $self->wait;
 
