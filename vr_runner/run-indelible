@@ -189,7 +189,7 @@ sub read_jobs
 		my $bam = $data[0];
 		if ( !($bam=~m{([^/]+)\.[^\.]+$}) ) { $self->throw("Could not parse: $bam"); }
         my $bname = $1;
-		my @base = fileparse($bam)
+		my @base = fileparse($bam);
 
         if (scalar(@data) == 1) {
 		    push @jobs, { bam=>$bam, bname=>$bname, basename => $base[0], mum=>$data[1], dad=>$data[2]};
