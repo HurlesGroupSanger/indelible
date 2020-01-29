@@ -185,7 +185,7 @@ Additional commands for run-indelible:
    -d, --database              Path to a precomputed MAF database [null]
 ```
 
-***Note:*** If nothing is provided for `-d`, InDelible will rebuild the MAF database based only on samples included in `-b`!
+***Note:*** If a filepath to a prebuilt MAF database (e.g. `./Indelible/data/`) is not provided for `-d/--database`, InDelible will rebuild the MAF database based only on samples included in `-b`!
 
 ## Usage
 
@@ -280,7 +280,7 @@ The **annotate** command enriches the result with gene/exon annotations and merg
 
 * `--i` : path to the input file (output of score command after running the blast command).
 * `--o` : path to output the annotated file.
-* `--d` : path to the InDelible frequency database. A default frequency database from the Deciphering Developmental Disorders WES data is availible at `./InDelible/data/InDelible_db_10k.bed`. 
+* `--d` : path to the InDelible frequency database. A default frequency database from the Deciphering Developmental Disorders WES data is availible at `./Indelible/data/Indelible_db_10k.bed`. 
 
 ```
 ./indelible.py annotate --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored.annotated --d data/InDelible_db_10k.bed
