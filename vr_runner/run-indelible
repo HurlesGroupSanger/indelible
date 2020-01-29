@@ -95,7 +95,6 @@ sub main
 
     # Run Indelible fetch
     for my $job (@$jobs) {
-        print $$self{outdir} . "/" . $$job{basename} . ".sc_reads\n"
 	    $self->spawn('run_fetch',$$self{outdir} . "/" . $$job{basename} . ".sc_reads",$$job{bam});
     }
     $self->wait;
