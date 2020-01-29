@@ -112,6 +112,7 @@ sub main
     $self->wait;
 
     # Rebuild the MAF database if requested
+    my $db_file;
     if (!defined($$self{database})) {
         #This part prints the fofn.txt file that is necessary for building the db...
         open(my $fh,'<',$$self{bams}) or $self->throw("$$self{bams}: $!");
@@ -134,9 +135,11 @@ sub main
         close($fh) or $self->throw("close failed: $$self{bams}");
         close($fofn) or $self->throw("close failed on fofn.txt file");
 
-        my $db_file = $dir . "indelible_db.tsv";
+        $db_file = $dir . "indelible_db.tsv";
         $self->spawn('run_db', $db_file, $fofn_file);
         $self->wait;
+    } else {
+        $db_file = $$self{database};
     }
 
     # Run Indelible blast
