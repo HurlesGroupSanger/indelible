@@ -156,7 +156,7 @@ sub main
 	
     # Run Indelible denovo
     for my $job (@$jobs) {
-	    $self->spawn('run_denovo',$$self{outdir} . "/" . $$job{basename} . ".indelible.denovo.tsv", $$job{bam}, $$job{mum}, $$job{dad})
+	    $self->spawn('run_denovo',$$self{outdir} . "/" . $$job{basename} . ".indelible.denovo.tsv", $$self{outdir} . "/" . $$job{basename} . ".counts.scored.annotated", $$job{mum}, $$job{dad})
     }
     $self->wait;
     $self->all_done;
