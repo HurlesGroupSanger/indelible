@@ -192,9 +192,9 @@ sub read_jobs
 		my @base = File::Basename::fileparse($bam);
 
         if (scalar(@data) == 1) {
-		    push @jobs, { bam=>$bam, bname=>$bname, basename => $base[0], mum=>$data[1], dad=>$data[2]};
+            push @jobs, { bam=>$bam, bname=>$bname, basename => $base[0], mum=>"-", dad=>"-"};
 		} else {
-		    push @jobs, { bam=>$bam, bname=>$bname, basename => $base[0], mum=>"-", dad=>"-"};
+		    push @jobs, { bam=>$bam, bname=>$bname, basename => $base[0], mum=>$data[1], dad=>$data[2]};
 		}
 
         if ( exists($$self{bam2bname}{$bam}) ) { $self->throw("Improve me: the bam basenames are not unique .. $bname\n"); }

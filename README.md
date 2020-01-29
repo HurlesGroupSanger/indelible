@@ -144,6 +144,49 @@ WINDOW_SIZE: window around position to look for indels/clipped reads (window_siz
 
 **Note**: The above data resources will only work if you run InDelible using the the human GRCh37 reference. 
 
+### Using vr-runner
+
+InDelible comes packages with a script for use with the vr-runner packaged which automates the analysis of multiple 
+samples. For information on how to install and use vr-runner, please see [this link](https://github.com/VertebrateResequencing/vr-runner).
+
+The InDelible-specific vr-runner script is located at `./vr_runner/run-indelible`. This script requires a list of tab-delimited bam paths, where columns are:
+
+1. child bam
+2. mum bam
+3. dad bam 
+
+For example:
+
+```
+/path/to/child.bam  /path/to/mum.bam    /path/to/dad.bam
+```
+
+If mum or dad bams are not available, substitute a "-" like:
+
+```
+/path/to/child.bam  -   -
+/path/to.child.bam  /path/to/mum.bam    -
+/path/to.child.bam  - /path/to/dad.bam
+```
+
+A simple command for running InDelible with vr-runner is as follows:
+
+```
+./Indelible/vr_runner/run-indelible -o ./output/ -b crams.txt +maxjobs 1000 +loop 100 +retries -2
+```
+
+Resulting output will be in the `./output/` folder.
+
+Additional commands for run-indelible:
+
+```
+   -b, --bams-list <file>      File with bam files
+   -o, --outdir <dir>          Output directory
+   -d, --database              Path to a precomputed MAF database [null]
+```
+
+***Note:*** If nothing is provided for `-d`, InDelible will rebuild the MAF database based only on samples included in `-b`!
+
 ## Usage
 
 The main help page of the program can be accessed by executing the InDelible script with the `-h` flag as follows:

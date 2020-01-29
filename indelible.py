@@ -2,6 +2,7 @@
 
 """
     Author: Alejandro Sifrim
+    Author: Eugene Gardner
     Affiliation: Wellcome Trust Sanger Institute
 
     Indelible main program
