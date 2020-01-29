@@ -6,6 +6,7 @@
 use strict;
 use warnings;
 use Carp;
+use File::Basename;
 
 my $runner = myRunner->new();
 $runner->run();
@@ -46,6 +47,9 @@ sub new
 
             limits => { memory=>10_000 },
 
+            # Path to the indelible MAF database, leave as undef if you want this script to rebuild the database
+            database => undef
+
     ]."\n";
 
     $$self{usage} .= 
@@ -53,7 +57,8 @@ sub new
         "Usage: run-indelible\n" .
         "Options:\n" .
         "   -b, --bams-list <file>      File with bam files\n" .
-        "   -o, --outdir <dir>                  Output directory\n" .
+        "   -o, --outdir <dir>          Output directory\n" .
+        "   -d, --database              Rebuild the MAF database during runtime?\n"
         "\n";
 
     return $self;
@@ -66,6 +71,7 @@ sub parse_args
     {
         if ( $arg eq '-b' or $arg eq '--bams-list' ) { $$self{bams}=shift(@ARGV); next; }
         if ( $arg eq '-o' or $arg eq '--outdir' ) { $$self{outdir}=shift(@ARGV); next; }
+        if ( $arg eq '-d' or $arg eq '--database' ) { $$self{database}=shift(@ARGV); next; }
         $self->throw();
     }
     if ( !defined($$self{bams}) ) { $self->throw("Expected the -b option."); }
@@ -89,63 +95,65 @@ sub main
 
     # Run Indelible fetch
     for my $job (@$jobs) {
-	    $self->spawn('run_fetch',$$job{bam} . ".sc_reads",$$job{bam});
+	    $self->spawn('run_fetch',$$self{outdir} . "/" . $$job{basename} . ".sc_reads",$$job{bam});
     }
     $self->wait;
 
     # Run Indelible aggregate
     for my $job (@$jobs) {
-	    $self->spawn('run_aggregate',$$job{bam} . ".counts",$$job{bam});
+	    $self->spawn('run_aggregate',$$self{outdir} . "/" . $$job{basename} . ".counts",$$self{outdir} . "/" . $$job{basename} . ".sc_reads", $$job{bam});
     }
     $self->wait;
 
-   # Run Indelible score
-   for my $job (@$jobs) {
-   	   $self->spawn('run_score',$$job{bam} . ".counts.scored",$$job{bam});
-   }
-   $self->wait;
-
-    # Rebuild the database
-    #This part prints the fofn.txt file that is necessary for building the db...
-    open(my $fh,'<',$$self{bams}) or $self->throw("$$self{bams}: $!");
-    my $dir = "./indelible_db/";
-    if (! -e $dir) {
-	    system("mkdir $dir");
+    # Run Indelible score
+    for my $job (@$jobs) {
+        $self->spawn('run_score',$$self{outdir} . "/" . $$job{basename} . ".counts.scored",$$self{outdir} . "/" . $$job{basename} . ".counts");
     }
-
-    my $fofn_file = $dir . "fofn.txt";
-    open (my $fofn, '>', $fofn_file);
-	
-    while (my $line=<$fh>) {
-     	    chomp $line;
-	    my @data = split("\t",$line);
-	    my $bam = $data[0];
-	    if (-e $bam . ".counts.scored") { 
-		    print $fofn $bam . ".counts.scored\n";
-	    }
-    }
-    close($fh) or $self->throw("close failed: $$self{bams}");
-    close($fofn) or $self->throw("close failed on fofn.txt file");
-
-    my $db_file = $dir . "indelible_db.tsv";
-    $self->spawn('run_db', $db_file, $fofn_file);
     $self->wait;
-    
+
+    # Rebuild the MAF database if requested
+    if (!defined($$self{database})) {
+        #This part prints the fofn.txt file that is necessary for building the db...
+        open(my $fh,'<',$$self{bams}) or $self->throw("$$self{bams}: $!");
+        my $dir = "./indelible_db/";
+        if (! -e $dir) {
+            system("mkdir $dir");
+        }
+
+        my $fofn_file = $dir . "fofn.txt";
+        open (my $fofn, '>', $fofn_file);
+
+        while (my $line=<$fh>) {
+                chomp $line;
+            my @data = split("\t",$line);
+            my $bam = $data[0];
+            if (-e $bam . ".counts.scored") {
+                print $fofn $bam . ".counts.scored\n";
+            }
+        }
+        close($fh) or $self->throw("close failed: $$self{bams}");
+        close($fofn) or $self->throw("close failed on fofn.txt file");
+
+        my $db_file = $dir . "indelible_db.tsv";
+        $self->spawn('run_db', $db_file, $fofn_file);
+        $self->wait;
+    }
+
     # Run Indelible blast
     for my $job (@$jobs) {
-	    $self->spawn('run_blast',$$job{bam} . ".counts.scored.fasta.blast_done",$$job{bam});
+	    $self->spawn('run_blast',$$self{outdir} . "/" . $$job{basename} . ".counts.scored.fasta.blast_done", $$self{outdir} . "/" . $$job{basename} . ".counts.scored);
     }
     $self->wait;
 
     # Run Indelible annotate
     for my $job (@$jobs) {
-	    $self->spawn('run_annotate',$$job{bam} . ".counts.scored.annotated",$$job{bam}, $db_file);
+	    $self->spawn('run_annotate',$$self{outdir} . "/" . $$job{basename} . ".counts.scored.annotated", $$self{outdir} . "/" . $$job{basename} . ".counts.scored", $db_file);
     }
     $self->wait;
 	
     # Run Indelible denovo
     for my $job (@$jobs) {
-	    $self->spawn('run_denovo',$$job{bam} . ".indelible.denovo.tsv", $$job{bam}, $$job{mum}, $$job{dad})
+	    $self->spawn('run_denovo',$$self{outdir} . "/" . $$job{basename} . ".indelible.denovo.tsv", $$job{bam}, $$job{mum}, $$job{dad})
     }
     $self->wait;
     $self->all_done;
@@ -178,8 +186,13 @@ sub read_jobs
 		my $bam = $data[0];
 		if ( !($bam=~m{([^/]+)\.[^\.]+$}) ) { $self->throw("Could not parse: $bam"); }
         my $bname = $1;
-		
-		push @jobs, { bam=>$bam, bname=>$bname, mum=>$data[1], dad=>$data[2]};
+		my @base = fileparse($bam)
+
+        if (scalar(@data) == 1) {
+		    push @jobs, { bam=>$bam, bname=>$bname, basename => $base[0], mum=>$data[1], dad=>$data[2]};
+		} else {
+		    push @jobs, { bam=>$bam, bname=>$bname, basename => $base[0], mum=>"-", dad=>"-"};
+		}
 
         if ( exists($$self{bam2bname}{$bam}) ) { $self->throw("Improve me: the bam basenames are not unique .. $bname\n"); }
         $$self{bam2bname}{$bam} = $bname;
@@ -202,8 +215,8 @@ sub run_fetch
 sub run_aggregate
 {
 	
-	my ($self,$outfile,$bam) = @_;
-	my $cmd = $$self{indelible} . " aggregate --i " . $bam . ".sc_reads --b $bam --r $$self{ref} --o $outfile.part";
+	my ($self,$outfile,$infile,$bam) = @_;
+	my $cmd = $$self{indelible} . " aggregate --i $infile --b $bam --r $$self{ref} --o $outfile.part";
 	$self->cmd($cmd);
 	$cmd = "mv $outfile.part $outfile";
 	$self->cmd($cmd);
@@ -212,8 +225,8 @@ sub run_aggregate
 sub run_score
 {
 	
-	my ($self,$outfile,$bam) = @_;
-	my $cmd = $$self{indelible} . " score --i " . $bam . ".counts --o $outfile.part";
+	my ($self,$outfile,$infile) = @_;
+	my $cmd = $$self{indelible} . " score --i $infile --o $outfile.part";
 	$self->cmd($cmd);
 	$cmd = "mv $outfile.part $outfile";
 	$self->cmd($cmd);
@@ -235,8 +248,8 @@ sub run_db
 sub run_blast
 {
 	
-	my ($self,$outfile,$bam) = @_;
-	my $cmd = $$self{indelible} . " blast --i " . $bam . ".counts.scored";
+	my ($self,$outfile,$infile) = @_;
+	my $cmd = $$self{indelible} . " blast --i $infile";
 	$self->cmd($cmd);
 	$cmd = "touch $outfile";
 	$self->cmd($cmd);
@@ -246,8 +259,8 @@ sub run_blast
 sub run_annotate
 {
 	
-	my ($self,$outfile,$bam,$db_file) = @_;
-	my $cmd = $$self{indelible} . " annotate --i " . $bam . ".counts.scored --o $outfile.part --d " . $db_file;
+	my ($self,$outfile,$infile,$db_file) = @_;
+	my $cmd = $$self{indelible} . " annotate --i $infile --o $outfile.part --d $db_file";
 	$self->cmd($cmd);
 	$cmd = "mv $outfile.part $outfile";
 	$self->cmd($cmd);
@@ -257,17 +270,17 @@ sub run_annotate
 sub run_denovo
 {
 
-	my ($self,$outfile,$bam,$mum,$dad) = @_;
+	my ($self,$outfile,$infile,$mum,$dad) = @_;
 	
 	my $cmd;
 	if ($mum eq "-" && $dad eq "-") {
-		$cmd = $$self{indelible} . " denovo --c " . $bam . ".counts.scored.annotated --o $outfile.part";
+		$cmd = $$self{indelible} . " denovo --c $infile --o $outfile.part";
 	} elsif ($mum ne "-" && $dad eq "-") {
-		$cmd = $$self{indelible} . " denovo --c " . $bam . ".counts.scored.annotated --m " . $mum . " --o $outfile.part";
+		$cmd = $$self{indelible} . " denovo --c $infile --m " . $mum . " --o $outfile.part";
 	} elsif ($mum eq "-" && $dad ne "-") {
-		$cmd = $$self{indelible} . " denovo --c " . $bam . ".counts.scored.annotated --p " . $dad . " --o $outfile.part";
+		$cmd = $$self{indelible} . " denovo --c $infile --p " . $dad . " --o $outfile.part";
 	} else {
-		$cmd = $$self{indelible} . " denovo --c " . $bam . ".counts.scored.annotated --m " . $mum . " --p " . $dad . " --o $outfile.part";
+		$cmd = $$self{indelible} . " denovo --c $infile --m " . $mum . " --p " . $dad . " --o $outfile.part";
 	}
 	$self->cmd($cmd);
 	$cmd = "mv $outfile.part $outfile";

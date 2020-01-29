@@ -109,6 +109,7 @@ wget ftp://ftp.ncbi.nlm.nih.gov/blast/windowmasker_files/9606/wmasker.obinary
 wget ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz
 wget ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz.fai
 makeblastdb -in hs37d5.fa -dbtype nucl
+makeblastdb -in repeats.fasta -dbtype nucl
 ```
 
 6. Edit the config file to point to required data files and edit any default parameters:
