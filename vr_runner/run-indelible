@@ -58,7 +58,7 @@ sub new
         "Options:\n" .
         "   -b, --bams-list <file>      File with bam files\n" .
         "   -o, --outdir <dir>          Output directory\n" .
-        "   -d, --database              Rebuild the MAF database during runtime?\n" .
+        "   -d, --database              Path to a precomputed MAF database [null]\n" .
         "\n";
 
     return $self;
