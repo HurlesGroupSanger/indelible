@@ -3,7 +3,7 @@
 ## Table of Contents
 
 1. [Authors](#authors)
-2. [About InDelible](#about_indelible)
+2. [About InDelible](#about-indelible)
 3. [Installation](#installation)
 4. [Usage](#usage)
 
