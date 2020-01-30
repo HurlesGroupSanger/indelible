@@ -2,10 +2,10 @@
 
 ## Table of Contents
 
-1. [Authors](#-Authors)
-2. [About InDelible](#-about_indelible)
-3. [Installation](#-installation)
-4. [Usage](#-usage)
+1. [Authors](#authors)
+2. [About InDelible](#about_indelible)
+3. [Installation](#installation)
+4. [Usage](#usage)
 
 ## Authors
 
