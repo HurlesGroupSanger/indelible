@@ -1,5 +1,11 @@
-# InDelible
-#### Genomic Structural Variant Caller by Adaptive Training
+# InDelible: Genomic Structural Variant Caller by Adaptive Training
+
+## Table of Contents
+
+1. [Authors](#-Authors)
+2. [About InDelible](#-about_indelible)
+3. [Installation](#-installation)
+4. [Usage](#-usage)
 
 ## Authors
 
@@ -26,6 +32,10 @@ TBD
 ### What is InDelible for?
 
 ### What is InDelible not for?
+
+### How to Cite InDelible
+
+TBD
 
 ## Installation
 
