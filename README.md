@@ -374,42 +374,42 @@ The primary output from InDelible is the output file from the [_denovo_](#6-deno
 |coverage| total number of reads covering breakpoint | 
 |insertion_context| total number of insertions (cigar "I") in reads overlapping this breakpoint | 
 |deletion_context| total number of deletions (cigar "D") in reads overlapping this breakpoint |
-|sr_total| total number of split reads (cigar "S") in reads overlapping this breakpoint "
-|sr_total_long| 
-|sr_total_short|
-|sr_long_5|
-|sr_short_5|
-|sr_long_3|
-|sr_short_3|
-|sr_entropy|
-|context_entropy|
-|entropy_upstream|
-|entropy_downstream|
-|sr_sw_similarity|
-|avg_avg_sr_qual|
-|avg_mapq|
-|seq_longest|
-|pct_double_split|
-|prob_N|
-|prob_Y|
-|predicted|
-|ddg2p|
-|hgnc|
-|hgnc_constrained|
-|exonic|
-|transcripts|
-|maf|
-|blast_hit|
-|blast_strand|
-|blast_identity|
-|blast_dist|
-|blast_hgnc|
-|mum_sr|
-|dad_sr|
-|mum_indel_context|
-|dad_indel_context|
-|mum_cov|
-|dad_cov|
+|sr_total| total number of split reads (cigar "S") in reads overlapping this breakpoint |
+|sr_total_long| Number of reads with SR length ≥ MINIMUM_LENGTH_SPLIT_READ |
+|sr_total_short| Number of reads with SR length < MINIMUM_LENGTH_SPLIT_READ |
+|sr_long_5| sr_total_long for 5' end of reads |
+|sr_short_5| sr_total_short for 5' end of reads |
+|sr_long_3| sr_total_long for 3' end of reads |
+|sr_short_3| sr_total_short for 3' end of reads |
+|sr_entropy| Sequence entropy of the longest SR sequence given by the formula from Schmitt and Herzel (1997) |
+|context_entropy| Sequence entropy of the ±20bp from the breakpoint position |
+|entropy_upstream| Sequence entropy of the +20bp from the breakpoint position |
+|entropy_downstream| Sequence entropy of the -20bp from the breakpoint position |
+|sr_sw_similarity| Smith-Waterman based similarity of split reads from the breakpoint |
+|avg_avg_sr_qual| Average sequence quality of split bases |
+|avg_mapq| Average mapping quality of reads supporting the breakpoint |
+|seq_longest| longest split sequence |
+|pct_double_split| Number of reads with both 5' and 3' split reads |
+|prob_N| Probability of the breakpoint being a false positive based on the adaptive learning model (1 - prob_Y) | 
+|prob_Y| Probability of the breakpoint being a true positive based on the adaptive learning model |
+|predicted| Is prob_Y > prob_N? | 
+|ddg2p| Does this breakpoint intersect any genes given by `ddg2p_bed` file in config.yml |
+|hgnc| Does this breakpoint intersect any genes given by `hgnc_file` in config.yml |
+|hgnc_constrained| Does this breakpoint intersect any genes given by `hgnc_constrained` in config.yml | 
+|exonic| Does this breakpoint intersect any exons given by `ensembl_exons` in config.yml |
+|transcripts| What transcripts does this breakpoint intersect? If > 10 transcripts, will return 'multiple_transcripts' |
+|maf| "Allele Frequency" based on the InDelible database provided with `--d`
+|blast_hit| The coordinate given by BLAST for the longest SR of this breakpoint. If multiple BLAST hits, will be 'multi_hit', if overlaps a region from `repeatdb` in config.yml, will be repeats hit. |
+|blast_strand| Strand of blast_hit |
+|blast_identity| Percent identity of blast_hit |
+|blast_dist| Distance to blast_hit from 'position' |
+|blast_hgnc| Gene overlap of blast_hit |
+|mum_sr| Number of SRs in the bam/cram provided to --m with the same 'position' |
+|dad_sr| Number of SRs in the bam/cram provided to --d with the same 'position' |
+|mum_indel_context| Number of reads in the bam/cram provided to --m with cigar 'I/D' values |
+|dad_indel_context| Number of reads in the bam/cram provided to --d with cigar 'I/D' values | 
+|mum_cov| Coverage in in the bam/cram provided to --m |
+|dad_cov| Coverage in in the bam/cram provided to --d |
 
 
 
