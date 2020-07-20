@@ -211,6 +211,9 @@ WINDOW_SIZE: window around position to look for indels/clipped reads (window_siz
 
 **Note**: The above data resources will only work if you run InDelible using the the human GRCh37 reference. 
 
+**Note**: All commands also take the command-line option `--config` which overrides the default config.yml path. The user 
+can either change the default config.yml, or provide a path to a different file with this option.
+
 ### Using vr-runner
 
 InDelible comes packages with a script for use with the vr-runner packaged which automates the analysis of multiple 
@@ -331,6 +334,9 @@ The InDelible variant calling process follows several steps:
 4. [Blast](#4-blast) - Longer clipped segments are blasted against the human genome and repeat databases
 5. [Annotate](#5-annotate) - Putative SVs are annotated with additional information (e.g. gene annotations) and the blast results from the previous step
 6. [_denovo_](#6-denovo) - _de novo_ events are called and inheritance information is appended.
+
+**Note**: All commands also take the command-line option `--config` which overrides the default config.yml path. The user 
+can either change the default config.yml, or provide a path to a different file with this option. See the section above for configuring the `config.yml` file.
 
 These different steps can be performed by the different sub-commands:
 
