@@ -4,7 +4,7 @@ pybedtools
 pyfaidx
 pysam
 scipy
-scikit-learn
+scikit-learn==0.21.3
 PyYAML
 Biopython
 intervaltree

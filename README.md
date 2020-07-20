@@ -298,7 +298,9 @@ Additional notes on the above command:
 1. `-c` and `--cleanenv` clean your enviornment variables and home directory prior to running InDelible. These may not be strictly necessary, but are recommended to prevent any conflicts with the environment internal to the Singularity image.
 2. `--bind` is meant to be used to mount your local storage folder to the Singularity image and should be pointed to the location on your local machine/cluster where your sequence files are stored.
 3. `--pwd` is the location of the InDelible directory **within** the Singularity image. This part of the command line **must not** be changed.
-4.  `--r` and `--d` point to reference files within the Singularity image. The other references files are also located here, but  
+4.  `--r` and `--d` point to reference files within the Singularity image. The other references files are also located within the Singularity instance at `4.  `--r` and `--d` point to reference files within the Singularity image. Prebuilt references files are also located within the Singularity instance at /usr/src/app/Indelible/data`.
+  
+**Big Note**: If  
 
 ## Usage
 
