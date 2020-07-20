@@ -2,13 +2,22 @@
 
 ## Table of Contents
 
-1. [Authors](#authors)
+1. [Development Team](#development-team)
 2. [About InDelible](#about-indelible)
 3. [Installation](#installation)
+
+    a. [Required Software Dependencies](#required-software-dependencies)
+    
+    b. [Local Installation](#installing-indelible-on-a-local-machine)
+    
+    c. [Using vr-runner](#using-vr-runner) 
+    
+    d. [Docker & Singularity](#using-singularity-or-docker)
+    
 4. [Usage](#usage)
 5. [Output](#output)
 
-## Authors
+## Development Team
 
 Alejandro Sifrim (Creator, Developer)
 
@@ -28,15 +37,62 @@ We are affiliated with the [Wellcome Sanger Institute](http://www.sanger.ac.uk/s
 
 ### Abstract
 
-TBD
+Structural Variations (SVs) are genetic differences greater than 50bps in size and have been identified as causative of 
+diseases such as rare developmental disorders (DD). Patients presenting with DD are typically referred for chromosomal 
+microarray (CMA) to identify large copy-number variants or for single gene or panel tests based on presenting symptoms.
+Increasingly, patients for which a diagnosis is not forthcoming are additionally referred for whole exome sequencing (WES)
+which is used to identify single nucleotide variants or small insertions/deletions (InDels). This leaves a class of
+intermediate size deletions that are technically difficult to identify, hence patients with SVs undetectable by
+conventional CMA or WES analysis often remain undiagnosed. To this end, we have developed a novel SV discovery approach,
+‘InDelible’, and applied it to 13,438 probands with severe DD recruited as part of the Deciphering Developmental Disorders
+(DDD) study. InDelible queries WES data to identify split read clusters within a gene set of interest and performs variant
+quality-control utilizing an active learning methodology. Using InDelible we were able to find 59 previously undetected
+variants among DDD probands, of which 89.8% (53) were in genes previously associated with DD, had phenotypes which
+putatively match the conditions of the patient in which they were found, and were thus reported to the referring 
+clinician. InDelible was particularly effective at ascertaining variants between 20-500 bps in size, and increased
+the total number of causal variants identified by DDD in this size range by 46.4% (n = 26 variants). Of particular
+interest were seven confirmed de novo SVs in the gene MECP2; these variants represent 35.0% of all de novo PTVs
+in MECP2 among DDD patients and represent an enrichment of large, causal variants compared to other DD-associated
+genes. InDelible provides a rapid framework for the discovery of likely pathogenic SVs and has the potential to
+improve the diagnostic yield of WES.
 
 ### What is InDelible for?
 
-### What is InDelible not for?
+InDelible was originally designed for the ascertainment of large InDels (>20bp) and Structural Variants from Whole Exome 
+Sequencing (WES) data for which other ascertainment approaches have proven refractory. To reduce the search space, InDelible
+also makes use of a "target gene list" containing genes that the end user is interested in.
+
+### Potential Limitations of InDelible
+
+InDelible is likely to be adaptable to a wide range of sequencing technologies, genetic architectures, and disease/conditions. 
+However, we have not specifically tested InDelible with:
+
+1. _Whole Genome Sequencing (WGS) Data_
+    - While InDelible should in theory be able to identify variants from WGS, the number of 
+reads that InDelible has to process would likely result in significantly increased run-times. 
+
+2. _Other Diseases_
+    - InDelible was designed as part of the Deciphering Developmental Disorders (DDD) study and, as such, was targeted to
+    genes known to contribute to dominant developmental disorders. We have provided for the possibility that end-users may
+    want to identify variants within other gene sets, but have not specifically performed variant discovery among a patient
+    cohort to test this functionality
+    
+3. _Other Genetic Architectures_
+    - While _de novo_ variants play an outsized role in the genetic architecture of DD, recessive causes of DD are likewise 
+    a major contributor. While we have focused our primary analysis on _de novo_ variation to try to maximise our discovery potential,
+    we do not preclude the possibility that InDelible could also be used to identify homozygous or compound heterozygous 
+    variants which could be plausibly linked to a patient's symptoms.
+    
+4. _Higher Allele Frequency Variants_
+    - Likewise, since InDelible was developed as part of DDD, where the largest contributor to patient symptoms is high-penetrance
+    _de novo_ variation, we focused our filtering to such variants. However, InDelible does report all high-confidence variants
+    identified for each patient and could, in theory, be used to identify population level variation.    
 
 ### How to Cite InDelible
 
-TBD
+
+Eugene J. Gardner, Alejandro Sifrim, Sarah J. Lindsay, Elena Prigmore, Diana Rajan, Giuseppe Gallone, Ruth Y. Eberhardt, Caroline F. Wright, David R. FitzPatrick, Helen V. Firth, Matthew E. Hurles.
+**InDelible: Detection and Evaluation of Clinically-relevant Structural Variation from Whole Exome Sequencing.** medRxiv (2020).
 
 ## Installation
 
@@ -53,7 +109,7 @@ InDelible requires the following software to be installed and in `$PATH`:
 
 The python package Biopython requires a local install of [blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download) in `$PATH` in order to function. This needs to be installed prior to [installing InDelible](#installing-InDelible).
 
-### Installing InDelible
+### Installing InDelible on a Local Machine
 
 To install InDelible:
 
@@ -197,6 +253,49 @@ Additional commands for run-indelible:
 ```
 
 ***Note:*** If a filepath to a prebuilt MAF database (e.g. `./Indelible/data/`) is not provided for `-d/--database`, InDelible will rebuild the MAF database based only on samples included in `-b`!
+
+### Using Singularity or Docker
+
+We have developed both a [Docker](https://www.docker.com/) and derived [Singularity](https://sylabs.io/docs/) VM image to enable quick deployment of InDelible to both local and cloud compute platforms.
+The InDelible docker image is available through [Docker Hub](https://hub.docker.com/) here: 
+
+https://hub.docker.com/repository/docker/mercury/indelible
+ 
+Please see Docker's documentation for information on running InDelible via the Docker framework.
+
+We have also developed a separate github repository which hosts the associated InDelible Dockerfile as well as instructions for converting this Dockerfile into
+a Singularity image:
+
+https://github.com/wtsi-hgi/indelible-docker/tree/master
+
+This Docker/Singularity image contains both an install of InDelible running on Python3.7 as well as all of the required 
+library files as described in the [local install](#installing-indelible-on-a-local-machine) instructions. We describe here 
+a basic command-line for running InDelible via Singularity. Please see the [Singularity documentation](https://sylabs.io/docs/) for more detail instructions
+for running Singularity itself.
+
+```
+/software/singularity-v3.5.3/bin/singularity exec \
+    -c \
+    --cleanenv \
+    --bind /path/to/local/storage/device/ \
+    --pwd /usr/src/app/Indelible/ \
+    /path/to/mercury_indelible_6dbe32d.sif \
+    indelible.py complete \
+    --i /path/to/local/storage/device/proband.cram \
+    --o /path/to/local/storage/device/ \
+    --r data/hs37d5.fa \
+    --d data/Indelible_db_10k.bed \
+    --m /path/to/local/storage/device/mum.cram \
+    --p /path/to/local/storage/device/dad.cram
+```
+
+The above command will run the [complete](#indelible-complete) InDelible SV discovery pipeline on the file `proband.cram`. 
+Additional notes on the above command:
+
+1. `-c` and `--cleanenv` clean your enviornment variables and home directory prior to running InDelible. These may not be strictly necessary, but are recommended to prevent any conflicts with the environment internal to the Singularity image.
+2. `--bind` is meant to be used to mount your local storage folder to the Singularity image and should be pointed to the location on your local machine/cluster where your sequence files are stored.
+3. `--pwd` is the location of the InDelible directory **within** the Singularity image. This part of the command line **must not** be changed.
+4.  `--r` and `--d` point to reference files within the Singularity image. The other references files are also located here, but  
 
 ## Usage
 
