@@ -282,7 +282,7 @@ for running Singularity itself.
     --cleanenv \
     --bind /path/to/local/storage/device/ \
     --pwd /usr/src/app/Indelible/ \
-    /path/to/mercury_indelible_6dbe32d.sif \
+    /path/to/indelible_singularity_container.sif \
     indelible.py complete \
     --i /path/to/local/storage/device/proband.cram \
     --o /path/to/local/storage/device/ \
@@ -300,7 +300,10 @@ Additional notes on the above command:
 3. `--pwd` is the location of the InDelible directory **within** the Singularity image. This part of the command line **must not** be changed.
 4.  `--r` and `--d` point to reference files within the Singularity image. The other references files are also located within the Singularity instance at `4.  `--r` and `--d` point to reference files within the Singularity image. Prebuilt references files are also located within the Singularity instance at /usr/src/app/Indelible/data`.
   
-**Big Note**: If  
+**Big Note**: If using InDelible for anything beyond the built-in data files (i.e. on files aligned to Hg38 rather than Hg37), 
+you will need to generate a local version of the `config.yml` file, edit it to point to your own resource files, and then point 
+indelible.py to it with `--config /path/to/config.new.yml`. The paths in `config.new.yml` can reflect a mix of both local paths and 
+paths already within the Singularity instance.
 
 ## Usage
 
