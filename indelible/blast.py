@@ -42,7 +42,6 @@ def generate_fasta(scored_file):
     output_fasta.close()
     return scored_file + ".fasta"
 
-
 def run_blast(fasta_file, db, WINDOWMASKERdb=None):
     blastn_clin = NcbiblastnCommandline(query=fasta_file, db=db, word_size=15,
                                         max_target_seqs=100, penalty=-3, evalue=0.001, reward=1,
@@ -75,7 +74,6 @@ def blast_fasta(fasta_file, output_path, db, WINDOWMASKERdb=None):
     hits = run_blast(fasta_file, db, WINDOWMASKERdb)
 
     for seq in hits:
-        msg = 'query {} has {} hits'.format(seq, len(hits[seq]))
         if len(hits[seq]) < 10:
             for result in hits[seq]:
                 res = {}

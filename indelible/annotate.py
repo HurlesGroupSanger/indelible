@@ -38,6 +38,79 @@ def create_exon_intervaltree(exon_file):
 
     return exons
 
+def create_hit_tree(scored_file):
+
+    hits = {}
+
+    for line in csv.DictReader(open(scored_file), delimiter="\t"):
+
+        if line['chrom'] in hits:
+            current_position = int(line['position'])
+            hits.get(line['chrom']).addi(current_position,current_position+1, '')
+
+        else:
+            current_tree = IntervalTree()
+            current_position = int(line['position'])
+            current_tree.addi(current_position,current_position+1, '')
+            hits[line['chrom']] = current_tree
+
+    return hits
+
+def query_hit_tree(v, hit_tree):
+
+    coord_pattern = re.compile("([0-9XY]{1,2}):(\d+)\-(\d+)")
+    coord_match = coord_pattern.match(v["blast_hit"])
+
+    v['otherside'] = None
+    v['sv_type'] = None
+
+    if coord_match:
+
+        q_chrom = coord_match.group(1)
+        q_start = int(coord_match.group(2))
+        q_end = int(coord_match.group(3))
+
+        overlaps = hit_tree.get(q_chrom).overlap(q_start - 10, q_end + 10)
+
+        for hits in overlaps:
+
+            if hits[0] != v['position']:
+
+                found_pos = hits[0]
+                v["otherside"] = q_chrom + ":" + str(found_pos)
+
+                if q_chrom != v['chrom']:
+
+                    v["svtype"] = "TRANS_SEGDUP"
+
+                else:
+
+                    ## Check for overlap to right of found breakpoint:
+                    left_check = found_pos
+                    right_check = found_pos + 10
+                    overlap_right = (min(right_check, q_end) - max(left_check, q_start)) / 10
+
+                    ## Check for overlap to left of found breakpoint:
+                    left_check = found_pos - 10
+                    right_check = found_pos
+                    overlap_left = (min(right_check, q_end) - max(left_check, q_start)) / 10
+
+                    if found_pos < int(v['position']):
+                        if overlap_right > overlap_left:
+                            v["sv_type"] = "DUP"
+                        elif overlap_right < overlap_left:
+                            v["sv_type"] = "DEL"
+                        else:
+                            v["sv_type"] = "UNK"
+                    else:
+                        if overlap_right > overlap_left:
+                            v["sv_type"] = "DEL"
+                        elif overlap_right < overlap_left:
+                            v["sv_type"] = "DUP"
+                        else:
+                            v["sv_type"] = "UNK"
+
+    return v
 
 def create_gene_synonym_hash(hgnc_synonyms):
     syn_hash = {}
@@ -194,7 +267,7 @@ def create_blast_hash(scored_file):
     return h
 
 
-# THIS IS POSSIBLY THE UGLIEST CODE I'VE EVER WRITTEN
+# THIS IS POSSIBLY THE UGLIEST CODE I'VE EVER WRITTEN - Alejandro ;)
 def annotate_blast(hit, blast_hash, ddg2p_db, constraint_hash, hgnc_db):
     key = hit["chrom"] + "_" + hit["position"] + "_" + str(len(hit["seq_longest"]))
     if key in blast_hash:
@@ -253,7 +326,7 @@ def annotate(input_path, output_path, database, config):
     # Prepare outputfile
     new_fieldnames = scored_file.fieldnames
     new_fieldnames.extend(("ddg2p", 'hgnc', 'hgnc_constrained', "exonic", "transcripts", "maf",
-                           "blast_hit", "blast_strand", "blast_identity", "blast_dist", "blast_hgnc"))
+                           "blast_hit", "blast_strand", "blast_identity", "blast_dist", "blast_hgnc","otherside","sv_type"))
     output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=new_fieldnames, delimiter="\t", lineterminator="\n")
     output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=scored_file.fieldnames, delimiter="\t", lineterminator="\n")
     output_file.writeheader()
@@ -265,6 +338,7 @@ def annotate(input_path, output_path, database, config):
     constraint_hash = create_exac_constraint_hash(config)
     ddg2p_db = read_ddg2p(config['ddg2p_bed'])
     hgnc_db = read_hgnc_genes(config['hgnc_file'])
+    hit_tree = create_hit_tree(input_path)
 
     for v in scored_file:
 
@@ -304,5 +378,40 @@ def annotate(input_path, output_path, database, config):
             v["maf"] = db[chrom][pos]
         else:
             v["maf"] = "NA"
+
+        ## Do SV detection and identification of 5'/3' breakpoints here:
+        ## Calling SV Type Possibilities:
+        ##  DEL - SR blast should be INSIDE of the variant bps
+        ##  DUP - SR blast should be OUTSIDE of the variant bps
+        ##  INS - Not sure what this would look like and not sure if actually possible
+        ##  MEI - should have repeats hit (not handled here)
+        ##  CPLX - Not sure how to resolve this with available information
+        ##  INV - SR should be on both sides of BP (not sure if information for this is available in current framework)
+        ##  TRANS_SEGDUP - SR should match to another chr. I don't think we can reliably say if it's a Segdup or Trans w/o more info
+        ##  UNK - can't determine from available information
+        if v["blast_hit"] == "repeats_hit": ## MEIs
+
+            key = v["chrom"] + "_" + v["position"] + "_" + str(len(v["seq_longest"]))
+            blast_hit = bhash[key]["repeats"]
+            print(blast_hit)
+            min_score = float(1.0)
+            curr_hit = None
+
+            ## This will effectively take the first hit if all of the values are the same, which should be roughly the same call anyway...
+            ## Need to warn that family information for MEIs in unlikely to be accurate
+            for hit in blast_hit:
+                e_val = float(hit["evalue"])
+                if e_val < min_score:
+                    min_score = e_val
+                    curr_hit = hit["target_chrom"]
+
+            v["otherside"] = "NA"
+            v["sv_type"] = "INS_" + curr_hit
+
+        elif v["blast_hit"] != "no_hit" or v["blast_hit"] != "multi_hit" or v["blast_hit"] != "repeats_hit": ## DELs/DUPs/SEGDUPs/TRANSLOCATIONS
+            v = query_hit_tree(v, hit_tree)
+        else: ## Unknown
+            v["otherside"] = "NA"
+            v["otherside"] = "Unknown"
 
         output_file.writerow(v)
