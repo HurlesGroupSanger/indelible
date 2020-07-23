@@ -393,7 +393,6 @@ def annotate(input_path, output_path, database, config):
 
             key = v["chrom"] + "_" + v["position"] + "_" + str(len(v["seq_longest"]))
             blast_hit = bhash[key]["repeats"]
-            print(blast_hit)
             min_score = float(1.0)
             curr_hit = None
 
