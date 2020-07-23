@@ -46,12 +46,12 @@ def create_hit_tree(scored_file):
 
         if line['chrom'] in hits:
             current_position = int(line['position'])
-            hits.get(line['chrom']).addi(current_position,current_position+1, line['blast_hit'])
+            hits.get(line['chrom']).addi(current_position,current_position+1, line["seq_longest"])
 
         else:
             current_tree = IntervalTree()
             current_position = int(line['position'])
-            current_tree.addi(current_position,current_position+1, line['blast_hit'])
+            current_tree.addi(current_position,current_position+1, line["seq_longest"])
             hits[line['chrom']] = current_tree
 
     return hits
@@ -73,14 +73,14 @@ def search_tree(coord, hit_tree):
         else:
             overlaps = hit_tree.get(q_chrom).overlap(q_end - 30, q_start + 30)
 
-        return {"chrom": q_chrom, "q_start": q_start, "q_end": q_end, "overlaps": overlaps}
+        return {"q_chrom": q_chrom, "q_start": q_start, "q_end": q_end, "overlaps": overlaps}
 
     else:
 
-        return {"chrom": None, "q_start": None, "q_end": None, "overlaps": None}
+        return {"q_chrom": None, "q_start": None, "q_end": None, "overlaps": None}
 
 
-def determine_sv_type(v, hit_tree):
+def determine_sv_type(v, hit_tree, bhash, ddg2p_db, constraint_hash, hgnc_db):
 
     v['otherside'] = "NA"
     v['sv_type'] = "UNK"
@@ -90,48 +90,52 @@ def determine_sv_type(v, hit_tree):
 
     for hits in overlaps["overlaps"]:
 
+        # Check to make sure we haven't just turned up the same breakpoint
         if hits[0] != act_position:
 
             # Check the reciprocal overlap as well...
-            recip_overlaps = search_tree(hits[2], hit_tree)
+            # Need to search the blast tree for the reverse hit. Not ideal but the easiest way to do this I think.
+            rev_hit = annotate_blast({"chrom": overlaps["q_chrom"], "position": hits[0], "seq_longest": hits[2]}, bhash, ddg2p_db, constraint_hash, hgnc_db)
+            recip_overlaps = search_tree(rev_hit["blast_hit"], hit_tree)
             found_self = False
             for recip_hits in recip_overlaps["overlaps"]:
                 if recip_hits[0] == act_position:
                     found_self = True
 
-            found_pos = hits[0]
-            v["otherside"] = overlaps["chrom"] + ":" + str(found_pos)
+            if found_self is True:
+                found_pos = hits[0]
+                v["otherside"] = overlaps["q_chrom"] + ":" + str(found_pos)
 
-            if overlaps["chrom"] != v['chrom']:
+                if overlaps["q_chrom"] != v['chrom']:
 
-                v["sv_type"] = "TRANS_SEGDUP"
+                    v["sv_type"] = "TRANS_SEGDUP"
 
-            else:
-
-                ## Check for overlap to right of found breakpoint:
-                left_check = found_pos
-                right_check = found_pos + 10
-                overlap_right = (min(right_check, overlaps["q_end"]) - max(left_check, overlaps["q_start"])) / 10
-
-                ## Check for overlap to left of found breakpoint:
-                left_check = found_pos - 10
-                right_check = found_pos
-                overlap_left = (min(right_check, overlaps["q_end"]) - max(left_check, overlaps["q_start"])) / 10
-
-                if found_pos < int(v['position']):
-                    if overlap_right > overlap_left:
-                        v["sv_type"] = "DUP"
-                    elif overlap_right < overlap_left:
-                        v["sv_type"] = "DEL"
-                    else:
-                        v["sv_type"] = "UNK"
                 else:
-                    if overlap_right > overlap_left:
-                        v["sv_type"] = "DEL"
-                    elif overlap_right < overlap_left:
-                        v["sv_type"] = "DUP"
+
+                    ## Check for overlap to right of found breakpoint:
+                    left_check = found_pos
+                    right_check = found_pos + 10
+                    overlap_right = (min(right_check, overlaps["q_end"]) - max(left_check, overlaps["q_start"])) / 10
+
+                    ## Check for overlap to left of found breakpoint:
+                    left_check = found_pos - 10
+                    right_check = found_pos
+                    overlap_left = (min(right_check, overlaps["q_end"]) - max(left_check, overlaps["q_start"])) / 10
+
+                    if found_pos < int(v['position']):
+                        if overlap_right > overlap_left:
+                            v["sv_type"] = "DUP"
+                        elif overlap_right < overlap_left:
+                            v["sv_type"] = "DEL"
+                        else:
+                            v["sv_type"] = "UNK"
                     else:
-                        v["sv_type"] = "UNK"
+                        if overlap_right > overlap_left:
+                            v["sv_type"] = "DEL"
+                        elif overlap_right < overlap_left:
+                            v["sv_type"] = "DUP"
+                        else:
+                            v["sv_type"] = "UNK"
 
     return v
 
@@ -431,7 +435,7 @@ def annotate(input_path, output_path, database, config):
             v["sv_type"] = "INS_" + curr_hit
 
         elif v["blast_hit"] != "no_hit" and v["blast_hit"] != "multi_hit": # DELs/DUPs/SEGDUPs/TRANSLOCATIONS
-            v = determine_sv_type(v, hit_tree)
+            v = determine_sv_type(v, hit_tree, bhash, ddg2p_db, constraint_hash, hgnc_db)
 
         else: # Unknown
             v["otherside"] = "NA"
