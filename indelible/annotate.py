@@ -77,7 +77,7 @@ def search_tree(coord, hit_tree):
 
     else:
 
-        return {"q_chrom": None, "q_start": None, "q_end": None, "overlaps": None}
+        return {"q_chrom": None, "q_start": None, "q_end": None, "overlaps": {}}
 
 
 def determine_sv_type(v, hit_tree, bhash, ddg2p_db, constraint_hash, hgnc_db):
