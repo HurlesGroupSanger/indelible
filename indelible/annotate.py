@@ -396,7 +396,7 @@ def annotate(input_path, output_path, database, config):
             min_score = float(1.0)
             curr_hit = None
 
-            ## This will effectively take the first hit if all of the values are the same, which should be roughly the same call anyway...
+            ## This will effectively take the first hit if all of the values are the same, which should be roughly the same repeat type anyway...
             ## Need to warn that family information for MEIs in unlikely to be accurate
             for hit in blast_hit:
                 e_val = float(hit["evalue"])
@@ -407,10 +407,10 @@ def annotate(input_path, output_path, database, config):
             v["otherside"] = "NA"
             v["sv_type"] = "INS_" + curr_hit
 
-        elif v["blast_hit"] != "no_hit" or v["blast_hit"] != "multi_hit" or v["blast_hit"] != "repeats_hit": ## DELs/DUPs/SEGDUPs/TRANSLOCATIONS
+        elif v["blast_hit"] != "no_hit" or v["blast_hit"] != "multi_hit": ## DELs/DUPs/SEGDUPs/TRANSLOCATIONS
             v = query_hit_tree(v, hit_tree)
         else: ## Unknown
             v["otherside"] = "NA"
-            v["sv_type"] = "Unknown"
+            v["sv_type"] = "UNK"
 
         output_file.writerow(v)
