@@ -379,16 +379,17 @@ def annotate(input_path, output_path, database, config):
         else:
             v["maf"] = "NA"
 
-        ## Do SV detection and identification of 5'/3' breakpoints here:
-        ## Calling SV Type Possibilities:
-        ##  DEL - SR blast should be INSIDE of the variant bps
-        ##  DUP - SR blast should be OUTSIDE of the variant bps
-        ##  INS - Not sure what this would look like and not sure if actually possible
-        ##  MEI - should have repeats hit (not handled here)
-        ##  CPLX - Not sure how to resolve this with available information
-        ##  INV - SR should be on both sides of BP (not sure if information for this is available in current framework)
-        ##  TRANS_SEGDUP - SR should match to another chr. I don't think we can reliably say if it's a Segdup or Trans w/o more info
-        ##  UNK - can't determine from available information
+        # Do SV detection and identification of 5'/3' breakpoints here:
+        # Calling SV Type Possibilities:
+        #  DEL - SR blast should be INSIDE of the variant bps
+        #  DUP - SR blast should be OUTSIDE of the variant bps
+        #  INS - Not sure what this would look like and not sure if actually possible
+        #  MEI - should have repeats hit (not handled here)
+        #  CPLX - Not sure how to resolve this with available information
+        #  INV - SR should be on both sides of BP (not sure if information for this is available in current framework)
+        #       Also often come with duplications on both 5' and 3' flanks as well.
+        #  TRANS_SEGDUP - SR should match to another chr. I don't think we can reliably say if it's a Segdup or Trans w/o more info
+        #  UNK - can't determine from available information
         if v["blast_hit"] == "repeats_hit": ## MEIs
 
             key = v["chrom"] + "_" + v["position"] + "_" + str(len(v["seq_longest"]))
@@ -396,8 +397,8 @@ def annotate(input_path, output_path, database, config):
             min_score = float(1.0)
             curr_hit = None
 
-            ## This will effectively take the first hit if all of the values are the same, which should be roughly the same repeat type anyway...
-            ## Need to warn that family information for MEIs in unlikely to be accurate
+            # This will effectively take the first hit if all of the values are the same, which should be roughly the same repeat type anyway...
+            # Need to warn that family information for MEIs in unlikely to be accurate
             for hit in blast_hit:
                 e_val = float(hit["evalue"])
                 if e_val < min_score:
@@ -407,9 +408,10 @@ def annotate(input_path, output_path, database, config):
             v["otherside"] = "NA"
             v["sv_type"] = "INS_" + curr_hit
 
-        elif v["blast_hit"] != "no_hit" or v["blast_hit"] != "multi_hit": ## DELs/DUPs/SEGDUPs/TRANSLOCATIONS
+        elif v["blast_hit"] != "no_hit" or v["blast_hit"] != "multi_hit": # DELs/DUPs/SEGDUPs/TRANSLOCATIONS
             v = query_hit_tree(v, hit_tree)
-        else: ## Unknown
+
+        else: # Unknown
             v["otherside"] = "NA"
             v["sv_type"] = "UNK"
 
