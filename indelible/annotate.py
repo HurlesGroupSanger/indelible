@@ -70,7 +70,11 @@ def query_hit_tree(v, hit_tree):
         q_start = int(coord_match.group(2))
         q_end = int(coord_match.group(3))
 
-        overlaps = hit_tree.get(q_chrom).overlap(q_start - 10, q_end + 10)
+        # Blast will report a start > stop if on "-" strand - have to check that here
+        if q_start < q_end:
+            overlaps = hit_tree.get(q_chrom).overlap(q_start - 10, q_end + 10)
+        else:
+            overlaps = hit_tree.get(q_chrom).overlap(q_end - 10, q_start + 10)
 
         for hits in overlaps:
 
