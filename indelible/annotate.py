@@ -46,23 +46,20 @@ def create_hit_tree(scored_file):
 
         if line['chrom'] in hits:
             current_position = int(line['position'])
-            hits.get(line['chrom']).addi(current_position,current_position+1, '')
+            hits.get(line['chrom']).addi(current_position,current_position+1, line['blast_hit'])
 
         else:
             current_tree = IntervalTree()
             current_position = int(line['position'])
-            current_tree.addi(current_position,current_position+1, '')
+            current_tree.addi(current_position,current_position+1, line['blast_hit'])
             hits[line['chrom']] = current_tree
 
     return hits
 
-def query_hit_tree(v, hit_tree):
+def search_tree(coord, hit_tree):
 
     coord_pattern = re.compile("([0-9XY]{1,2}):(\d+)\-(\d+)")
-    coord_match = coord_pattern.match(v["blast_hit"])
-
-    v['otherside'] = "NA"
-    v['sv_type'] = "UNK"
+    coord_match = coord_pattern.match(coord)
 
     if coord_match:
 
@@ -72,47 +69,69 @@ def query_hit_tree(v, hit_tree):
 
         # Blast will report a start > stop if on "-" strand - have to check that here
         if q_start < q_end:
-            overlaps = hit_tree.get(q_chrom).overlap(q_start - 10, q_end + 10)
+            overlaps = hit_tree.get(q_chrom).overlap(q_start - 30, q_end + 30)
         else:
-            overlaps = hit_tree.get(q_chrom).overlap(q_end - 10, q_start + 10)
+            overlaps = hit_tree.get(q_chrom).overlap(q_end - 30, q_start + 30)
 
-        for hits in overlaps:
+        return {"chrom": q_chrom, "q_start": q_start, "q_end": q_end, "overlaps": overlaps}
 
-            if hits[0] != v['position']:
+    else:
 
-                found_pos = hits[0]
-                v["otherside"] = q_chrom + ":" + str(found_pos)
+        return {"chrom": None, "q_start": None, "q_end": None, "overlaps": None}
 
-                if q_chrom != v['chrom']:
 
-                    v["sv_type"] = "TRANS_SEGDUP"
+def determine_sv_type(v, hit_tree):
 
-                else:
+    v['otherside'] = "NA"
+    v['sv_type'] = "UNK"
+    act_position = int(v['position'])
 
-                    ## Check for overlap to right of found breakpoint:
-                    left_check = found_pos
-                    right_check = found_pos + 10
-                    overlap_right = (min(right_check, q_end) - max(left_check, q_start)) / 10
+    overlaps = search_tree(v["blast_hit"], hit_tree)
 
-                    ## Check for overlap to left of found breakpoint:
-                    left_check = found_pos - 10
-                    right_check = found_pos
-                    overlap_left = (min(right_check, q_end) - max(left_check, q_start)) / 10
+    for hits in overlaps["overlaps"]:
 
-                    if found_pos < int(v['position']):
-                        if overlap_right > overlap_left:
-                            v["sv_type"] = "DUP"
-                        elif overlap_right < overlap_left:
-                            v["sv_type"] = "DEL"
-                        else:
-                            v["sv_type"] = "UNK"
+        if hits[0] != act_position:
+
+            # Check the reciprocal overlap as well...
+            recip_overlaps = search_tree(hits[2], hit_tree)
+            found_self = False
+            for recip_hits in recip_overlaps["overlaps"]:
+                if recip_hits[0] == act_position:
+                    found_self = True
+
+            found_pos = hits[0]
+            v["otherside"] = overlaps["chrom"] + ":" + str(found_pos)
+
+            if overlaps["chrom"] != v['chrom']:
+
+                v["sv_type"] = "TRANS_SEGDUP"
+
+            else:
+
+                ## Check for overlap to right of found breakpoint:
+                left_check = found_pos
+                right_check = found_pos + 10
+                overlap_right = (min(right_check, overlaps["q_end"]) - max(left_check, overlaps["q_start"])) / 10
+
+                ## Check for overlap to left of found breakpoint:
+                left_check = found_pos - 10
+                right_check = found_pos
+                overlap_left = (min(right_check, overlaps["q_end"]) - max(left_check, overlaps["q_start"])) / 10
+
+                if found_pos < int(v['position']):
+                    if overlap_right > overlap_left:
+                        v["sv_type"] = "DUP"
+                    elif overlap_right < overlap_left:
+                        v["sv_type"] = "DEL"
                     else:
-                        if overlap_right > overlap_left:
-                            v["sv_type"] = "DEL"
-                        elif overlap_right < overlap_left:
-                            v["sv_type"] = "DUP"
-                        else:
-                            v["sv_type"] = "UNK"
+                        v["sv_type"] = "UNK"
+                else:
+                    if overlap_right > overlap_left:
+                        v["sv_type"] = "DEL"
+                    elif overlap_right < overlap_left:
+                        v["sv_type"] = "DUP"
+                    else:
+                        v["sv_type"] = "UNK"
 
     return v
 
@@ -331,7 +350,6 @@ def annotate(input_path, output_path, database, config):
     new_fieldnames = scored_file.fieldnames
     new_fieldnames.extend(("ddg2p", 'hgnc', 'hgnc_constrained', "exonic", "transcripts", "maf",
                            "blast_hit", "blast_strand", "blast_identity", "blast_dist", "blast_hgnc","otherside","sv_type"))
-    output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=new_fieldnames, delimiter="\t", lineterminator="\n")
     output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=scored_file.fieldnames, delimiter="\t", lineterminator="\n")
     output_file.writeheader()
 
@@ -413,7 +431,7 @@ def annotate(input_path, output_path, database, config):
             v["sv_type"] = "INS_" + curr_hit
 
         elif v["blast_hit"] != "no_hit" and v["blast_hit"] != "multi_hit": # DELs/DUPs/SEGDUPs/TRANSLOCATIONS
-            v = query_hit_tree(v, hit_tree)
+            v = determine_sv_type(v, hit_tree)
 
         else: # Unknown
             v["otherside"] = "NA"
