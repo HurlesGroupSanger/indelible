@@ -95,7 +95,9 @@ def determine_sv_type(v, hit_tree, bhash, ddg2p_db, constraint_hash, hgnc_db):
 
             # Check the reciprocal overlap as well...
             # Need to search the blast tree for the reverse hit. Not ideal but the easiest way to do this I think.
-            rev_hit = annotate_blast({"chrom": overlaps["q_chrom"], "position": hits[0], "seq_longest": hits[2]}, bhash, ddg2p_db, constraint_hash, hgnc_db)
+            print(hits[2])
+            rev_hit = {"chrom": overlaps["q_chrom"], "position": hits[0], "seq_longest": hits[2]}
+            rev_hit = annotate_blast(rev_hit, bhash, ddg2p_db, constraint_hash, hgnc_db)
             recip_overlaps = search_tree(rev_hit["blast_hit"], hit_tree)
             found_self = False
             for recip_hits in recip_overlaps["overlaps"]:
