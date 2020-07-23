@@ -411,6 +411,6 @@ def annotate(input_path, output_path, database, config):
             v = query_hit_tree(v, hit_tree)
         else: ## Unknown
             v["otherside"] = "NA"
-            v["otherside"] = "Unknown"
+            v["sv_type"] = "Unknown"
 
         output_file.writerow(v)
