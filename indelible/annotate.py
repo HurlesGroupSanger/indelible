@@ -390,7 +390,7 @@ def annotate(input_path, output_path, database, config):
         #       Also often come with duplications on both 5' and 3' flanks as well.
         #  TRANS_SEGDUP - SR should match to another chr. I don't think we can reliably say if it's a Segdup or Trans w/o more info
         #  UNK - can't determine from available information
-        if v["blast_hit"] == "repeats_hit": ## MEIs
+        if v["blast_hit"] == "repeats_hit": # Typically MEIs
 
             key = v["chrom"] + "_" + v["position"] + "_" + str(len(v["seq_longest"]))
             blast_hit = bhash[key]["repeats"]
@@ -408,7 +408,7 @@ def annotate(input_path, output_path, database, config):
             v["otherside"] = "NA"
             v["sv_type"] = "INS_" + curr_hit
 
-        elif v["blast_hit"] != "no_hit" or v["blast_hit"] != "multi_hit": # DELs/DUPs/SEGDUPs/TRANSLOCATIONS
+        elif v["blast_hit"] != "no_hit" and v["blast_hit"] != "multi_hit": # DELs/DUPs/SEGDUPs/TRANSLOCATIONS
             v = query_hit_tree(v, hit_tree)
 
         else: # Unknown
