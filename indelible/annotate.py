@@ -85,7 +85,7 @@ def query_hit_tree(v, hit_tree):
 
                 if q_chrom != v['chrom']:
 
-                    v["svtype"] = "TRANS_SEGDUP"
+                    v["sv_type"] = "TRANS_SEGDUP"
 
                 else:
 
