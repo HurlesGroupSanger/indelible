@@ -61,8 +61,8 @@ def query_hit_tree(v, hit_tree):
     coord_pattern = re.compile("([0-9XY]{1,2}):(\d+)\-(\d+)")
     coord_match = coord_pattern.match(v["blast_hit"])
 
-    v['otherside'] = None
-    v['sv_type'] = None
+    v['otherside'] = "NA"
+    v['sv_type'] = "UNK"
 
     if coord_match:
 
