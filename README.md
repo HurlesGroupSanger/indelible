@@ -514,6 +514,8 @@ The primary output from InDelible is the output file from the [_denovo_](#6-deno
 |blast_identity| Percent identity of blast_hit |
 |blast_dist| Distance to blast_hit from 'position' |
 |blast_hgnc| Gene overlap of blast_hit |
+|otherside| Coordinate of likely 5'/3' breakpoint if present |
+|sv_type| If otherside found or blast_hit = "repeats_hit" potential SV type. Possible values are DUP (duplication), DEL (deletion), INS_<CLASS> (mobile element insertion), or SEGDUP_TRANS (segmental duplication or translocation). For INS, this will list the likely type of templated insertion from the *.fasta.hits_repeats file. SEGDUP_TRANS represents either a segmenetal duplication or translocation. As we cannot discern with short read data between a SEGDUP or translocation, we list both here. |
 |mum_sr| Number of SRs in the bam/cram provided to --m with the same 'position' |
 |dad_sr| Number of SRs in the bam/cram provided to --d with the same 'position' |
 |mum_indel_context| Number of reads in the bam/cram provided to --m with cigar 'I/D' values |
