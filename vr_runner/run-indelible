@@ -39,6 +39,9 @@ sub new
             # List of bams
             bams => undef,
 
+            # config file
+            config => undef,
+
             # Path to reference genome
             ref => '] .$$self{ref}. q[',
 
@@ -59,6 +62,7 @@ sub new
         "   -b, --bams-list <file>      File with bam files\n" .
         "   -o, --outdir <dir>          Output directory\n" .
         "   -d, --database              Path to a precomputed MAF database [null]\n" .
+        "   -c, --config                Path to config file"
         "\n";
 
     return $self;
@@ -72,10 +76,12 @@ sub parse_args
         if ( $arg eq '-b' or $arg eq '--bams-list' ) { $$self{bams}=shift(@ARGV); next; }
         if ( $arg eq '-o' or $arg eq '--outdir' ) { $$self{outdir}=shift(@ARGV); next; }
         if ( $arg eq '-d' or $arg eq '--database' ) { $$self{database}=shift(@ARGV); next; }
+        if ( $arg eq '-c' or $arg eq '--config' ) { $$self{config}=shift(@ARGV); next; }
         $self->throw();
     }
     if ( !defined($$self{bams}) ) { $self->throw("Expected the -b option."); }
     if ( !defined($$self{outdir}) ) { $self->throw("Expected the -o option."); }
+    if ( !defined($$self{config}) ) { $self->throw("Expected the -c option."); }
 
 	$self->set_temp_dir($$self{outdir});
 
@@ -208,7 +214,7 @@ sub run_fetch
 {
 	
 	my ($self,$outfile,$bam) = @_;
-	my $cmd = $$self{indelible} . " fetch --i " . $bam . " --o $outfile.part";
+	my $cmd = $$self{indelible} . " fetch --i " . $bam . " --o $outfile.part --config $$self{config}";
 	$self->cmd($cmd);
 	$cmd = "mv $outfile.part $outfile";
 	$self->cmd($cmd);
@@ -219,7 +225,7 @@ sub run_aggregate
 {
 	
 	my ($self,$outfile,$infile,$bam) = @_;
-	my $cmd = $$self{indelible} . " aggregate --i $infile --b $bam --r $$self{ref} --o $outfile.part";
+	my $cmd = $$self{indelible} . " aggregate --i $infile --b $bam --r $$self{ref} --o $outfile.part --config $$self{config}";
 	$self->cmd($cmd);
 	$cmd = "mv $outfile.part $outfile";
 	$self->cmd($cmd);
@@ -229,7 +235,7 @@ sub run_score
 {
 	
 	my ($self,$outfile,$infile) = @_;
-	my $cmd = $$self{indelible} . " score --i $infile --o $outfile.part";
+	my $cmd = $$self{indelible} . " score --i $infile --o $outfile.part --config $$self{config}";
 	$self->cmd($cmd);
 	$cmd = "mv $outfile.part $outfile";
 	$self->cmd($cmd);
@@ -241,7 +247,7 @@ sub run_db
 	
 	my ($self, $outfile, $fofn) = @_;
 	
-	my $cmd = $$self{indelible} . " database --f " . $fofn . " --o " . $outfile . ".part";
+	my $cmd = $$self{indelible} . " database --f " . $fofn . " --o " . $outfile . ".part --config $$self{config}";
 	$self->cmd($cmd);
 	$cmd = "mv $outfile.part $outfile";
 	$self->cmd($cmd);
@@ -252,7 +258,7 @@ sub run_blast
 {
 	
 	my ($self,$outfile,$infile) = @_;
-	my $cmd = $$self{indelible} . " blast --i $infile";
+	my $cmd = $$self{indelible} . " blast --i $infile --config $$self{config}";
 	$self->cmd($cmd);
 	$cmd = "touch $outfile";
 	$self->cmd($cmd);
@@ -263,7 +269,7 @@ sub run_annotate
 {
 	
 	my ($self,$outfile,$infile,$db_file) = @_;
-	my $cmd = $$self{indelible} . " annotate --i $infile --o $outfile.part --d $db_file";
+	my $cmd = $$self{indelible} . " annotate --i $infile --o $outfile.part --d $db_file --config $$self{config}";
 	$self->cmd($cmd);
 	$cmd = "mv $outfile.part $outfile";
 	$self->cmd($cmd);
@@ -277,13 +283,13 @@ sub run_denovo
 	
 	my $cmd;
 	if ($mum eq "-" && $dad eq "-") {
-		$cmd = $$self{indelible} . " denovo --c $infile --o $outfile.part";
+		$cmd = $$self{indelible} . " denovo --c $infile --o $outfile.part --config $$self{config}";
 	} elsif ($mum ne "-" && $dad eq "-") {
-		$cmd = $$self{indelible} . " denovo --c $infile --m " . $mum . " --o $outfile.part";
+		$cmd = $$self{indelible} . " denovo --c $infile --m " . $mum . " --o $outfile.part --config $$self{config}";
 	} elsif ($mum eq "-" && $dad ne "-") {
-		$cmd = $$self{indelible} . " denovo --c $infile --p " . $dad . " --o $outfile.part";
+		$cmd = $$self{indelible} . " denovo --c $infile --p " . $dad . " --o $outfile.part --config $$self{config}";
 	} else {
-		$cmd = $$self{indelible} . " denovo --c $infile --m " . $mum . " --p " . $dad . " --o $outfile.part";
+		$cmd = $$self{indelible} . " denovo --c $infile --m " . $mum . " --p " . $dad . " --o $outfile.part --config $$self{config}";
 	}
 	$self->cmd($cmd);
 	$cmd = "mv $outfile.part $outfile";

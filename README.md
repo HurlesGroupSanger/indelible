@@ -75,7 +75,7 @@ reads that InDelible has to process would likely result in significantly increas
     - InDelible was designed as part of the Deciphering Developmental Disorders (DDD) study and, as such, was targeted to
     genes known to contribute to dominant developmental disorders. We have provided for the possibility that end-users may
     want to identify variants within other gene sets, but have not specifically performed variant discovery among a patient
-    cohort to test this functionality
+    cohort to test this functionality.
     
 3. _Other Genetic Architectures_
     - While _de novo_ variants play an outsized role in the genetic architecture of DD, recessive causes of DD are likewise 
@@ -91,7 +91,7 @@ reads that InDelible has to process would likely result in significantly increas
 ### How to Cite InDelible
 
 
-Eugene J. Gardner, Alejandro Sifrim, Sarah J. Lindsay, Elena Prigmore, Diana Rajan, Giuseppe Gallone, Ruth Y. Eberhardt, Caroline F. Wright, David R. FitzPatrick, Helen V. Firth, Matthew E. Hurles.
+Eugene J. Gardner, Alejandro Sifrim, Sarah J. Lindsay, Elena Prigmore, Diana Rajan, Petr Danecek, Giuseppe Gallone, Ruth Y. Eberhardt, Hilary C. Martin, Caroline F. Wright, David R. FitzPatrick, Helen V. Firth, Matthew E. Hurles.
 **InDelible: Detection and Evaluation of Clinically-relevant Structural Variation from Whole Exome Sequencing.** medRxiv (2020).
 
 ## Installation
@@ -116,8 +116,8 @@ To install InDelible:
 1. Clone the git repo:
 
 ```
-git clone https://github.com/eugenegardner/Indelible.git
-cd Indelible/
+git clone https://github.com/eugenegardner/indelible.git
+cd indelible/
 ```
 
 2. Create a virtual environment and activate it:
