@@ -26,41 +26,41 @@ parser = argparse.ArgumentParser(prog='indelible',description="InDelible v" + ve
 subparsers = parser.add_subparsers(help='One of the following commands:',dest="command",metavar="<command>")
 
 subparser = subparsers.add_parser('fetch', help='fetch reads from BAM file')
-subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=False, dest="config_path", default = None)
+subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=True, dest="config_path", default = None)
 subparser.add_argument('--i', help='path to input BAM file', metavar="<input_path>", required=True, dest="input_path")
 subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 
 subparser = subparsers.add_parser('aggregate', help='aggregate information per position')
-subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=False, dest="config_path", default = None)
+subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=True, dest="config_path", default = None)
 subparser.add_argument('--i', help='path to input file (output of fetch command)', metavar="<input_path>", required=True, dest="input_path")
 subparser.add_argument('--b', help='path to input bam file which was used in the fetch command', metavar="<input_bam>", required=True, dest="input_bam")
 subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 subparser.add_argument('--r', help='path to reference genome', metavar="<reference_path>", required=True, dest="reference_path")
 
 subparser = subparsers.add_parser('score', help='score positions using Random Forest model')
-subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=False, dest="config_path", default = None)
+subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=True, dest="config_path", default = None)
 subparser.add_argument('--i', help='input file (output of aggregate command)', metavar="<input_path>", required=True, dest="input_path")
 subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 
 subparser = subparsers.add_parser('blast', help='blast clipped sequences')
-subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=False, dest="config_path", default = None)
+subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=True, dest="config_path", default = None)
 subparser.add_argument('--i', help='input file (output of score command)', metavar="<input_path>", required=True, dest="input_path")
 
 subparser = subparsers.add_parser('annotate', help='annotate positions with additional information')
-subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=False, dest="config_path", default = None)
+subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=True, dest="config_path", default = None)
 subparser.add_argument('--i', help='input file (output of score command)', metavar="<input_path>", required=True, dest="input_path")
 subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 subparser.add_argument('--d', help='path to indelible frequency database', metavar="<database>", required=True, dest="database")
 
 subparser = subparsers.add_parser('denovo', help='searches for de novo events')
-subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=False, dest="config_path", default = None)
+subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=True, dest="config_path", default = None)
 subparser.add_argument('--c', help='path to scored/annotated calls in the child', metavar="<child_indelible_path>", required=True, dest="child_input")
 subparser.add_argument('--m', help='path to maternal BAM file', metavar="<mother_bam_path>", required=False, dest="mother_bam")
 subparser.add_argument('--p', help='path to paternal BAM file', metavar="<father_bam_path>", required=False, dest="father_bam")
 subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 
 subparser = subparsers.add_parser('complete', help='Performs the complete Indelible analysis')
-subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=False, dest="config_path", default = None)
+subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=True, dest="config_path", default = None)
 subparser.add_argument('--i', help='path to input BAM file', metavar="<input_path>", required=True, dest="input_path")
 subparser.add_argument('--o', help='path to output directory', metavar="<output_path>", required=True, dest="output_path")
 subparser.add_argument('--r', help='path to reference genome', metavar="<reference_path>", required=True, dest="reference_path")
@@ -70,12 +70,12 @@ subparser.add_argument('--p', help='path to paternal BAM file', metavar="<father
 subparser.add_argument('--keeptmp', action='store_const', const=True,  dest="keep_tmp")
 
 subparser = subparsers.add_parser('database', help='build SR allele frequency database')
-subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=False, dest="config_path", default = None)
+subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=True, dest="config_path", default = None)
 subparser.add_argument('--f', help='File of files from the score command representing a complete dataset', metavar="<fof>", required=True, dest="fof")
 subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 
 subparser = subparsers.add_parser('train', help='trains the Random Forest model on a bunch of examples')
-subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=False, dest="config_path", default = None)
+subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=True, dest="config_path", default = None)
 subparser.add_argument('--i', help='Input file with labeled examples', metavar="<input_path>", required=True, dest="input_path")
 subparser.add_argument('--o', help='Output path for RF model', metavar="<output_path>", required=True, dest="output_path")
 subparser.add_argument('--k', help='value of k hyperparameter for training the Random Forest [75].', metavar="<k>", required=False, default=75, type=int, dest="k")
@@ -87,11 +87,7 @@ args = parser.parse_args()
 Read config file
 """
 
-if args.config_path is not None:
-    config_path = args.config_path
-else:
-    config_path = os.path.join(os.path.dirname(__file__), 'config.yml')
-
+config_path = args.config_path
 config = yaml.load(open(config_path), Loader=yaml.SafeLoader)
 
 required = ["MINIMUM_SR_COVERAGE","SHORT_SR_CUTOFF",

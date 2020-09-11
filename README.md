@@ -181,17 +181,17 @@ makeblastdb -in repeats.fasta -dbtype nucl
 
 6. Edit the config file to point to required data files and edit any default parameters:
 
-An example config.yml file (`example_config.yml`) is included in the top level directory. Edit this and save as `config.yml`.
+An example config.yml file (hg19: `example_config.hg19.yml`, hg38: `example_config.hg38.yml`) is included in the top level directory. Edit this and save as `config.<VERSION>.yml`.
 
 ```
 cd ..
 
-## Provide the path to each required file at the top of the config.yml
+## Provide the path to each required file at the top of the config.<VERSION>.yml
 ## Edit parameters at bottom of file.
 vim example_config.yml
 
-## cp/mv to config.yml
-cp example_config.yml config.yml
+## cp/mv to config.<VERSION>.yml
+cp example_config.<VERSION>.yml config.<VERSION>.yml
 ```
 
 Parameters in `config.yml` are as follows:
@@ -209,10 +209,13 @@ COV_THRESHOLD: Minimum parental coverage to be able to call event as denovo
 WINDOW_SIZE: window around position to look for indels/clipped reads (window_size/2 to the left and to the right)
 ```
 
-**Note**: The above data resources will only work if you run InDelible using the the human GRCh37 reference. 
+**Note**: The above data resources will only work if you run InDelible using the the human GRCh37/38 reference. A brief note on
+Hg38 resources: The InDelible MAF database provided with this distribution is a [liftOver](https://genome.ucsc.edu/cgi-bin/hgLiftOver)
+of project resources generated using version hg19 of the human genome. As such, the position accuracy of variants contained there-in
+should not be considered 100% accurate.
 
-**Note**: All commands also take the command-line option `--config` which overrides the default config.yml path. The user 
-can either change the default config.yml, or provide a path to a different file with this option.
+**Note**: All commands take the command-line option `--config`. The user **must** provide the path to a valid config yml to 
+InDelible at runtime.
 
 ### Using vr-runner
 
@@ -300,8 +303,8 @@ Additional notes on the above command:
 3. `--pwd` is the location of the InDelible directory **within** the Singularity image. This part of the command line **must not** be changed.
 4.  `--r` and `--d` point to reference files within the Singularity image. The other references files are also located within the Singularity instance at `4.  `--r` and `--d` point to reference files within the Singularity image. Prebuilt references files are also located within the Singularity instance at /usr/src/app/Indelible/data`.
   
-**Big Note**: If using InDelible for anything beyond the built-in data files (i.e. on files aligned to Hg38 rather than Hg37), 
-you will need to generate a local version of the `config.yml` file, edit it to point to your own resource files, and then point 
+**Big Note**: If using InDelible for anything beyond the built-in data files (i.e. on files aligned to other human references), 
+you will need to generate a local version of the `config.hg19.yml` file, edit it to point to your own resource files, and then point 
 indelible.py to it with `--config /path/to/config.new.yml`. The paths in `config.new.yml` can reflect a mix of both local paths and 
 paths already within the Singularity instance.
 
@@ -351,6 +354,7 @@ The **fetch** command extracts the reads from the BAM file, it takes 2 arguments
 
 * `--i` : path to the input CRAM/BAM file.
 * `--o` : path to output the clipped reads to.
+* `--config` : path to the config.yml file.
 
 ```
 ./indelible.py fetch --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.sc_reads
@@ -363,7 +367,8 @@ The **aggregate** merges information across reads towards a position-level view 
 * `--i` : path to the input file (the output of the *fetch* command from previous step).
 * `--b` : path to the CRAM/BAM file used to generate the input file.
 * `--o` : the path to the output file.
-* `--r` : path to reference genome 
+* `--r` : path to reference genome .
+* `--config` : path to the config.yml file.
 
 ```
 ./indelible.py aggregate --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.sc_reads --b test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts --r hs37d5.fasta
@@ -377,6 +382,7 @@ The **score** command scores positions based on the read information and sequenc
 
 * `--i` : path to the input file (the output of the *aggregate* command from previous step).
 * `--o` : the path to the output file.
+* `--config` : path to the config.yml file.
 
 ```
 ./indelible.py score --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored
@@ -388,6 +394,7 @@ The **score** command scores positions based on the read information and sequenc
 
 The **blast** command blasts longer clipped segments (20+ bp) to find matches elsewhere in the human genome and/or repeat database:
 * `--i` :  path to the input file (the output of the *score* command from previous step).
+* `--config` : path to the config.yml file.
 
 This will automatically generate 3 files: a fasta file with the sequences to be blasted, 2 results files (one for repeat sequences, one for non-repeat sequences). These files are used in the next step.
 
@@ -402,6 +409,7 @@ The **annotate** command enriches the result with gene/exon annotations and merg
 * `--i` : path to the input file (output of score command after running the blast command).
 * `--o` : path to output the annotated file.
 * `--d` : path to the InDelible frequency database. A default frequency database from the Deciphering Developmental Disorders WES data is availible at `./Indelible/data/Indelible_db_10k.bed`. 
+* `--config` : path to the config.yml file.
 
 ```
 ./indelible.py annotate --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored.annotated --d data/InDelible_db_10k.bed
@@ -417,6 +425,7 @@ One can then look for *de novo* mutation events using the **denovo** command:
 * `--m` : path to maternal CRAM/BAM file. [optional]
 * `--p` : path to paternal CRAM/BAM file. [optional]
 * `--o` : path to output file.
+* `--config` : path to the config.yml file.
 
 ```
 ./indelible.py denovo --c test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.InDelible.tsv --m maternal.bam --p paternal.bam --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.indelible.denovo.tsv
@@ -437,6 +446,7 @@ All steps in the InDelible calling pipeline can be performed in succession autom
 * `--m` : path to maternal CRAM/BAM file. [optional]
 * `--p` : path to paternal CRAM/BAM file. [optional]
 * `--keeptmp` : If this flag is given, intermediate files are kept. Otherwise these files will be removed once the analysis is finished.
+* `--config` : path to the config.yml file.
 
 ```
 ./indelible.py complete --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o test_data/ --r hs37d5.fasta --keeptmp --m maternal.bam --p paternal.bam
@@ -450,6 +460,7 @@ The **database** command will generate the database required for the step [Annot
 
 * `--f` : file of files to merge to generate split read "allele frequencies"
 * `--o` : output file to generate
+* `--config` : path to the config.yml file.
 
 ```
 ls InDelible_files/*.scored > fofn.txt
@@ -464,6 +475,7 @@ The **train** command will run the active learning RandomForest on training data
 * `--o output random forest`
 * `--k number of samples to use for initial training and subsequent active selection [50].`
 * `--s convergence parameter to stop learning at when accuracy does not improve by X% [0.01]`
+* `--config` : path to the config.yml file.
 
 The input data has identical columns to the output generated by [Aggregate](#2-aggregate), except with an additional column appended to the end of the file named "annotation". **Column names need to be identical!** See an example training file which can be used to regenerate the RandomForest used on the DDD data in `./data/`.
 
