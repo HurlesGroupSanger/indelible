@@ -278,7 +278,11 @@ def hgnc_constrained_subset(genes, constraint_hash):
         if hg in constraint_hash:
             if constraint_hash[hg] > 0.9:
                 constrained_hgnc.append(hg)
-    return constrained_hgnc
+
+    if constrained_hgnc != []:
+        return constrained_hgnc
+    else:
+        return None
 
 
 def create_blast_hash(scored_file):
@@ -308,7 +312,7 @@ def create_blast_hash(scored_file):
 
 # THIS IS POSSIBLY THE UGLIEST CODE I'VE EVER WRITTEN - Alejandro ;)
 def annotate_blast(hit, blast_hash, hgnc_db):
-    key = hit["chrom"] + "_" + hit["position"] + "_" + str(len(hit["seq_longest"]))
+    key = normalize_chr(hit["chrom"]) + "_" + hit["position"] + "_" + str(len(hit["seq_longest"]))
     if key in blast_hash:
         blast_hit = blast_hash[key]
         if blast_hit["repeats"] == []:
