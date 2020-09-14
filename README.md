@@ -221,10 +221,16 @@ COV_THRESHOLD: Minimum parental coverage to be able to call event as denovo
 WINDOW_SIZE: window around position to look for indels/clipped reads (window_size/2 to the left and to the right)
 ```
 
-**Note**: The above data resources will only work if you run InDelible using the the human GRCh37/38 reference. A brief note on
-Hg38 resources: The InDelible MAF database provided with this distribution is a [liftOver](https://genome.ucsc.edu/cgi-bin/hgLiftOver)
+**Note**: The above data resources will only work if you run InDelible using the the human GRCh37/38 reference.
+
+A brief note on Hg38 resources: 
+
+* The InDelible MAF database provided with this distribution is a [liftOver](https://genome.ucsc.edu/cgi-bin/hgLiftOver)
 of project resources generated using version hg19 of the human genome. As such, the position accuracy of variants contained there-in
 should not be considered 100% accurate.
+* The training data packaged with InDelible is technically agnostic to genome build. However, differences between alignment methods and/or genome builds
+may result in slight differences in covariate importance. As such, it may be a good idea to train the random forest with data from study being assessed, if sufficiently large enough.
+* As gnomAD has not generated pLI scores specifically using Hg38-aligned genomes, pLI values are from gnomADv2.1.1.
 
 **Note**: All commands take the command-line option `--config`. The user **must** provide the path to a valid config yml to 
 InDelible at runtime.

@@ -1,6 +1,6 @@
 #PATHS:
-ddg2p_bed: "./data/DDG2P_18112014.hg38.bed"
-ensembl_exons: "./data/hg38.ensemblv19.sorted.bed"
+ddg2p_bed: "./data/DDG2P_18VI2019.hg38.bed"
+ensembl_exons: "./data/hg38.ensemblv19.bed"
 random_forest_model: "./data/random_forest.17IX2019.pkl"
 exac_constraint: "./data/cleaned_exac_with_pLI_march16_anno.hg38.txt"
 hgnc_synonyms: "./data/hgnc_gene_synonyms.txt"
