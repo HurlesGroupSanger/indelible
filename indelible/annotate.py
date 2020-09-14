@@ -438,7 +438,7 @@ def annotate(input_path, output_path, database, config):
         #  UNK - can't determine from available information
         if v["blast_hit"] == "repeats_hit": # Typically MEIs
 
-            key = v["chrom"] + "_" + v["position"] + "_" + str(len(v["seq_longest"]))
+            key = normalize_chr(v["chrom"]) + "_" + v["position"] + "_" + str(len(v["seq_longest"]))
             blast_hit = bhash[key]["repeats"]
             min_score = float(1.0)
             curr_hit = None
