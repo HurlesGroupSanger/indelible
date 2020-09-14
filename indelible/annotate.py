@@ -231,9 +231,10 @@ def read_ddg2p(ddg2p_bed):
         current_gene = data[3]
 
         if current_chr in ddg2p_db:
-            ddg2p_db[current_chr].append({"start": current_start, "end": current_end, "gene": current_gene})
+            ddg2p_db[current_chr].addi(current_start, current_end, current_gene)
         else:
-            ddg2p_db[current_chr] = {}
+            ddg2p_db[current_chr] = IntervalTree()
+            ddg2p_db[current_chr].addi(current_start, current_end, current_gene)
 
     return ddg2p_db
 
@@ -241,9 +242,9 @@ def read_ddg2p(ddg2p_bed):
 def find_ddg2p_gene(chrom, start, end, ddg2p_db):
     res = []
     if chrom in ddg2p_db:
-        for d in ddg2p_db[chrom]:
-            if interval_overlap(start, end, d["start"], d["end"]):
-                res.append(d["gene"])
+        overlaps = ddg2p_db.get(chrom).overlap(start, end)
+        for d in overlaps:
+            res.append(d.data)
         if res != []:
             return res
         else:
@@ -306,7 +307,7 @@ def create_blast_hash(scored_file):
 
 
 # THIS IS POSSIBLY THE UGLIEST CODE I'VE EVER WRITTEN - Alejandro ;)
-def annotate_blast(hit, blast_hash, ddg2p_db, constraint_hash, hgnc_db):
+def annotate_blast(hit, blast_hash, hgnc_db):
     key = hit["chrom"] + "_" + hit["position"] + "_" + str(len(hit["seq_longest"]))
     if key in blast_hash:
         blast_hit = blast_hash[key]
@@ -379,7 +380,7 @@ def annotate(input_path, output_path, database, config):
 
     for v in scored_file:
 
-        v = annotate_blast(v, bhash, ddg2p_db, constraint_hash, hgnc_db)
+        v = annotate_blast(v, bhash, hgnc_db)
 
         chrom = normalize_chr(v["chrom"])
         pos = int(v["position"])
