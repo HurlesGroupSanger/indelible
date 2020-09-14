@@ -60,12 +60,12 @@ def create_hit_tree(scored_file):
 
 def search_tree(coord, hit_tree):
 
-    coord_pattern = re.compile("([0-9XY]{1,2}):(\d+)\-(\d+)")
+    coord_pattern = re.compile("(?:chr)*([0-9XY]{1,2}):(\d+)\-(\d+)")
     coord_match = coord_pattern.match(coord)
 
     if coord_match:
 
-        q_chrom = coord_match.group(1)
+        q_chrom = normalize_chr(coord_match.group(1))
         q_start = int(coord_match.group(2))
         q_end = int(coord_match.group(3))
 
@@ -331,10 +331,10 @@ def annotate_blast(hit, blast_hash, hgnc_db):
                     # Choose smallest interval
                     if abs(int(hit["position"]) - int(blast_hit["target_start"])) > abs(
                             int(hit["position"]) - int(blast_hit["target_end"])):
-                        hit["blast_hgnc"] = find_hgnc_genes(hit["chrom"], hit["position"], blast_hit["target_end"],
+                        hit["blast_hgnc"] = find_hgnc_genes(normalize_chr(hit["chrom"]), hit["position"], blast_hit["target_end"],
                                                             hgnc_db)
                     else:
-                        hit["blast_hgnc"] = find_hgnc_genes(hit["chrom"], hit["position"], blast_hit["target_start"],
+                        hit["blast_hgnc"] = find_hgnc_genes(normalize_chr(hit["chrom"]), hit["position"], blast_hit["target_start"],
                                                             hgnc_db)
                     if hit["blast_hgnc"] != None:
                         hit["blast_hgnc"] = ";".join(hit["blast_hgnc"])
