@@ -266,6 +266,7 @@ def find_hgnc_genes(chrom, start, end, hgnc_db):
         if chrom == normalize_chr(coords["chrom"]):
             if interval_overlap(start, end, coords["start"], coords["end"]):
                 res.append(gene)
+
     if res != []:
         return res
     else:
@@ -396,7 +397,10 @@ def annotate(input_path, output_path, database, config):
         if hgnc_genes != None:
             v["hgnc"] = ";".join(hgnc_genes)
             hgnc_constrained = hgnc_constrained_subset(hgnc_genes, constraint_hash)
-            v["hgnc_constrained"] = ";".join(hgnc_constrained)
+            if hgnc_constrained != None:
+                v["hgnc_constrained"] = ";".join(hgnc_constrained)
+            else:
+                v["hgnc_constrained"] = "NA"
         else:
             v["hgnc"] = "NA"
 
