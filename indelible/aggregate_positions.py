@@ -1,18 +1,5 @@
-import sys
-import pysam
-import csv
-import math
-from collections import Counter
-from pyfaidx import Fasta
-import numpy
-import re
-from indelible.indelible_lib import *
-from .coverage_calculator import CoverageCalculator
-from Bio import Align
-import time
-
 """
-Author: Alejandro Sifrim
+Author: Alejandro Sifrim & Eugene Gardner
 Affiliation: Wellcome Trust Sanger Institute
 
 Takes the output of fetch_reads.py and computes stats per
@@ -30,6 +17,20 @@ Returns
 File with stats for each position
 
 """
+
+import sys
+import pysam
+import csv
+import math
+from collections import Counter
+from pyfaidx import Fasta
+import numpy
+import re
+from indelible.indelible_lib import *
+from .coverage_calculator import CoverageCalculator
+from Bio import Align
+import time
+import warnings
 
 
 def dedup(sr_reads=[]):
@@ -177,14 +178,17 @@ def aggregate_positions(input_path, input_bam, output_path, reference_path, conf
                 res["pct_double_split"] = float(sr_cov[7]) / float(res["sr_total"])
                 res["sr_entropy"] = entropy_longest_sr(sr_reads)
 
-                seq_context = reference[str(chrom)][pos - 20:pos + 20]
-                res["context_entropy"] = entropy(seq_context)
-                res["entropy_upstream"] = entropy(seq_context[0:20])
-                res["entropy_downstream"] = entropy(seq_context[20:])
-                res["sr_sw_similarity"] = sequence_similarity_score(sr_reads)
-                res["avg_mapq"] = avg_mapq(sr_reads)
-                res["avg_avg_sr_qual"] = avg_avg_sr_qual(sr_reads)
-                res["seq_longest"] = seq_longest(sr_reads)
+                if str(chrom) in reference.keys():
+                    seq_context = reference[str(chrom)][pos - 20:pos + 20]
+                    res["context_entropy"] = entropy(seq_context)
+                    res["entropy_upstream"] = entropy(seq_context[0:20])
+                    res["entropy_downstream"] = entropy(seq_context[20:])
+                    res["sr_sw_similarity"] = sequence_similarity_score(sr_reads)
+                    res["avg_mapq"] = avg_mapq(sr_reads)
+                    res["avg_avg_sr_qual"] = avg_avg_sr_qual(sr_reads)
+                    res["seq_longest"] = seq_longest(sr_reads)
 
-                splitwriter.writerow(res)
-                outputfile.flush()
+                    splitwriter.writerow(res)
+                    outputfile.flush()
+                else:
+                    warnings.warn(str(chrom) + " does not exist in the reference you have provided but has reads aligned to it!")

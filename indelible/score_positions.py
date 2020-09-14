@@ -1,6 +1,6 @@
 """
-    Author: Alejandro Sifrim
-    Affiliation: Wellcome Trust Sanger Institute
+    Author: Alejandro Sifrim @ Eugene Gardner
+    Affiliation: Wellcome Sanger Institute
 
     Loads the Random Forest model and scores all the variants in the file
 
