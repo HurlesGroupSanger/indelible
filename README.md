@@ -165,11 +165,10 @@ cd data/
 unzip data.zip
 ```
 
-
 5. Download required blast resources:
 
 ```
-## Download windowmasker:
+## Download windowmasker (*hg19 ONLY*):
 wget ftp://ftp.ncbi.nlm.nih.gov/blast/windowmasker_files/9606/wmasker.obinary
 
 ## Download the GRCh37 human reference and create the blast db:
@@ -178,6 +177,19 @@ wget ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/phase2_ref
 makeblastdb -in hs37d5.fa -dbtype nucl
 makeblastdb -in repeats.fasta -dbtype nucl
 ```
+
+You can also make your own windowmasker resources. windowmasker binaries are provided as part of the blast+ distrobution. To make
+the `*.obinary` format file one can use the commands: 
+
+```
+## Generate counts file:
+windowmasker -in ref.fa -infmt blastdb -mk_counts -parse_seqids -out ref.counts
+
+## Convert to .obinary:
+windowmasker -convert -in ref.asnb -out ref.obinary -sformat obinary
+```
+
+See the [windowmasker documentation](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/app/winmasker/) for more information.
 
 6. Edit the config file to point to required data files and edit any default parameters:
 
@@ -238,8 +250,8 @@ If mum or dad bams are not available, substitute a "-" like:
 
 ```
 /path/to/child.bam  -   -
-/path/to.child.bam  /path/to/mum.bam    -
-/path/to.child.bam  - /path/to/dad.bam
+/path/to/child.bam  /path/to/mum.bam    -
+/path/to/child.bam  - /path/to/dad.bam
 ```
 
 A simple command for running InDelible with vr-runner is as follows:

@@ -6,8 +6,6 @@ from indelible.indelible_lib import *
 import re
 from intervaltree import Interval, IntervalTree
 
-CHROMOSOMES = [str(x) for x in range(1, 23)] + ["X", "Y"]
-
 
 def create_exon_intervaltree(exon_file):
 
@@ -27,14 +25,16 @@ def create_exon_intervaltree(exon_file):
             current_start = (int(transcript['start']) + int(starts_array[i])) + 1 ## +1 is to correct for 0-based bed format
             current_stop = current_start + (int(lengths_array[i]))
 
-            if transcript['chr'] in exons:
+            current_chr = normalize_chr(transcript['chr'])
 
-                exons.get(transcript['chr']).addi(current_start, current_stop, transcript['transcript'])
+            if current_chr in exons:
+
+                exons.get(current_chr).addi(current_start, current_stop, transcript['transcript'])
 
             else:
                 current_tree = IntervalTree()
                 current_tree.addi(current_start, current_stop, i)
-                exons[transcript['chr']] = current_tree
+                exons[current_chr] = current_tree
 
     return exons
 
@@ -44,15 +44,17 @@ def create_hit_tree(scored_file):
 
     for line in csv.DictReader(open(scored_file), delimiter="\t"):
 
-        if line['chrom'] in hits:
+        current_chr = normalize_chr(line['chrom'])
+
+        if current_chr in hits:
             current_position = int(line['position'])
-            hits.get(line['chrom']).addi(current_position,current_position+1, line["seq_longest"])
+            hits.get(current_chr).addi(current_position,current_position+1, line["seq_longest"])
 
         else:
             current_tree = IntervalTree()
             current_position = int(line['position'])
             current_tree.addi(current_position,current_position+1, line["seq_longest"])
-            hits[line['chrom']] = current_tree
+            hits[current_chr] = current_tree
 
     return hits
 
@@ -219,12 +221,20 @@ def interval_overlap(start1, end1, start2, end2):
 
 def read_ddg2p(ddg2p_bed):
     ddg2p_db = {}
-    for c in CHROMOSOMES:
-        ddg2p_db[c] = []
+
     for d in open(ddg2p_bed, 'r'):
         data = d.rstrip().split("\t")
-        if data[0] in CHROMOSOMES:
-            ddg2p_db[data[0]].append({"start": int(data[1]), "end": int(data[2]), "gene": data[3]})
+
+        current_chr = normalize_chr(data[0])
+        current_start = int(data[1])
+        current_end = int(data[2])
+        current_gene = data[3]
+
+        if current_chr in ddg2p_db:
+            ddg2p_db[current_chr].append({"start": current_start, "end": current_end, "gene": current_gene})
+        else:
+            ddg2p_db[current_chr] = {}
+
     return ddg2p_db
 
 
@@ -245,14 +255,14 @@ def find_ddg2p_gene(chrom, start, end, ddg2p_db):
 def read_hgnc_genes(hgnc_bed):
     hgnc_db = {}
     for row in csv.DictReader(open(hgnc_bed, 'r'), delimiter="\t"):
-        hgnc_db[row['HGNC']] = {"chrom": row['CHROM'], "start": int(row["START"]), "end": int(row["END"])}
+        hgnc_db[row['HGNC']] = {"chrom": normalize_chr(row['CHROM']), "start": int(row["START"]), "end": int(row["END"])}
     return hgnc_db
 
 
 def find_hgnc_genes(chrom, start, end, hgnc_db):
     res = []
     for (gene, coords) in list(hgnc_db.items()):
-        if chrom == coords["chrom"]:
+        if chrom == normalize_chr(coords["chrom"]):
             if interval_overlap(start, end, coords["start"], coords["end"]):
                 res.append(gene)
     if res != []:
@@ -277,7 +287,7 @@ def create_blast_hash(scored_file):
     h = {}
 
     for row in csv.DictReader(open(blast_nonrepeats_path, 'r'), delimiter="\t"):
-        key = row['chrom'] + "_" + row["pos"] + "_" + row["query_length"]
+        key = normalize_chr(row['chrom']) + "_" + row["pos"] + "_" + row["query_length"]
         if key not in h:
             h[key] = {}
             h[key]["nonrepeats"] = []
@@ -285,7 +295,7 @@ def create_blast_hash(scored_file):
         h[key]["nonrepeats"].append(row)
 
     for row in csv.DictReader(open(blast_repeats_path, 'r'), delimiter="\t"):
-        key = row['chrom'] + "_" + row["pos"] + "_" + row["query_length"]
+        key = normalize_chr(row['chrom']) + "_" + row["pos"] + "_" + row["query_length"]
         if key not in h:
             h[key] = {}
             h[key]["nonrepeats"] = []
@@ -371,7 +381,7 @@ def annotate(input_path, output_path, database, config):
 
         v = annotate_blast(v, bhash, ddg2p_db, constraint_hash, hgnc_db)
 
-        chrom = v["chrom"]
+        chrom = normalize_chr(v["chrom"])
         pos = int(v["position"])
 
         hgnc_genes = find_hgnc_genes(chrom, pos, pos + 1, hgnc_db)
