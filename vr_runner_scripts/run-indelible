@@ -30,6 +30,7 @@ sub new
 	$$self{ref} = undef;
 	$$self{config} = undef;
 	$$self{indelible} = undef;
+	$$self{database} = undef;
 	$$self{limits}   = { memory=>10_000};
     $$self{config_version} = '1427807557';
     $$self{_sampleconf} = q[
@@ -37,6 +38,7 @@ sub new
             # the version key in your config file to get rid of the warnings.
             version  => '] .$$self{config_version}. q[',
 
+            # Make sure to enclose all file paths in quotes (")
             # List of bams
             bams => undef,
 

@@ -268,13 +268,17 @@ First setup the vr-runner config file:
 ```
 ./indelible/vr_runner_scripts/run-indelible +sampleconf > my.conf
 ## Change ALL parameters to point to the correct files:
-
+## bams = list of bams made above
+## ref = reference genome.fa
+## config = config.yml
+## indelible = path to the main indelible.py script
+## database = path to the indelible db
 ```
 
 A simple command for running InDelible with vr-runner is as follows:
 
 ```
-./indelible/vr_runner_scripts/run-indelible -o ./output/ -b crams.txt -c config.yml +maxjobs 1000 +loop 100 +retries -2
+./indelible/vr_runner_scripts/run-indelible -o ./output/ +config my.conf +maxjobs 1000 +loop 100 +retries -2
 ```
 
 Resulting output will be in the `./output/` folder.
