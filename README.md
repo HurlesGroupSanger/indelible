@@ -243,7 +243,7 @@ InDelible at runtime.
 InDelible comes packages with a script for use with the vr-runner packaged which automates the analysis of multiple 
 samples. For information on how to install and use vr-runner, please see [this link](https://github.com/VertebrateResequencing/vr-runner).
 
-The InDelible-specific vr-runner script is located at `./vr_runner/run-indelible`. This script requires a list of tab-delimited bam paths, where columns are:
+The InDelible-specific vr-runner script is located at `./vr_runner_scripts/run-indelible`. This script requires a list of tab-delimited bam paths, where columns are:
 
 1. child bam
 2. mum bam
@@ -266,7 +266,7 @@ If mum or dad bams are not available, substitute a "-" like:
 A simple command for running InDelible with vr-runner is as follows:
 
 ```
-./Indelible/vr_runner/run-indelible -o ./output/ -b crams.txt +maxjobs 1000 +loop 100 +retries -2
+./indelible/vr_runner_scripts/run-indelible -o ./output/ -b crams.txt -c config.yml +maxjobs 1000 +loop 100 +retries -2
 ```
 
 Resulting output will be in the `./output/` folder.
