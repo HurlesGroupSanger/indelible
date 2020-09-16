@@ -27,8 +27,9 @@ sub new
 
     $$self{verbose} = 1;
     $$self{bams} = undef;
-	$$self{ref} = '/lustre/scratch115/projects/ddd/users/eg15/WXS_10K/ref/hs37d5.fa';
-	$$self{indelible} = '/lustre/scratch115/projects/ddd/users/eg15/indelible/Indelible/indelible.py';
+	$$self{ref} = undef;
+	$$self{config} = undef;
+	$$self{indelible} = undef;
 	$$self{limits}   = { memory=>10_000};
     $$self{config_version} = '1427807557';
     $$self{_sampleconf} = q[
@@ -39,14 +40,14 @@ sub new
             # List of bams
             bams => undef,
 
+            # Path to reference genome
+            ref => undef,
+
             # config file
             config => undef,
 
-            # Path to reference genome
-            ref => '] .$$self{ref}. q[',
-
             # Path to indelible
-            indelible => '] .$$self{indelible}. q[',
+            indelible => undef,
 
             limits => { memory=>10_000 },
 
@@ -61,8 +62,9 @@ sub new
         "Options:\n" .
         "   -b, --bams-list <file>      File with bam files\n" .
         "   -o, --outdir <dir>          Output directory\n" .
-        "   -d, --database              Path to a precomputed MAF database [null]\n" .
-        "   -c, --config                Path to config file" .
+        "   -d, --database <file>       Path to a precomputed MAF database [null]\n" .
+        "   -c, --config <file>         Path to InDelible config file" .
+        "   -r, --ref <file>            Path to the reference genome" .
         "\n";
 
     return $self;
@@ -77,11 +79,13 @@ sub parse_args
         if ( $arg eq '-o' or $arg eq '--outdir' ) { $$self{outdir}=shift(@ARGV); next; }
         if ( $arg eq '-d' or $arg eq '--database' ) { $$self{database}=shift(@ARGV); next; }
         if ( $arg eq '-c' or $arg eq '--config' ) { $$self{config}=shift(@ARGV); next; }
+        if ( $arg eq '-r' or $arg eq '--ref' ) { $$self{config}=shift(@ARGV); next; }
         $self->throw();
     }
     if ( !defined($$self{bams}) ) { $self->throw("Expected the -b option."); }
     if ( !defined($$self{outdir}) ) { $self->throw("Expected the -o option."); }
     if ( !defined($$self{config}) ) { $self->throw("Expected the -c option."); }
+    if ( !defined($$self{ref}) ) { $self->throw("Expected the -c option."); }
 
 	$self->set_temp_dir($$self{outdir});
 

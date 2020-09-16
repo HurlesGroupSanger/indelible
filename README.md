@@ -263,6 +263,14 @@ If mum or dad bams are not available, substitute a "-" like:
 /path/to/child.bam  - /path/to/dad.bam
 ```
 
+First setup the vr-runner config file:
+
+```
+./indelible/vr_runner_scripts/run-indelible +sampleconf > my.conf
+## Change ALL parameters to point to the correct files:
+
+```
+
 A simple command for running InDelible with vr-runner is as follows:
 
 ```
