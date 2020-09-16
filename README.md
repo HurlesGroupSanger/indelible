@@ -560,7 +560,7 @@ The primary output from InDelible is the output file from the [_denovo_](#6-deno
 
 ### Recommended Filtering
 
-As we have described in the [InDelible manuscript](http:tbd), we follow a strict filtering regimen to further refine our TSV output. 
+As we have described in the [InDelible manuscript](#how-to-cite-indelible), we follow a strict filtering regimen to further refine our TSV output. 
 Filters are as follows, and are meant to "funnel" variants down (i.e. each successive filter is applied following the 
 previous filter). Filter names are as above to avoid confusion. Parentheses are applied as pseudocode to demonstrate order 
 of operations.
