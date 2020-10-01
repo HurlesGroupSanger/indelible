@@ -1,0 +1,304 @@
+#!/usr/bin/env perl
+#
+# Author: eugene.gardner@sanger
+#
+
+use strict;
+use warnings;
+use Carp;
+use File::Basename;
+
+my $runner = myRunner->new();
+$runner->run();
+
+exit;
+
+#--------------------------------
+
+package myRunner;
+use base qw(Runner);
+use strict;
+use warnings;
+
+sub new
+{
+    my ($class,@args) = @_;
+    my $self = $class->SUPER::new(@args);
+
+    $$self{verbose} = 1;
+    $$self{bams} = undef;
+	$$self{ref} = undef;
+	$$self{config} = undef;
+	$$self{indelible} = undef;
+	$$self{database} = undef;
+	$$self{limits}   = { memory=>10_000};
+    $$self{config_version} = '1427807557';
+    $$self{_sampleconf} = q[
+            # For sanity checking that your config file is not obsolete. Update
+            # the version key in your config file to get rid of the warnings.
+            version  => '] .$$self{config_version}. q[',
+
+            # Make sure to enclose all file paths in quotes (")
+            # List of bams
+            bams => undef,
+
+            # Path to reference genome
+            ref => undef,
+
+            # config file
+            config => undef,
+
+            # Path to indelible
+            indelible => undef,
+
+            limits => { memory=>10_000 },
+
+            # Path to the indelible MAF database, leave as undef if you want this script to rebuild the database
+            database => undef
+
+    ]."\n";
+
+    $$self{usage} .= 
+        "About: Run InDelible software\n" .
+        "Usage: run-indelible\n" .
+        "Options:\n" .
+        "   -b, --bams-list <file>      File with bam files\n" .
+        "   -o, --outdir <dir>          Output directory\n" .
+        "   -d, --database <file>       Path to a precomputed MAF database [null]\n" .
+        "   -c, --config <file>         Path to InDelible config file" .
+        "   -r, --ref <file>            Path to the reference genome" .
+        "\n";
+
+    return $self;
+}
+
+sub parse_args
+{
+    my ($self) = @_;
+    while (defined(my $arg=shift(@ARGV)))
+    {
+        if ( $arg eq '-b' or $arg eq '--bams-list' ) { $$self{bams}=shift(@ARGV); next; }
+        if ( $arg eq '-o' or $arg eq '--outdir' ) { $$self{outdir}=shift(@ARGV); next; }
+        if ( $arg eq '-d' or $arg eq '--database' ) { $$self{database}=shift(@ARGV); next; }
+        if ( $arg eq '-c' or $arg eq '--config' ) { $$self{config}=shift(@ARGV); next; }
+        if ( $arg eq '-r' or $arg eq '--ref' ) { $$self{config}=shift(@ARGV); next; }
+        $self->throw();
+    }
+    if ( !defined($$self{bams}) ) { $self->throw("Expected the -b option."); }
+    if ( !defined($$self{outdir}) ) { $self->throw("Expected the -o option."); }
+    if ( !defined($$self{config}) ) { $self->throw("Expected the -c option."); }
+    if ( !defined($$self{ref}) ) { $self->throw("Expected the -c option."); }
+
+	$self->set_temp_dir($$self{outdir});
+
+}
+
+sub main
+{
+    my ($self) = @_;
+    $self->parse_args();
+    $self->save_config("config.txt");
+    
+    `mkdir -p $$self{outdir}`;
+
+    my $jobs = $self->read_jobs();
+
+    $self->set_limits(%{$$self{limits}}) unless !exists($$self{limits});
+
+    # Run Indelible fetch
+    for my $job (@$jobs) {
+		$self->spawn('run_fetch',$$self{outdir} . "/" . $$job{basename} . ".sc_reads",$$job{bam});
+    }
+    $self->wait;
+
+    # Run Indelible aggregate
+    for my $job (@$jobs) {
+	    $self->spawn('run_aggregate',$$self{outdir} . "/" . $$job{basename} . ".counts",$$self{outdir} . "/" . $$job{basename} . ".sc_reads", $$job{bam});
+    }
+    $self->wait;
+
+    # Run Indelible score
+    for my $job (@$jobs) {
+        $self->spawn('run_score',$$self{outdir} . "/" . $$job{basename} . ".counts.scored",$$self{outdir} . "/" . $$job{basename} . ".counts");
+    }
+    $self->wait;
+
+    # Rebuild the MAF database if requested
+    my $db_file;
+    if (!defined($$self{database})) {
+        #This part prints the fofn.txt file that is necessary for building the db...
+        open(my $fh,'<',$$self{bams}) or $self->throw("$$self{bams}: $!");
+        my $dir = "./indelible_db/";
+        if (! -e $dir) {
+            system("mkdir $dir");
+        }
+
+        my $fofn_file = $dir . "fofn.txt";
+        open (my $fofn, '>', $fofn_file);
+
+        while (my $line=<$fh>) {
+                chomp $line;
+            my @data = split("\t",$line);
+            my $bam = $data[0];
+            if (-e $bam . ".counts.scored") {
+                print $fofn $bam . ".counts.scored\n";
+            }
+        }
+        close($fh) or $self->throw("close failed: $$self{bams}");
+        close($fofn) or $self->throw("close failed on fofn.txt file");
+
+        $db_file = $dir . "indelible_db.tsv";
+        $self->spawn('run_db', $db_file, $fofn_file);
+        $self->wait;
+    } else {
+        $db_file = $$self{database};
+    }
+
+    # Run Indelible blast
+    for my $job (@$jobs) {
+	    $self->spawn('run_blast',$$self{outdir} . "/" . $$job{basename} . ".counts.scored.fasta.blast_done", $$self{outdir} . "/" . $$job{basename} . ".counts.scored");
+    }
+    $self->wait;
+
+    # Run Indelible annotate
+    for my $job (@$jobs) {
+	    $self->spawn('run_annotate',$$self{outdir} . "/" . $$job{basename} . ".counts.scored.annotated", $$self{outdir} . "/" . $$job{basename} . ".counts.scored", $db_file);
+    }
+    $self->wait;
+	
+    # Run Indelible denovo
+    for my $job (@$jobs) {
+	    $self->spawn('run_denovo',$$self{outdir} . "/" . $$job{basename} . ".indelible.denovo.tsv", $$self{outdir} . "/" . $$job{basename} . ".counts.scored.annotated", $$job{mum}, $$job{dad})
+    }
+    $self->wait;
+    $self->all_done;
+}
+
+sub save_config
+{
+    my ($self,$name) = @_;
+    my $src = $$self{_config} ? $$self{_config} : undef;
+    my $dst = "$$self{outdir}/$name";
+    if ( -e $dst && (!defined($src) or (stat($src))[9] <= (stat($dst))[9]) ) { return; }
+    if ( !-d $$self{outdir} ) { $self->cmd("mkdir -p $$self{outdir}"); }
+    open(my $fh,'>',$dst) or $self->throw("$dst: $!");
+    my $about = $$self{_about};
+    $about =~ s/\n/\n# /g;
+    print $fh "# $about";
+    close($fh);
+    if ( defined $src ) { $self->cmd("cat $src >> $dst"); }
+}
+
+sub read_jobs
+{
+    my ($self) = @_;
+    my @jobs = ();
+    open(my $fh,'<',$$self{bams}) or $self->throw("$$self{bams}: $!");
+    while (my $line=<$fh>)
+    {
+        chomp $line;
+		my @data = split("\t",$line);
+		my $bam = $data[0];
+		if ( !($bam=~m{([^/]+)\.[^\.]+$}) ) { $self->throw("Could not parse: $bam"); }
+        my $bname = $1;
+		my @base = File::Basename::fileparse($bam);
+
+        if (scalar(@data) == 1) {
+            push @jobs, { bam=>$bam, bname=>$bname, basename => $base[0], mum=>"-", dad=>"-"};
+		} else {
+		    push @jobs, { bam=>$bam, bname=>$bname, basename => $base[0], mum=>$data[1], dad=>$data[2]};
+		}
+
+        if ( exists($$self{bam2bname}{$bam}) ) { $self->throw("Improve me: the bam basenames are not unique .. $bname\n"); }
+        $$self{bam2bname}{$bam} = $bname;
+    }
+    close($fh) or $self->throw("close failed: $$self{bams}");
+    return \@jobs;
+}
+
+sub run_fetch
+{
+	
+	my ($self,$outfile,$bam) = @_;
+	my $cmd = $$self{indelible} . " fetch --i " . $bam . " --o $outfile.part --config $$self{config}";
+	$self->cmd($cmd);
+	$cmd = "mv $outfile.part $outfile";
+	$self->cmd($cmd);
+	
+}
+
+sub run_aggregate
+{
+	
+	my ($self,$outfile,$infile,$bam) = @_;
+	my $cmd = $$self{indelible} . " aggregate --i $infile --b $bam --r $$self{ref} --o $outfile.part --config $$self{config}";
+	$self->cmd($cmd);
+	$cmd = "mv $outfile.part $outfile";
+	$self->cmd($cmd);
+}
+
+sub run_score
+{
+	
+	my ($self,$outfile,$infile) = @_;
+	my $cmd = $$self{indelible} . " score --i $infile --o $outfile.part --config $$self{config}";
+	$self->cmd($cmd);
+	$cmd = "mv $outfile.part $outfile";
+	$self->cmd($cmd);
+
+}	
+
+sub run_db
+{
+	
+	my ($self, $outfile, $fofn) = @_;
+	
+	my $cmd = $$self{indelible} . " database --f " . $fofn . " --o " . $outfile . ".part --config $$self{config}";
+	$self->cmd($cmd);
+	$cmd = "mv $outfile.part $outfile";
+	$self->cmd($cmd);
+
+}
+
+sub run_blast
+{
+	
+	my ($self,$outfile,$infile) = @_;
+	my $cmd = $$self{indelible} . " blast --i $infile --config $$self{config}";
+	$self->cmd($cmd);
+	$cmd = "touch $outfile";
+	$self->cmd($cmd);
+
+}
+
+sub run_annotate
+{
+	
+	my ($self,$outfile,$infile,$db_file) = @_;
+	my $cmd = $$self{indelible} . " annotate --i $infile --o $outfile.part --d $db_file --config $$self{config}";
+	$self->cmd($cmd);
+	$cmd = "mv $outfile.part $outfile";
+	$self->cmd($cmd);
+
+}
+
+sub run_denovo
+{
+
+	my ($self,$outfile,$infile,$mum,$dad) = @_;
+	
+	my $cmd;
+	if ($mum eq "-" && $dad eq "-") {
+		$cmd = $$self{indelible} . " denovo --c $infile --o $outfile.part --config $$self{config}";
+	} elsif ($mum ne "-" && $dad eq "-") {
+		$cmd = $$self{indelible} . " denovo --c $infile --m " . $mum . " --o $outfile.part --config $$self{config}";
+	} elsif ($mum eq "-" && $dad ne "-") {
+		$cmd = $$self{indelible} . " denovo --c $infile --p " . $dad . " --o $outfile.part --config $$self{config}";
+	} else {
+		$cmd = $$self{indelible} . " denovo --c $infile --m " . $mum . " --p " . $dad . " --o $outfile.part --config $$self{config}";
+	}
+	$self->cmd($cmd);
+	$cmd = "mv $outfile.part $outfile";
+	$self->cmd($cmd);
+
+}

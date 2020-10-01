@@ -1,6 +1,6 @@
 """
-    Author: Alejandro Sifrim
-    Affiliation: Wellcome Trust Sanger Institute
+    Author: Alejandro Sifrim & Eugene Gardner
+    Affiliation: Wellcome Sanger Institute
 
     Script to call inheritance mode of an event
 

@@ -16,6 +16,10 @@
     
 4. [Usage](#usage)
 5. [Output](#output)
+    
+    a. [Primary TSV File](#primary-tsv-file)
+    
+    b. [Recommended Filtering](#recommended-filtering)
 
 ## Development Team
 
@@ -75,10 +79,10 @@ reads that InDelible has to process would likely result in significantly increas
     - InDelible was designed as part of the Deciphering Developmental Disorders (DDD) study and, as such, was targeted to
     genes known to contribute to dominant developmental disorders. We have provided for the possibility that end-users may
     want to identify variants within other gene sets, but have not specifically performed variant discovery among a patient
-    cohort to test this functionality
+    cohort to test this functionality.
     
 3. _Other Genetic Architectures_
-    - While _de novo_ variants play an outsized role in the genetic architecture of DD, recessive causes of DD are likewise 
+    - While causal _de novo_ variants play an important role in the genetic architecture of severe DD, recessive causes of DD are likewise 
     a major contributor. While we have focused our primary analysis on _de novo_ variation to try to maximise our discovery potential,
     we do not preclude the possibility that InDelible could also be used to identify homozygous or compound heterozygous 
     variants which could be plausibly linked to a patient's symptoms.
@@ -90,8 +94,7 @@ reads that InDelible has to process would likely result in significantly increas
 
 ### How to Cite InDelible
 
-
-Eugene J. Gardner, Alejandro Sifrim, Sarah J. Lindsay, Elena Prigmore, Diana Rajan, Giuseppe Gallone, Ruth Y. Eberhardt, Caroline F. Wright, David R. FitzPatrick, Helen V. Firth, Matthew E. Hurles.
+Eugene J. Gardner, Alejandro Sifrim, Sarah J. Lindsay, Elena Prigmore, Diana Rajan, Petr Danecek, Giuseppe Gallone, Ruth Y. Eberhardt, Hilary C. Martin, Caroline F. Wright, David R. FitzPatrick, Helen V. Firth, Matthew E. Hurles.
 **InDelible: Detection and Evaluation of Clinically-relevant Structural Variation from Whole Exome Sequencing.** medRxiv (2020).
 
 ## Installation
@@ -116,8 +119,8 @@ To install InDelible:
 1. Clone the git repo:
 
 ```
-git clone https://github.com/eugenegardner/Indelible.git
-cd Indelible/
+git clone https://github.com/eugenegardner/indelible.git
+cd indelible/
 ```
 
 2. Create a virtual environment and activate it:
@@ -165,11 +168,10 @@ cd data/
 unzip data.zip
 ```
 
-
 5. Download required blast resources:
 
 ```
-## Download windowmasker:
+## Download windowmasker (*hg19 ONLY*):
 wget ftp://ftp.ncbi.nlm.nih.gov/blast/windowmasker_files/9606/wmasker.obinary
 
 ## Download the GRCh37 human reference and create the blast db:
@@ -179,19 +181,32 @@ makeblastdb -in hs37d5.fa -dbtype nucl
 makeblastdb -in repeats.fasta -dbtype nucl
 ```
 
+You can also make your own windowmasker resources. windowmasker binaries are provided as part of the blast+ distrobution. To make
+the `*.obinary` format file one can use the commands: 
+
+```
+## Generate counts file:
+windowmasker -in ref.fa -infmt blastdb -mk_counts -parse_seqids -out ref.counts
+
+## Convert to .obinary:
+windowmasker -convert -in ref.asnb -out ref.obinary -sformat obinary
+```
+
+See the [windowmasker documentation](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/app/winmasker/) for more information.
+
 6. Edit the config file to point to required data files and edit any default parameters:
 
-An example config.yml file (`example_config.yml`) is included in the top level directory. Edit this and save as `config.yml`.
+An example config.yml file (hg19: `example_config.hg19.yml`, hg38: `example_config.hg38.yml`) is included in the top level directory. Edit this and save as `config.<VERSION>.yml`.
 
 ```
 cd ..
 
-## Provide the path to each required file at the top of the config.yml
+## Provide the path to each required file at the top of the config.<VERSION>.yml
 ## Edit parameters at bottom of file.
 vim example_config.yml
 
-## cp/mv to config.yml
-cp example_config.yml config.yml
+## cp/mv to config.<VERSION>.yml
+cp example_config.<VERSION>.yml config.<VERSION>.yml
 ```
 
 Parameters in `config.yml` are as follows:
@@ -209,17 +224,26 @@ COV_THRESHOLD: Minimum parental coverage to be able to call event as denovo
 WINDOW_SIZE: window around position to look for indels/clipped reads (window_size/2 to the left and to the right)
 ```
 
-**Note**: The above data resources will only work if you run InDelible using the the human GRCh37 reference. 
+**Note**: The above data resources will only work if you run InDelible using the the human GRCh37/38 reference.
 
-**Note**: All commands also take the command-line option `--config` which overrides the default config.yml path. The user 
-can either change the default config.yml, or provide a path to a different file with this option.
+A brief note on Hg38 resources: 
+
+* The InDelible MAF database provided with this distribution is a [liftOver](https://genome.ucsc.edu/cgi-bin/hgLiftOver)
+of project resources generated using version hg19 of the human genome. As such, the position accuracy of variants contained there-in
+should not be considered 100% accurate.
+* The training data packaged with InDelible is technically agnostic to genome build. However, differences between alignment methods and/or genome builds
+may result in slight differences in covariate importance. As such, it may be a good idea to train the random forest with data from study being assessed, if sufficiently large enough.
+* As gnomAD has not generated pLI scores specifically using Hg38-aligned genomes, pLI values are from gnomADv2.1.1.
+
+**Note**: All commands take the command-line option `--config`. The user **must** provide the path to a valid config yml to 
+InDelible at runtime.
 
 ### Using vr-runner
 
 InDelible comes packages with a script for use with the vr-runner packaged which automates the analysis of multiple 
 samples. For information on how to install and use vr-runner, please see [this link](https://github.com/VertebrateResequencing/vr-runner).
 
-The InDelible-specific vr-runner script is located at `./vr_runner/run-indelible`. This script requires a list of tab-delimited bam paths, where columns are:
+The InDelible-specific vr-runner script is located at `./vr_runner_scripts/run-indelible`. This script requires a list of tab-delimited bam paths, where columns are:
 
 1. child bam
 2. mum bam
@@ -235,14 +259,26 @@ If mum or dad bams are not available, substitute a "-" like:
 
 ```
 /path/to/child.bam  -   -
-/path/to.child.bam  /path/to/mum.bam    -
-/path/to.child.bam  - /path/to/dad.bam
+/path/to/child.bam  /path/to/mum.bam    -
+/path/to/child.bam  - /path/to/dad.bam
+```
+
+First setup the vr-runner config file:
+
+```
+./indelible/vr_runner_scripts/run-indelible +sampleconf > my.conf
+## Change ALL parameters to point to the correct files:
+## bams = list of bams made above
+## ref = reference genome.fa
+## config = config.yml
+## indelible = path to the main indelible.py script
+## database = path to the indelible db
 ```
 
 A simple command for running InDelible with vr-runner is as follows:
 
 ```
-./Indelible/vr_runner/run-indelible -o ./output/ -b crams.txt +maxjobs 1000 +loop 100 +retries -2
+./indelible/vr_runner_scripts/run-indelible -o ./output/ +config my.conf +maxjobs 1000 +loop 100 +retries -2
 ```
 
 Resulting output will be in the `./output/` folder.
@@ -300,8 +336,8 @@ Additional notes on the above command:
 3. `--pwd` is the location of the InDelible directory **within** the Singularity image. This part of the command line **must not** be changed.
 4.  `--r` and `--d` point to reference files within the Singularity image. The other references files are also located within the Singularity instance at `4.  `--r` and `--d` point to reference files within the Singularity image. Prebuilt references files are also located within the Singularity instance at /usr/src/app/Indelible/data`.
   
-**Big Note**: If using InDelible for anything beyond the built-in data files (i.e. on files aligned to Hg38 rather than Hg37), 
-you will need to generate a local version of the `config.yml` file, edit it to point to your own resource files, and then point 
+**Big Note**: If using InDelible for anything beyond the built-in data files (i.e. on files aligned to other human references), 
+you will need to generate a local version of the `config.hg19.yml` file, edit it to point to your own resource files, and then point 
 indelible.py to it with `--config /path/to/config.new.yml`. The paths in `config.new.yml` can reflect a mix of both local paths and 
 paths already within the Singularity instance.
 
@@ -351,6 +387,7 @@ The **fetch** command extracts the reads from the BAM file, it takes 2 arguments
 
 * `--i` : path to the input CRAM/BAM file.
 * `--o` : path to output the clipped reads to.
+* `--config` : path to the config.yml file.
 
 ```
 ./indelible.py fetch --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.sc_reads
@@ -363,7 +400,8 @@ The **aggregate** merges information across reads towards a position-level view 
 * `--i` : path to the input file (the output of the *fetch* command from previous step).
 * `--b` : path to the CRAM/BAM file used to generate the input file.
 * `--o` : the path to the output file.
-* `--r` : path to reference genome 
+* `--r` : path to reference genome .
+* `--config` : path to the config.yml file.
 
 ```
 ./indelible.py aggregate --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.sc_reads --b test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts --r hs37d5.fasta
@@ -377,6 +415,7 @@ The **score** command scores positions based on the read information and sequenc
 
 * `--i` : path to the input file (the output of the *aggregate* command from previous step).
 * `--o` : the path to the output file.
+* `--config` : path to the config.yml file.
 
 ```
 ./indelible.py score --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored
@@ -388,6 +427,7 @@ The **score** command scores positions based on the read information and sequenc
 
 The **blast** command blasts longer clipped segments (20+ bp) to find matches elsewhere in the human genome and/or repeat database:
 * `--i` :  path to the input file (the output of the *score* command from previous step).
+* `--config` : path to the config.yml file.
 
 This will automatically generate 3 files: a fasta file with the sequences to be blasted, 2 results files (one for repeat sequences, one for non-repeat sequences). These files are used in the next step.
 
@@ -402,6 +442,7 @@ The **annotate** command enriches the result with gene/exon annotations and merg
 * `--i` : path to the input file (output of score command after running the blast command).
 * `--o` : path to output the annotated file.
 * `--d` : path to the InDelible frequency database. A default frequency database from the Deciphering Developmental Disorders WES data is availible at `./Indelible/data/Indelible_db_10k.bed`. 
+* `--config` : path to the config.yml file.
 
 ```
 ./indelible.py annotate --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored.annotated --d data/InDelible_db_10k.bed
@@ -417,9 +458,10 @@ One can then look for *de novo* mutation events using the **denovo** command:
 * `--m` : path to maternal CRAM/BAM file. [optional]
 * `--p` : path to paternal CRAM/BAM file. [optional]
 * `--o` : path to output file.
+* `--config` : path to the config.yml file.
 
 ```
-./indelible.py denovo --c test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.InDelible.tsv --m maternal.bam --p paternal.bam --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.indelible.denovo.tsv
+./indelible.py denovo --c test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored.annotated --m maternal.bam --p paternal.bam --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.indelible.denovo.tsv
 ```
 
 ### Additional Commands
@@ -437,6 +479,7 @@ All steps in the InDelible calling pipeline can be performed in succession autom
 * `--m` : path to maternal CRAM/BAM file. [optional]
 * `--p` : path to paternal CRAM/BAM file. [optional]
 * `--keeptmp` : If this flag is given, intermediate files are kept. Otherwise these files will be removed once the analysis is finished.
+* `--config` : path to the config.yml file.
 
 ```
 ./indelible.py complete --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o test_data/ --r hs37d5.fasta --keeptmp --m maternal.bam --p paternal.bam
@@ -450,6 +493,7 @@ The **database** command will generate the database required for the step [Annot
 
 * `--f` : file of files to merge to generate split read "allele frequencies"
 * `--o` : output file to generate
+* `--config` : path to the config.yml file.
 
 ```
 ls InDelible_files/*.scored > fofn.txt
@@ -464,6 +508,7 @@ The **train** command will run the active learning RandomForest on training data
 * `--o output random forest`
 * `--k number of samples to use for initial training and subsequent active selection [50].`
 * `--s convergence parameter to stop learning at when accuracy does not improve by X% [0.01]`
+* `--config` : path to the config.yml file.
 
 The input data has identical columns to the output generated by [Aggregate](#2-aggregate), except with an additional column appended to the end of the file named "annotation". **Column names need to be identical!** See an example training file which can be used to regenerate the RandomForest used on the DDD data in `./data/`.
 
@@ -475,56 +520,68 @@ The input data has identical columns to the output generated by [Aggregate](#2-a
 
 ## Output
 
+### Primary TSV File
+
 The primary output from InDelible is the output file from the [_denovo_](#6-denovo) command (e.g. `<BAM_NAME>.bam.indelible.denovo.tsv`). This file has 41 columns, of which most are only relevant to how InDelible handles internal filtering with the adaptive learning model. What each column contains is listed in the table below:
 
-| Column | Description |
-|--------|-------------|
-|chrom| Chromosome of breakpoint |
-|position| Position of breakpoint |
-|coverage| total number of reads covering breakpoint | 
-|insertion_context| total number of insertions (cigar "I") in reads overlapping this breakpoint | 
-|deletion_context| total number of deletions (cigar "D") in reads overlapping this breakpoint |
-|sr_total| total number of split reads (cigar "S") in reads overlapping this breakpoint |
-|sr_total_long| Number of reads with SR length ≥ MINIMUM_LENGTH_SPLIT_READ |
-|sr_total_short| Number of reads with SR length < MINIMUM_LENGTH_SPLIT_READ |
-|sr_long_5| sr_total_long for 5' end of reads |
-|sr_short_5| sr_total_short for 5' end of reads |
-|sr_long_3| sr_total_long for 3' end of reads |
-|sr_short_3| sr_total_short for 3' end of reads |
-|sr_entropy| Sequence entropy of the longest SR sequence given by the formula from Schmitt and Herzel (1997) |
-|context_entropy| Sequence entropy of the ±20bp from the breakpoint position |
-|entropy_upstream| Sequence entropy of the +20bp from the breakpoint position |
-|entropy_downstream| Sequence entropy of the -20bp from the breakpoint position |
-|sr_sw_similarity| Smith-Waterman based similarity of split reads from the breakpoint |
-|avg_avg_sr_qual| Average sequence quality of split bases |
-|avg_mapq| Average mapping quality of reads supporting the breakpoint |
-|seq_longest| longest split sequence |
-|pct_double_split| Number of reads with both 5' and 3' split reads |
-|prob_N| Probability of the breakpoint being a false positive based on the adaptive learning model (1 - prob_Y) | 
-|prob_Y| Probability of the breakpoint being a true positive based on the adaptive learning model |
-|predicted| Is prob_Y > prob_N? | 
-|ddg2p| Does this breakpoint intersect any genes given by `ddg2p_bed` file in config.yml |
-|hgnc| Does this breakpoint intersect any genes given by `hgnc_file` in config.yml |
-|hgnc_constrained| Does this breakpoint intersect any genes given by `hgnc_constrained` in config.yml | 
-|exonic| Does this breakpoint intersect any exons given by `ensembl_exons` in config.yml |
-|transcripts| What transcripts does this breakpoint intersect? If > 10 transcripts, will return 'multiple_transcripts' |
-|maf| "Allele Frequency" based on the InDelible database provided with `--d`
-|blast_hit| The coordinate given by BLAST for the longest SR of this breakpoint. If multiple BLAST hits, will be 'multi_hit', if overlaps a region from `repeatdb` in config.yml, will be repeats hit. |
-|blast_strand| Strand of blast_hit |
-|blast_identity| Percent identity of blast_hit |
-|blast_dist| Distance to blast_hit from 'position' |
-|blast_hgnc| Gene overlap of blast_hit |
-|otherside| Coordinate of likely 5'/3' breakpoint if present |
-|sv_type| If otherside found or blast_hit = "repeats_hit" potential SV type. Possible values are DUP (duplication), DEL (deletion), INS_<CLASS> (mobile element insertion), or SEGDUP_TRANS (segmental duplication or translocation). For INS, this will list the likely type of templated insertion from the *.fasta.hits_repeats file. SEGDUP_TRANS represents either a segmenetal duplication or translocation. As we cannot discern with short read data between a SEGDUP or translocation, we list both here. |
-|mum_sr| Number of SRs in the bam/cram provided to --m with the same 'position' |
-|dad_sr| Number of SRs in the bam/cram provided to --d with the same 'position' |
-|mum_indel_context| Number of reads in the bam/cram provided to --m with cigar 'I/D' values |
-|dad_indel_context| Number of reads in the bam/cram provided to --d with cigar 'I/D' values | 
-|mum_cov| Coverage in in the bam/cram provided to --m |
-|dad_cov| Coverage in in the bam/cram provided to --d |
+| Column Name | Column # | Description |
+|-------------|----------|-------------|
+|chrom| 1 | Chromosome of breakpoint |
+|position| 2 | Position of breakpoint |
+|coverage| 3 | total number of reads covering breakpoint | 
+|insertion_context| 4 | total number of insertions (cigar "I") in reads overlapping this breakpoint | 
+|deletion_context| 5 | total number of deletions (cigar "D") in reads overlapping this breakpoint |
+|sr_total| 6 | total number of split reads (cigar "S") in reads overlapping this breakpoint |
+|sr_total_long| 7 | Number of reads with SR length ≥ MINIMUM_LENGTH_SPLIT_READ |
+|sr_total_short| 8 | Number of reads with SR length < MINIMUM_LENGTH_SPLIT_READ |
+|sr_long_5| 9 | sr_total_long for 5' end of reads |
+|sr_short_5| 10 | sr_total_short for 5' end of reads |
+|sr_long_3| 11 | sr_total_long for 3' end of reads |
+|sr_short_3| 12 | sr_total_short for 3' end of reads |
+|sr_entropy| 13 | Sequence entropy of the longest SR sequence given by the formula from Schmitt and Herzel (1997) |
+|context_entropy| 14 | Sequence entropy of the ±20bp from the breakpoint position |
+|entropy_upstream| 15 | Sequence entropy of the +20bp from the breakpoint position |
+|entropy_downstream| 16 | Sequence entropy of the -20bp from the breakpoint position |
+|sr_sw_similarity| 17 | Smith-Waterman based similarity of split reads from the breakpoint |
+|avg_avg_sr_qual| 18 | Average sequence quality of split bases |
+|avg_mapq| 19 | Average mapping quality of reads supporting the breakpoint |
+|seq_longest| 20 | longest split sequence |
+|pct_double_split| 21 | Number of reads with both 5' and 3' split reads |
+|prob_N| 22 | Probability of the breakpoint being a false positive based on the adaptive learning model (1 - prob_Y) | 
+|prob_Y| 23 | Probability of the breakpoint being a true positive based on the adaptive learning model |
+|predicted| 24 | Is prob_Y > prob_N? | 
+|ddg2p| 25 | Does this breakpoint intersect any genes given by `ddg2p_bed` file in config.yml |
+|hgnc| 26 | Does this breakpoint intersect any genes given by `hgnc_file` in config.yml |
+|hgnc_constrained| 27 | Does this breakpoint intersect any genes given by `hgnc_constrained` in config.yml | 
+|exonic| 28 | Does this breakpoint intersect any exons given by `ensembl_exons` in config.yml |
+|transcripts| 29 | What transcripts does this breakpoint intersect? If > 10 transcripts, will return 'multiple_transcripts' |
+|maf| 30 | "Allele Frequency" based on the InDelible database provided with `--d`
+|blast_hit| 31 | The coordinate given by BLAST for the longest SR of this breakpoint. If multiple BLAST hits, will be 'multi_hit', if overlaps a region from `repeatdb` in config.yml, will be repeats hit. |
+|blast_strand| 32 | Strand of blast_hit |
+|blast_identity| 33 | Percent identity of blast_hit |
+|blast_dist| 34 | Distance to blast_hit from 'position' |
+|blast_hgnc| 35 | Gene overlap of blast_hit |
+|otherside| 36 | Coordinate of likely 5'/3' breakpoint if present |
+|sv_type| 37 | If otherside found or blast_hit = "repeats_hit" potential SV type. Possible values are DUP (duplication), DEL (deletion), INS_<CLASS> (mobile element insertion), or SEGDUP_TRANS (segmental duplication or translocation). For INS, this will list the likely type of templated insertion from the *.fasta.hits_repeats file. SEGDUP_TRANS represents either a segmenetal duplication or translocation. As we cannot discern with short read data between a SEGDUP or translocation, we list both here. |
+|mum_sr| 38 | Number of SRs in the bam/cram provided to --m with the same 'position' |
+|dad_sr| 39 | Number of SRs in the bam/cram provided to --d with the same 'position' |
+|mum_indel_context| 40 | Number of reads in the bam/cram provided to --m with cigar 'I/D' values |
+|dad_indel_context| 41 | Number of reads in the bam/cram provided to --d with cigar 'I/D' values | 
+|mum_cov| 42 | Coverage in in the bam/cram provided to --m |
+|dad_cov| 43 | Coverage in in the bam/cram provided to --d |
 
+### Recommended Filtering
 
+As we have described in the [InDelible manuscript](#how-to-cite-indelible), we follow a strict filtering regimen to further refine our TSV output. 
+Filters are as follows, and are meant to "funnel" variants down (i.e. each successive filter is applied following the 
+previous filter). Filter names are as above to avoid confusion. Parentheses are applied as pseudocode to demonstrate order 
+of operations.
 
+1. maf ≤ 0.0004 **AND** avg_mapq ≥ 20
+    * *Note*: The maf filter is dependent on using the maf data provided in one of the *data.zip files
+2. (pct_double_split > 0.1 **AND** blast_hit != "no_hit") **OR** pct_double_split ≤ 0.1 
+3. ddg2p != "NA" **AND** sr_total ≥ 5 **AND** exonic = "True"
+4. mom_sr < 2 **AND** dad_sr < 2
 
 
 

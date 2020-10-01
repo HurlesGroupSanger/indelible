@@ -59,8 +59,9 @@ def entropy(s):
 def read_database(path):
     db = defaultdict(dict)
     for v in csv.DictReader(open(path, 'r'), fieldnames=("chrom", "position", "maf", "count", "total"), delimiter="\t"):
-        db[v["chrom"]][int(v["position"])] = float(v["maf"])
+        db[normalize_chr(v["chrom"])][int(v["position"])] = float(v["maf"])
     return db
+
 
 def bgzip_and_tabix(path):
 
@@ -72,3 +73,14 @@ def bgzip_and_tabix(path):
     sigint = subprocess.call(["tabix", "-f", "-p", "bed", path + ".gz"])
     if sigint != 0:
         raise Exception("tabix on the file " + path + ".gz did not run properly... Exiting!")
+
+
+def normalize_chr(chr):
+
+    chr_patt = re.compile("chr(\S+)", re.IGNORECASE)
+    chr_match = chr_patt.match(chr)
+
+    if chr_match:
+        return(chr_match.group(1))
+    else:
+        return(chr)

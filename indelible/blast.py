@@ -1,5 +1,5 @@
 """
-Author: Alejandro Sifrim
+Author: Alejandro Sifrim & Eugene Gardner
 Affiliation: Wellcome Trust Sanger Institute
 
 Library to blast and interpret results of soft-clipped segments:
