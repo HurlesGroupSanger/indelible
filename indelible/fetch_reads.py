@@ -63,7 +63,7 @@ def fetch_reads(input_path, output_path, config):
         cigar = s.cigartuples
         if cigar is not None:
             refname = infile.getrname(s.tid)
-            if refname is not "hs37d5":
+            if refname != "hs37d5":
 
                 if len(cigar) == 2:
                     total_reads += 1
