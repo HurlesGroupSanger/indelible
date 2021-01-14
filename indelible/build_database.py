@@ -38,6 +38,7 @@ def build_database(score_files, output_file, score_threshold):
             file,
             sep="\t",
             header=0)
+
         is_pos = frame["prob_Y"] >= score_threshold
         frame = frame[is_pos][["chrom", "position"]]
         data.append(frame)

@@ -69,20 +69,25 @@ def search_tree(coord, hit_tree):
         q_start = int(coord_match.group(2))
         q_end = int(coord_match.group(3))
 
-        # Blast will report a start > stop if on "-" strand - have to check that here
-        if q_start < q_end:
-            overlaps = hit_tree.get(q_chrom).overlap(q_start - 30, q_end + 30)
-        else:
-            overlaps = hit_tree.get(q_chrom).overlap(q_end - 30, q_start + 30)
+        if hit_tree.get(q_chrom) is None:
 
-        return {"q_chrom": q_chrom, "q_start": q_start, "q_end": q_end, "overlaps": overlaps}
+            return {"q_chrom": None, "q_start": None, "q_end": None, "overlaps": {}}
+
+        else:
+            # Blast will report a start > stop if on "-" strand - have to check that here
+            if q_start < q_end:
+                overlaps = hit_tree.get(q_chrom).overlap(q_start - 30, q_end + 30)
+            else:
+                overlaps = hit_tree.get(q_chrom).overlap(q_end - 30, q_start + 30)
+
+            return {"q_chrom": q_chrom, "q_start": q_start, "q_end": q_end, "overlaps": overlaps}
 
     else:
 
         return {"q_chrom": None, "q_start": None, "q_end": None, "overlaps": {}}
 
 
-def determine_sv_type(v, hit_tree, bhash, ddg2p_db, constraint_hash, hgnc_db):
+def determine_sv_type(v, hit_tree, bhash, hgnc_db):
 
     v['otherside'] = "NA"
     v['sv_type'] = "UNK"
@@ -455,7 +460,7 @@ def annotate(input_path, output_path, database, config):
             v["sv_type"] = "INS_" + curr_hit
 
         elif v["blast_hit"] != "no_hit" and v["blast_hit"] != "multi_hit": # DELs/DUPs/SEGDUPs/TRANSLOCATIONS
-            v = determine_sv_type(v, hit_tree, bhash, ddg2p_db, constraint_hash, hgnc_db)
+            v = determine_sv_type(v, hit_tree, bhash, hgnc_db)
 
         else: # Unknown
             v["otherside"] = "NA"
