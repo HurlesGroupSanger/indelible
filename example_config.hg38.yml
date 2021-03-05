@@ -6,9 +6,7 @@ exac_constraint: "./data/cleaned_exac_with_pLI_march16_anno.hg38.txt"
 hgnc_synonyms: "./data/hgnc_gene_synonyms.txt"
 hgnc_file: "./data/hgnc_genes.hg38.tsv"
 
-#BLASTPATHS:
-blastdb: "./data/GRCh38.fa"
-windowmaskerdb: "./data/wmasker.obinary"
+#BLASTPATH:
 repeatdb: "./data/repeats.fasta"
 
 # PARAMETERS:

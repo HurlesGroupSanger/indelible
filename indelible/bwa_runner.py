@@ -35,20 +35,20 @@ class BWARunner:
         # First – create fastq files with read information:
         split_fq = output_file + ".1.fastq"
         ref_fq = output_file + ".2.fastq"
-        # split_pairs = open(split_fq, "w")
-        # ref_pairs = open(ref_fq, "w")
-        #
-        # for index, row in final_frame.iterrows():
-        #
-        #     ref_seq = self.__get_ref_string(row["dir"], row["chrom"], row["pos"])
-        #     self.__write_fastq_entry(split_pairs, row["coord"], row["longest"])
-        #     self.__write_fastq_entry(ref_pairs, row["coord"], ref_seq)
-        #
-        # split_pairs.close()
-        # ref_pairs.close()
-        #
-        # # Now run bwa mem:
-        # self.__bwa_engine(split_fq, ref_fq, output_file + ".sam")
+        split_pairs = open(split_fq, "w")
+        ref_pairs = open(ref_fq, "w")
+
+        for index, row in final_frame.iterrows():
+
+            ref_seq = self.__get_ref_string(row["dir"], row["chrom"], row["pos"])
+            self.__write_fastq_entry(split_pairs, row["coord"], row["longest"])
+            self.__write_fastq_entry(ref_pairs, row["coord"], ref_seq)
+
+        split_pairs.close()
+        ref_pairs.close()
+
+        # Now run bwa mem:
+        self.__bwa_engine(split_fq, ref_fq, output_file + ".sam")
 
         # And process alignments...
         self.__process_alignment(output_file + ".sam")
