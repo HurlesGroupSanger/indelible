@@ -47,6 +47,7 @@ subparser.add_argument('--config', help='path to config file', metavar="<config_
 subparser.add_argument('--f', help='File of files from the score command representing a complete dataset', metavar="<fof>", required=True, dest="fof")
 subparser.add_argument('--r', help='path to reference genome', metavar="<reference_path>", required=True, dest="reference_path")
 subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
+subparser.add_argument('--tb', help='number of threads to use for bwa alignment. [1]', metavar="<bwa_thread>", required=False, dest="bwa_thread",default=1)
 
 subparser = subparsers.add_parser('annotate', help='annotate positions with additional information')
 subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=True, dest="config_path", default = None)
@@ -140,7 +141,7 @@ if args.command == "score":
 DATABASE command
 """
 if args.command == "database":
-    indelible.build_database(args.fof, args.output_path, args.reference_path, config)
+    indelible.build_database(args.fof, args.output_path, args.reference_path, config, args.bwa_thread)
 
 """
 BLAST

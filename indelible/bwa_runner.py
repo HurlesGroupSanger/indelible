@@ -16,11 +16,12 @@ import subprocess
 
 class BWARunner:
 
-    def __init__(self, final_frame, output_file, fasta_file, bwa_loc):
+    def __init__(self, final_frame, output_file, fasta_file, bwa_loc, bwa_threads):
 
         self.__fasta_loc = fasta_file
         self.__fasta = pysam.FastaFile(fasta_file)
         self.__bwa_loc = bwa_loc
+        self.__bwa_threads = bwa_threads
         self.final_frame = final_frame
 
         # dict of the structure:
@@ -89,7 +90,8 @@ class BWARunner:
 
     def __bwa_engine(self, split_fq, ref_fq, outsam):
 
-        cmd = self.__bwa_loc + " mem -T 10 -k 10 -o " + outsam + " " + self.__fasta_loc + " " + split_fq + " " + ref_fq
+        cmd = self.__bwa_loc + " mem -t " + str(self.__bwa_threads) + " -T 10 -k 10 -o " + outsam + " " + self.__fasta_loc + " " + split_fq + " " + ref_fq
+        print(cmd)
         p = subprocess.Popen(cmd, shell=True)
         p.wait()
         print("bwa ran with code:", p.returncode)

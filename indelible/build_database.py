@@ -106,7 +106,7 @@ def find_bwa():
             return(search_path)
 
 
-def build_database(score_files, output_path, fasta, config):
+def build_database(score_files, output_path, fasta, config, bwa_threads):
 
     # Pull stuff out of config that we need
     score_threshold = config['SCORE_THRESHOLD']
@@ -188,7 +188,7 @@ def build_database(score_files, output_path, fasta, config):
     repeat_info = repeat_blast.get_repeat_blast_info()
 
     # Generate bwa files and perform alignment:
-    bwa_parser = BWARunner(final_frame, output_path, fasta, bwa_loc)
+    bwa_parser = BWARunner(final_frame, output_path, fasta, bwa_loc, bwa_threads)
     decisions = bwa_parser.get_decisions()
 
     # Write final database file:
