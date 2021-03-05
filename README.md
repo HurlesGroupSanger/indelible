@@ -97,6 +97,18 @@ reads that InDelible has to process would likely result in significantly increas
 Eugene J. Gardner, Alejandro Sifrim, Sarah J. Lindsay, Elena Prigmore, Diana Rajan, Petr Danecek, Giuseppe Gallone, Ruth Y. Eberhardt, Hilary C. Martin, Caroline F. Wright, David R. FitzPatrick, Helen V. Firth, Matthew E. Hurles.
 **InDelible: Detection and Evaluation of Clinically-relevant Structural Variation from Whole Exome Sequencing.** medRxiv (2020).
 
+### Change Log
+
+**_1.1.0_** – Bug fixes and new functionality for peer review
+
+* We have removed the "Blast" module from the InDelible pipeline. All functionality previously performed by this module
+has been placed within the "[database](#database)" module. As such, database is now a required step in the InDelible
+SV calling pipeline. Please see [database](#database) for more information.
+* Alongside this change, we have added additional functionality for determining SV types (i.e. DEL/DUP/INS/etc) and 
+breakpoint information. Please see [output](#output) for more information.
+
+**_1.0.0_** - Initial release of InDelible alongside our [preprint](#how-to-cite-indelible).
+
 ## Installation
 
 ### Required Software Dependencies
@@ -109,8 +121,10 @@ InDelible requires the following software to be installed and in `$PATH`:
   * **Note**: If using CRAM formated files with InDelible, bedtools v2.28 or later is required.
 * [tabix](http://www.htslib.org/download/) 
 * [bgzip](http://www.htslib.org/download/)
+* [bwa](https://github.com/lh3/bwa)
 
-The python package Biopython requires a local install of [blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download) in `$PATH` in order to function. This needs to be installed prior to [installing InDelible](#installing-InDelible).
+The python package Biopython requires a local install of [blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
+ in `$PATH` in order to function. This needs to be installed prior to [installing InDelible](#installing-InDelible).
 
 ### Installing InDelible on a Local Machine
 
@@ -168,31 +182,21 @@ cd data/
 unzip data.zip
 ```
 
-5. Download required blast resources:
+5. Download required reference resources and create bwa/blast databases:
 
 ```
-## Download windowmasker (*hg19 ONLY*):
-wget ftp://ftp.ncbi.nlm.nih.gov/blast/windowmasker_files/9606/wmasker.obinary
-
-## Download the GRCh37 human reference and create the blast db:
+## Download the GRCh37 (or GRCH38) human reference and create the repeat blast db:
 wget ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz
 wget ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz.fai
-makeblastdb -in hs37d5.fa -dbtype nucl
+gunzip hs37d5.fa
+mv hs37d5.fa.gz.fai hs37d5.fa.fai
+
+## Make bwa index
+bwa index hs37d5.fa
+
+## Make repeat blast_db
 makeblastdb -in repeats.fasta -dbtype nucl
 ```
-
-You can also make your own windowmasker resources. windowmasker binaries are provided as part of the blast+ distribution. To make
-the `*.obinary` format file one can use the commands: 
-
-```
-## Generate counts file:
-windowmasker -in ref.fa -infmt blastdb -mk_counts -parse_seqids -out ref.counts
-
-## Convert to .obinary:
-windowmasker -convert -in ref.asnb -out ref.obinary -sformat obinary
-```
-
-See the [windowmasker documentation](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/app/winmasker/) for more information.
 
 6. Edit the config file to point to required data files and edit any default parameters:
 
@@ -354,11 +358,10 @@ positional arguments:
     fetch     fetch reads from BAM file
     aggregate aggregate information per position
     score     score positions using Random Forest model
-    blast     blast clipped sequences
+    database  build SR allele frequency database
     annotate  annotate positions with additional information
     denovo    searches for de novo events
     complete  Performs the complete InDelible analysis
-    database  build SR allele frequency database
     train     trains the Random Forest model on a bunch of examples
 
 optional arguments:
@@ -372,8 +375,8 @@ The InDelible variant calling process follows several steps:
 1. [Fetch](#1-fetch) – Soft-clipped reads are extracted from the BAM files 
 2. [Aggregate](#2-aggregate) - Information is aggregated across reads to find positions where multiple reads are clipped.
 3. [Score](#3-score) - Positions are scored using a Random Forest model taking into account the number/quality of clipped reads and the sequence context
-4. [Blast](#4-blast) - Longer clipped segments are blasted against the human genome and repeat databases
-5. [Annotate](#5-annotate) - Putative SVs are annotated with additional information (e.g. gene annotations) and the blast results from the previous step
+4. [Database](#4-database) - 
+5. [Annotate](#5-annotate) - Putative SVs are annotated with additional information (e.g. gene annotations) and the positional results from the previous step
 6. [_denovo_](#6-denovo) - _de novo_ events are called and inheritance information is appended.
 
 **Note**: All commands also take the command-line option `--config` which overrides the default config.yml path. The user 
@@ -400,7 +403,7 @@ The **aggregate** merges information across reads towards a position-level view 
 * `--i` : path to the input file (the output of the *fetch* command from previous step).
 * `--b` : path to the CRAM/BAM file used to generate the input file.
 * `--o` : the path to the output file.
-* `--r` : path to reference genome .
+* `--r` : path to reference genome.
 * `--config` : path to the config.yml file.
 
 ```
@@ -423,23 +426,27 @@ The **score** command scores positions based on the read information and sequenc
 
 **Note**: It is highly recommended if analysing a large amount of data at once to rebuild the InDelible frequency database. Please see the [Database](#database) command below for instructions.
 
-#### 4. Blast
+#### 4. Database
 
-The **blast** command blasts longer clipped segments (20+ bp) to find matches elsewhere in the human genome and/or repeat database:
-* `--i` :  path to the input file (the output of the *score* command from previous step).
+The **database** command generates the allele frequency and breakpoint database required for the next step – [Annotate](#5-annotate). 
+If analysing a small amount of data, it is highly recommended to use the '-p' flag with this command to include breakpoints
+from the initial DDD study described in our [manuscript](#how-to-cite-indelible).
+
+* `--f` : file of files to merge to generate split read "allele frequencies"
+* `--o` : output file to generate
+* `--r` : path to reference genome.
 * `--config` : path to the config.yml file.
 
-This will automatically generate 3 files: a fasta file with the sequences to be blasted, 2 results files (one for repeat sequences, one for non-repeat sequences). These files are used in the next step.
-
 ```
-./indelible.py blast --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored
+ls InDelible_files/*.scored > fofn.txt
+./indelible.py database --f fofn.txt --o InDelible_db.tsv
 ```
 
 #### 5. Annotate
 
-The **annotate** command enriches the result with gene/exon annotations and merges the blast results with the position file:
+The **annotate** command enriches the result with gene/exon annotations and merges the database results with the position file:
 
-* `--i` : path to the input file (output of score command after running the blast command).
+* `--i` : path to the input file (output of score command after running the [database](#4-database) command).
 * `--o` : path to output the annotated file.
 * `--d` : path to the InDelible frequency database. A default frequency database from the Deciphering Developmental Disorders WES data is availible at `./Indelible/data/Indelible_db_10k.bed`. 
 * `--config` : path to the config.yml file.
@@ -466,7 +473,7 @@ One can then look for *de novo* mutation events using the **denovo** command:
 
 ### Additional Commands
 
-InDelible also includes several helper commands:
+InDelible also includes two helper commands:
 
 #### InDelible Complete
 
@@ -486,19 +493,6 @@ All steps in the InDelible calling pipeline can be performed in succession autom
 ```
 
 For InDelible _de novo_ discovery behaviour when not providing maternal or paternal bams, please see [de novo](#6-denovo).
-
-#### Database
-
-The **database** command will generate the database required for the step [Annotate](#5-annotate). If analysing a large amount of data, it is highly recommended to run this command following running the [Score](#3-score) command.
-
-* `--f` : file of files to merge to generate split read "allele frequencies"
-* `--o` : output file to generate
-* `--config` : path to the config.yml file.
-
-```
-ls InDelible_files/*.scored > fofn.txt
-./indelible.py database --f fofn.txt --o InDelible_db.tsv
-```
 
 #### Train
 

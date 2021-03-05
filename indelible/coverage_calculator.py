@@ -8,7 +8,8 @@
     Parameters
     1.) chr_dictionary of split reads from fetch
     2.) input bam path
-    3.) config file of parameters for all of Indelible
+    3.) input path
+    4.) config file of parameters for all of Indelible
 
 
 """

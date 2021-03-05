@@ -20,7 +20,7 @@ today = time.strftime('%Y%m%d')
 def timestamp():
     return time.strftime('%d/%m/%y - %H:%M:%S')
 
-version = "1.0.0"
+version = "1.1.0"
 
 parser = argparse.ArgumentParser(prog='indelible',description="InDelible v" + version + " -- Structural variant discovery with split reads.\n\n")
 subparsers = parser.add_subparsers(help='One of the following commands:',dest="command",metavar="<command>")
@@ -42,9 +42,11 @@ subparser.add_argument('--config', help='path to config file', metavar="<config_
 subparser.add_argument('--i', help='input file (output of aggregate command)', metavar="<input_path>", required=True, dest="input_path")
 subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 
-subparser = subparsers.add_parser('blast', help='blast clipped sequences')
+subparser = subparsers.add_parser('database', help='build SR allele frequency database')
 subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=True, dest="config_path", default = None)
-subparser.add_argument('--i', help='input file (output of score command)', metavar="<input_path>", required=True, dest="input_path")
+subparser.add_argument('--f', help='File of files from the score command representing a complete dataset', metavar="<fof>", required=True, dest="fof")
+subparser.add_argument('--r', help='path to reference genome', metavar="<reference_path>", required=True, dest="reference_path")
+subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 
 subparser = subparsers.add_parser('annotate', help='annotate positions with additional information')
 subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=True, dest="config_path", default = None)
@@ -68,11 +70,6 @@ subparser.add_argument('--d', help='path to indelible frequency database', metav
 subparser.add_argument('--m', help='path to maternal BAM file', metavar="<mother_bam_path>", required=False, dest="mother_bam")
 subparser.add_argument('--p', help='path to paternal BAM file', metavar="<father_bam_path>", required=False, dest="father_bam")
 subparser.add_argument('--keeptmp', action='store_const', const=True,  dest="keep_tmp")
-
-subparser = subparsers.add_parser('database', help='build SR allele frequency database')
-subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=True, dest="config_path", default = None)
-subparser.add_argument('--f', help='File of files from the score command representing a complete dataset', metavar="<fof>", required=True, dest="fof")
-subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 
 subparser = subparsers.add_parser('train', help='trains the Random Forest model on a bunch of examples')
 subparser.add_argument('--config', help='path to config file', metavar="<config_path>", required=True, dest="config_path", default = None)
@@ -100,7 +97,7 @@ for r in required:
         exit(1)
 
 if args.command is None:
-    print("\nMust specify one of 'fetch', 'aggregate', 'score', 'blast', 'annotate', 'denovo', 'complete', 'database', 'train'\n")
+    print("\nMust specify one of 'fetch', 'aggregate', 'score', 'database', 'annotate', 'denovo', 'complete', 'train'\n")
     parser.print_help()
     exit(1)
 
@@ -143,7 +140,7 @@ if args.command == "score":
 DATABASE command
 """
 if args.command == "database":
-    indelible.build_database(args.fof, args.output_path, config['SCORE_THRESHOLD'])
+    indelible.build_database(args.fof, args.output_path, args.reference_path, config)
 
 """
 BLAST
