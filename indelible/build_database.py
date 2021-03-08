@@ -23,15 +23,6 @@ from indelible.blast_repeats import BlastRepeats
 import csv
 
 
-score_threshold = 0.6
-REPEATdb = "/lustre/scratch115/projects/ddd/users/eg15/indelible/Indelible/data/resources_striped/repbase_fixed.fasta"
-fasta = "/lustre/scratch115/projects/ddd/users/eg15/indelible/Indelible/data/resources_striped/hs37d5.fa"
-bwa_threads = 2
-output_path = "/lustre/scratch115/projects/ddd/users/eg15/indelible/final_set/indelible_db_rd2/db.txt"
-score_files = "/lustre/scratch115/projects/ddd/users/eg15/indelible/final_set/indelible_db_rd2/score_files.100.txt"
-
-
-
 def add_alignment_information(curr_bp, decisions, repeat_info):
     name = "%s_%s" % (curr_bp["chrom"], curr_bp["pos"])
     if name in repeat_info:
