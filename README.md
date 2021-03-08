@@ -450,16 +450,15 @@ from the initial DDD study described in our [manuscript](#how-to-cite-indelible)
 * `--o` : output file to generate
 * `--r` : path to reference genome.
 * `--config` : path to the config.yml file.
-* `--p`: path to prior MAF database.
+* `--priors`: path to prior MAF database.
+* `--tb`: threads for multi-threaded bwa mem alignment [default: 1]
 
 ```
 ls InDelible_files/*.scored > fofn.txt
 ./indelible.py database --f fofn.txt --o InDelible_db.tsv
 ```
 
-*Note* The MAF database provided to `--p` must have an identical format to the output of this command.
-
-Example output:
+*Note* The MAF database provided to `--prior` must conform to the following format:
 
 ```
 1   1234    0.0001  1   10000   1_1256  REALN   DEL 21  15  true    true   1:1234-1256
@@ -473,13 +472,13 @@ Where columns are:
 3. Breakpoint frequency
 4. Breakpoint count (i.e. number of individuals with this breakpoint)
 5. Total individuals assessed
-6. Alignment coordinate – where the split read from the score file aligned to in 'chr_position'
+6. Alignment coordinate – where the split read from the score file aligned to in 'chr_position' (can be NA)
 7. SV Type (either DEL/DUP/INS/TRANS_SEGDUP/UNK)
-8. SV Size
-9. Alignment Length
+8. SV Size (can be NA)
+9. Alignment Length (can be NA)
 10. Otherside found elsewhere in MAF database?
-11. Is this the left-most breakpoint when '10.' == true?
-12. VCF-like coordinate for this variant
+11. Is this the left-most breakpoint when '10.' == true? (can be NA)
+12. VCF-like coordinate for this variant (can be NA)
 
 
 #### 5. Annotate

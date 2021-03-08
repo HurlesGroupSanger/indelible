@@ -24,6 +24,22 @@ from indelible.blast_repeats import BlastRepeats
 import csv
 
 
+def build_priors(prior_file, final_frame):
+    priors_frame = pandas.read_csv("/Users/eg15/PycharmProjects/Indelible/test/test_db.txt",
+                                   sep="\t",
+                                   header=None,
+                                   names = ("chrom", "pos", "pct", "counts", "tot", "otherside", "mode", "svtype",
+                                            "size", "aln_length", "otherside_found", "is_primary", "variant_coord"))
+    priors_frame["coord"] = priors_frame["chrom"].astype(str) + "_" + priors_frame["pos"].astype(str)
+    priors_frame = priors_frame.set_index("coord")
+
+    ## Drop sites that have already been identified
+    already_found = final_frame.index.to_list()
+    priors_frame = priors_frame.drop(index=already_found)
+
+    return(priors_frame)
+
+
 def add_alignment_information(curr_bp, decisions, repeat_info):
     name = "%s_%s" % (curr_bp["chrom"], curr_bp["pos"])
     if name in repeat_info:
@@ -86,7 +102,7 @@ def decide_direction(left, right):
     return dir
 
 
-def build_database(score_files, output_path, fasta, config, bwa_threads):
+def build_database(score_files, output_path, fasta, config, priors, bwa_threads):
 
     # Pull stuff out of arguments/config that we need
     fasta = pysam.FastaFile(fasta)
@@ -164,5 +180,12 @@ def build_database(score_files, output_path, fasta, config, bwa_threads):
         v = add_alignment_information(v, decisions, repeat_info)
 
         output_file.writerow(v)
+
+    ## Check priors and append to the bottom:
+    if priors is not None:
+        priors_frame = build_priors(priors, final_frame)
+        for index, row in priors_frame.iterrows():
+            row_dict = row.to_dict()
+            output_file.writerow(row_dict)
 
     fasta.close()

@@ -121,6 +121,8 @@ def attach_db(v, db):
         for key,value in db_entry.iteritems():
             v[key] = value
 
+        return(v)
+
 
 def find_hgnc_genes(chrom, start, end, hgnc_db):
     res = []
@@ -236,6 +238,7 @@ def annotate(input_path, output_path, database, config):
                     else:
                         left_search = pos
                         right_search = qpos
+
 
             hgnc_genes = find_hgnc_genes(chrom, left_search, right_search, hgnc_db)
             ddg2p_genes = find_ddg2p_gene(chrom, left_search, right_search, ddg2p_db)
