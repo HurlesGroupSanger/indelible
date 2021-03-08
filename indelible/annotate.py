@@ -50,10 +50,10 @@ def read_database(path):
                                                                     'otherside': v["otherside"],
                                                                     'mode': v["mode"],
                                                                     'svtype': v["svtype"],
-                                                                    'size': int(v["size"]),
-                                                                    'aln_length': int(v["aln_length"]),
-                                                                    'otherside_found': bool(v["otherside_found"]),
-                                                                    'is_primary': bool(v["is_primary"]),
+                                                                    'size': v["size"],
+                                                                    'aln_length': v["aln_length"],
+                                                                    'otherside_found': v["otherside_found"],
+                                                                    'is_primary': v["is_primary"],
                                                                     'variant_coord': v["variant_coord"]}
     return db
 
