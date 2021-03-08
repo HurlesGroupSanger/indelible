@@ -94,18 +94,26 @@ reads that InDelible has to process would likely result in significantly increas
 
 ### How to Cite InDelible
 
+_Peer-Reviewed Manuscript_
+
+_Preprint_
+
 Eugene J. Gardner, Alejandro Sifrim, Sarah J. Lindsay, Elena Prigmore, Diana Rajan, Petr Danecek, Giuseppe Gallone, Ruth Y. Eberhardt, Hilary C. Martin, Caroline F. Wright, David R. FitzPatrick, Helen V. Firth, Matthew E. Hurles.
 **InDelible: Detection and Evaluation of Clinically-relevant Structural Variation from Whole Exome Sequencing.** medRxiv (2020).
 
 ### Change Log
 
-**_1.1.0_** – Bug fixes and new functionality for peer review
+**_1.1.0_** – Bug fixes and new functionality for the published 
 
 * We have removed the "Blast" module from the InDelible pipeline. All functionality previously performed by this module
 has been placed within the "[database](#database)" module. As such, database is now a required step in the InDelible
 SV calling pipeline. Please see [database](#database) for more information.
 * Alongside this change, we have added additional functionality for determining SV types (i.e. DEL/DUP/INS/etc) and 
 breakpoint information. Please see [output](#output) for more information.
+* These changes have also required us to modify where InDelible filters sites based on our active learning approach 
+in the [score](#3-score) step. This change means that the output of [annotate](#5-annotate) will only contain breakpoints 
+that pass the SCORE_THRESHOLD as defined in the provided config.yml file (default sites with probability >= 0.6). As a 
+reminder all raw variants are still available in the output of [score](#3-score).
 
 **_1.0.0_** - Initial release of InDelible alongside our [preprint](#how-to-cite-indelible).
 

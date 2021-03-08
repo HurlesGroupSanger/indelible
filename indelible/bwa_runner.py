@@ -42,8 +42,8 @@ class BWARunner:
         for index, row in final_frame.iterrows():
 
             ref_seq = self.__get_ref_string(row["dir"], row["chrom"], row["pos"])
-            self.__write_fastq_entry(split_pairs, row["coord"], row["longest"])
-            self.__write_fastq_entry(ref_pairs, row["coord"], ref_seq)
+            self.__write_fastq_entry(split_pairs, row["chrom"], row["pos"], row["longest"])
+            self.__write_fastq_entry(ref_pairs, row["chrom"], row["pos"], ref_seq)
 
         split_pairs.close()
         ref_pairs.close()
@@ -58,31 +58,32 @@ class BWARunner:
 
         return self.__final_decision
 
-    def __write_fastq_entry(self, writer, name, sequence):
+    def __write_fastq_entry(self, writer, chrom, position, sequence):
 
         qual = 'Z' * len(sequence)
+        name = chrom + "_" + str(position)
 
         writer.write('@' + name + "\n")
         writer.write(sequence + "\n")
         writer.write('+' + "\n")
         writer.write(qual + "\n")
 
-    def __get_ref_string(self, dir, chrom, coordinate):
+    def __get_ref_string(self, dir, chrom, position):
 
         if dir == "left":
 
-            left = coordinate
-            right = coordinate + 100
+            left = position
+            right = position + 100
 
         elif dir == "right":
 
-            left = coordinate - 100
-            right = coordinate
+            left = position - 100
+            right = position
 
         else:
 
-            left = coordinate - 50
-            right = coordinate + 50
+            left = position - 50
+            right = position + 50
 
         ref_seq = self.__fasta.fetch(reference=chrom, start=left, end=right)
 
@@ -91,7 +92,6 @@ class BWARunner:
     def __bwa_engine(self, split_fq, ref_fq, outsam):
 
         cmd = self.__bwa_loc + " mem -t " + str(self.__bwa_threads) + " -T 10 -k 10 -o " + outsam + " " + self.__fasta_loc + " " + split_fq + " " + ref_fq
-        print(cmd)
         p = subprocess.Popen(cmd, shell=True)
         p.wait()
         print("bwa ran with code:", p.returncode)
@@ -137,7 +137,7 @@ class BWARunner:
         ## Only fill the dictionary if we get valid information, will default to None for empties
         if read_one is not None and read_two is not None:
 
-            curr_data = self.final_frame.loc[self.final_frame["coord"] == current_id].to_dict("records")[0]
+            curr_data = self.final_frame.loc[current_id].to_dict()
             if curr_data["dir"] == "uncer":
 
                 self.__fill_dict(current_id, "NA", "FAIL_MULTISPLIT", "UNK", "NA", read_one.query_alignment_length)

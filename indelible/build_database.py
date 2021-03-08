@@ -22,50 +22,28 @@ from indelible.bwa_runner import BWARunner
 from indelible.blast_repeats import BlastRepeats
 import csv
 
-def decide_split_information(curr_data):
-
-    left_total = sum(curr_data["left"])
-    right_total = sum(curr_data["right"])
-
-    # Decide direction:
-    if (left_total * 0.5) > right_total:
-        dir = "left"
-    elif (right_total * 0.5) > left_total:
-        dir = "right"
-    else:
-        dir = "uncer"
-
-    # Decide longest sequence:
-    fin_seq = ""
-    for seq in curr_data["seq_longest"]:
-        if len(seq) > len(fin_seq):
-            fin_seq = seq
-
-    returnable = {'lefts': left_total, 'rights': right_total, 'dir': dir, 'longest_seq': fin_seq}
-    return returnable
-
 
 def add_alignment_information(curr_bp, decisions, repeat_info):
 
-    coord = curr_bp["coord"]
-    if coord in repeat_info:
+    name = curr_bp["chrom"] + "_" + str(curr_bp["pos"])
+    if name in repeat_info:
 
         curr_bp["otherside"] = "repeats_hit"
         curr_bp["mode"] = "BLAST_REPEAT"
-        curr_bp["svtype"] = "INS_" + repeat_info[coord]["target_chrom"]
+        curr_bp["svtype"] = "INS_" + repeat_info[name]["target_chrom"]
         curr_bp["size"] = "NA"
-        curr_bp["aln_length"] = repeat_info[coord]["query_length"]
+        curr_bp["aln_length"] = repeat_info[name]["query_length"]
         curr_bp["otherside_found"] = "NA"
         curr_bp["is_primary"] = "NA"
         curr_bp["variant_coord"] = "NA"
 
-    elif coord in decisions:
+    elif name in decisions:
 
-        curr_bp["otherside"] = decisions[coord]["otherside"]
-        curr_bp["mode"] = decisions[coord]["mode"]
-        curr_bp["svtype"] = decisions[coord]["svtype"]
-        curr_bp["size"] = decisions[coord]["size"]
-        curr_bp["aln_length"] = decisions[coord]["aln_length"]
+        curr_bp["otherside"] = decisions[name]["otherside"]
+        curr_bp["mode"] = decisions[name]["mode"]
+        curr_bp["svtype"] = decisions[name]["svtype"]
+        curr_bp["size"] = decisions[name]["size"]
+        curr_bp["aln_length"] = decisions[name]["aln_length"]
         curr_bp["otherside_found"] = "NA"
         curr_bp["is_primary"] = "NA"
         curr_bp["variant_coord"] = "NA"
@@ -104,6 +82,17 @@ def find_bwa():
         search_path = path + "/bwa"
         if os.path.isfile(search_path):
             return(search_path)
+
+
+def decide_direction(left, right):
+    if (left * 0.5) > right:
+        dir = "left"
+    elif (right * 0.5) > left:
+        dir = "right"
+    else:
+        dir = "uncer"
+
+    return dir
 
 
 def build_database(score_files, output_path, fasta, config, bwa_threads):
@@ -145,39 +134,17 @@ def build_database(score_files, output_path, fasta, config, bwa_threads):
 
     counts = data_joined["coord"].value_counts()
 
-    final_frame = pandas.DataFrame()
+    final_frame = data_joined.groupby('coord').agg(chrom = ('chrom','first'),
+                                                   pos = ('position','first'),
+                                                   counts=('coord', len),
+                                                   tot_left = ('left','sum'),
+                                                   tot_right = ('right','sum'),
+                                                   longest = ('seq_longest','max'))
 
-    final_frame["coord"] = counts.index.values
-    final_frame["counts"] = counts.values
-
-    # Assess each coordinate for properties we need to examine for SV type:
-    lefts = []
-    rights = []
-    dirs = []
-    longest = []
-
-    for index, row in final_frame.iterrows():
-
-        curr_data = data_joined.loc[data_joined["coord"] == row["coord"]]
-        curr_info = decide_split_information(curr_data)
-
-        lefts.append(curr_info["lefts"])
-        rights.append(curr_info["rights"])
-        dirs.append(curr_info["dir"])
-        longest.append(curr_info["longest_seq"])
-
-    # Add all of this information to the final_frame
-    final_frame["tot_left"] = lefts
-    final_frame["tot_right"] = rights
-    final_frame["dir"] = dirs
-    final_frame["longest"] = longest
-
-    # Convert the coordinate to positions:
-    split = final_frame["coord"].str.split("_", n=1, expand=True)
-    final_frame["chrom"] = split[0]
-    final_frame["pos"] = split[1]
-    final_frame["pos"] = final_frame["pos"].astype(int)
     final_frame = final_frame.sort_values(by=["chrom", "pos"])
+
+    # Set direction value:
+    final_frame['dir'] = final_frame.apply(lambda x: decide_direction(x.tot_left, x.tot_right), axis=1)
 
     # Generate "Allele Frequencies"
     final_frame["pct"] = final_frame["counts"] / allele_count
@@ -194,7 +161,6 @@ def build_database(score_files, output_path, fasta, config, bwa_threads):
     # Write final database file:
     header = ["chrom", "pos", "pct", "counts", "tot", "otherside", "mode", "svtype", "size", "aln_length",
               "otherside_found", "is_primary", "variant_coord"]
-    # header = ["coord","chrom", "pos", "otherside", "mode", "svtype", "size", "aln_length"]
     output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=header, delimiter="\t",
                                  lineterminator="\n")
 
@@ -202,7 +168,6 @@ def build_database(score_files, output_path, fasta, config, bwa_threads):
 
         row_dict = row.to_dict()
         v = {}
-        v["coord"] = row_dict["coord"]
         v["chrom"] = row_dict["chrom"]
         v["pos"] = row_dict["pos"]
         v["pct"] = row_dict["pct"]
@@ -210,6 +175,5 @@ def build_database(score_files, output_path, fasta, config, bwa_threads):
         v["tot"] = row_dict["tot"]
 
         v = add_alignment_information(v, decisions, repeat_info)
-        v.pop('coord', None)
 
         output_file.writerow(v)

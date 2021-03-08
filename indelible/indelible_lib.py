@@ -56,13 +56,6 @@ def entropy(s):
     return -sum(count / lns * math.log(count / lns, 2) for count in list(p.values()))
 
 
-def read_database(path):
-    db = defaultdict(dict)
-    for v in csv.DictReader(open(path, 'r'), fieldnames=("chrom", "position", "maf", "count", "total"), delimiter="\t"):
-        db[normalize_chr(v["chrom"])][int(v["position"])] = float(v["maf"])
-    return db
-
-
 def bgzip_and_tabix(path):
 
     # bgzip

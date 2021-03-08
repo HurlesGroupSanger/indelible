@@ -38,127 +38,24 @@ def create_exon_intervaltree(exon_file):
 
     return exons
 
-def create_hit_tree(scored_file):
 
-    hits = {}
+def read_database(path):
+    db = defaultdict(dict)
 
-    for line in csv.DictReader(open(scored_file), delimiter="\t"):
+    header = ["chrom", "pos", "pct", "counts", "tot", "otherside", "mode", "svtype", "size", "aln_length",
+     "otherside_found", "is_primary", "variant_coord"]
 
-        current_chr = normalize_chr(line['chrom'])
-
-        if current_chr in hits:
-            current_position = int(line['position'])
-            hits.get(current_chr).addi(current_position,current_position+1, line["seq_longest"])
-
-        else:
-            current_tree = IntervalTree()
-            current_position = int(line['position'])
-            current_tree.addi(current_position,current_position+1, line["seq_longest"])
-            hits[current_chr] = current_tree
-
-    return hits
-
-def search_tree(coord, hit_tree):
-
-    coord_pattern = re.compile("(?:chr)*([0-9XY]{1,2}):(\d+)\-(\d+)")
-    coord_match = coord_pattern.match(coord)
-
-    if coord_match:
-
-        q_chrom = normalize_chr(coord_match.group(1))
-        q_start = int(coord_match.group(2))
-        q_end = int(coord_match.group(3))
-
-        if hit_tree.get(q_chrom) is None:
-
-            return {"q_chrom": None, "q_start": None, "q_end": None, "overlaps": {}}
-
-        else:
-            # Blast will report a start > stop if on "-" strand - have to check that here
-            if q_start < q_end:
-                overlaps = hit_tree.get(q_chrom).overlap(q_start - 30, q_end + 30)
-            else:
-                overlaps = hit_tree.get(q_chrom).overlap(q_end - 30, q_start + 30)
-
-            return {"q_chrom": q_chrom, "q_start": q_start, "q_end": q_end, "overlaps": overlaps}
-
-    else:
-
-        return {"q_chrom": None, "q_start": None, "q_end": None, "overlaps": {}}
-
-
-def determine_sv_type(v, hit_tree, bhash, hgnc_db):
-
-    v['otherside'] = "NA"
-    v['sv_type'] = "UNK"
-    act_position = int(v['position'])
-
-    overlaps = search_tree(v["blast_hit"], hit_tree)
-
-    for hits in overlaps["overlaps"]:
-
-        # Check to make sure we haven't just turned up the same breakpoint
-        if hits[0] != act_position:
-
-            # Check the reciprocal overlap as well...
-            # Need to search the blast tree for the reverse hit. Not ideal but the easiest way to do this I think.
-            rev_hit = {"chrom": overlaps["q_chrom"], "position": str(hits[0]), "seq_longest": hits[2]}
-            rev_hit = annotate_blast(rev_hit, bhash, hgnc_db)
-            recip_overlaps = search_tree(rev_hit["blast_hit"], hit_tree)
-            found_self = False
-            for recip_hits in recip_overlaps["overlaps"]:
-                if recip_hits[0] == act_position:
-                    found_self = True
-
-            if found_self is True:
-                found_pos = hits[0]
-                v["otherside"] = overlaps["q_chrom"] + ":" + str(found_pos)
-
-                if overlaps["q_chrom"] != v['chrom']:
-
-                    v["sv_type"] = "TRANS_SEGDUP"
-
-                else:
-
-                    ## Check for overlap to right of found breakpoint:
-                    left_check = found_pos
-                    right_check = found_pos + 10
-                    overlap_right = (min(right_check, overlaps["q_end"]) - max(left_check, overlaps["q_start"])) / 10
-
-                    ## Check for overlap to left of found breakpoint:
-                    left_check = found_pos - 10
-                    right_check = found_pos
-                    overlap_left = (min(right_check, overlaps["q_end"]) - max(left_check, overlaps["q_start"])) / 10
-
-                    if found_pos < int(v['position']):
-                        if overlap_right > overlap_left:
-                            v["sv_type"] = "DUP"
-                        elif overlap_right < overlap_left:
-                            v["sv_type"] = "DEL"
-                        else:
-                            v["sv_type"] = "UNK"
-                    else:
-                        if overlap_right > overlap_left:
-                            v["sv_type"] = "DEL"
-                        elif overlap_right < overlap_left:
-                            v["sv_type"] = "DUP"
-                        else:
-                            v["sv_type"] = "UNK"
-
-    return v
-
-def create_gene_synonym_hash(hgnc_synonyms):
-    syn_hash = {}
-    syn_file = hgnc_synonyms
-    for row in csv.DictReader(open(syn_file, 'r'), delimiter="\t"):
-        if row['Status'] != "Approved":
-            continue
-        synonyms = []
-        synonyms.extend(row['Previous Symbols'].split(", "))
-        # synonyms.extend(row['Synonyms'].split(", "))
-        for synonym in synonyms:
-            syn_hash[synonym] = row['Approved Symbol']
-    return syn_hash
+    for v in csv.DictReader(open(path, 'r'), fieldnames=header, delimiter="\t"):
+        db[normalize_chr(v["chrom"]) + "_" + int(v["position"])] = {'maf': float(v["pct"]),
+                                                                    'otherside': v["otherside"],
+                                                                    'mode': v["mode"],
+                                                                    'svtype': v["svtype"],
+                                                                    'size': int(v["size"]),
+                                                                    'aln_length': int(v["aln_length"]),
+                                                                    'otherside_found': bool(v["otherside_found"]),
+                                                                    'is_primary': bool(v["is_primary"]),
+                                                                    'variant_coord': v["variant_coord"]}
+    return db
 
 
 def create_exac_constraint_hash(config):
@@ -172,56 +69,6 @@ def create_exac_constraint_hash(config):
         constraint_hash[row['gene']] = float(row["pLI"])
 
     return constraint_hash
-
-
-def find_protein_coding_ensembl_exon(chrom, pos, blast_hit, ensembl_exons):
-
-    # This is simply because of a weird scenario where SRs can be found at the beginning of a contig/chromosome...
-    if pos == 0:
-        pos = 1
-    else:
-        pos = pos
-
-    p = re.compile("(\S+):(\d+)\-(\d+)")
-    m = p.match(blast_hit)
-
-    if m:
-        if m.group(1) == chrom:
-            if int(m.group(2)) < pos:
-                start_coord = int(m.group(2))
-                end_coord = pos + 10
-            else:
-                start_coord = pos - 10
-                end_coord = int(m.group(2))
-        else:
-            start_coord = pos - 10
-            end_coord = pos + 10
-    else:
-        start_coord = pos - 10
-        end_coord = pos + 10
-
-    res_exons = set()
-    if chrom in ensembl_exons:
-        for v in ensembl_exons[chrom].overlap(start_coord, end_coord):
-            res_exons.add(v[2])
-
-    if len(res_exons) > 0:
-        return res_exons
-    else:
-        return None
-
-
-def interval_overlap(start1, end1, start2, end2):
-    s1 = min(int(start1), int(end1))
-    e1 = max(int(start1), int(end1))
-    s2 = min(int(start2), int(end2))
-    e2 = max(int(start2), int(end2))
-
-    overlap = max(0, min(e1, e2) - max(s1, s2))
-    if overlap > 0:
-        return True
-    else:
-        return False
 
 
 def read_ddg2p(ddg2p_bed):
@@ -244,25 +91,34 @@ def read_ddg2p(ddg2p_bed):
     return ddg2p_db
 
 
-def find_ddg2p_gene(chrom, start, end, ddg2p_db):
-    res = []
-    if chrom in ddg2p_db:
-        overlaps = ddg2p_db.get(chrom).overlap(start, end)
-        for d in overlaps:
-            res.append(d.data)
-        if res != []:
-            return res
-        else:
-            return None
-    else:
-        return None
-
-
 def read_hgnc_genes(hgnc_bed):
     hgnc_db = {}
     for row in csv.DictReader(open(hgnc_bed, 'r'), delimiter="\t"):
         hgnc_db[row['HGNC']] = {"chrom": normalize_chr(row['CHROM']), "start": int(row["START"]), "end": int(row["END"])}
     return hgnc_db
+
+
+def create_gene_synonym_hash(hgnc_synonyms):
+    syn_hash = {}
+    syn_file = hgnc_synonyms
+    for row in csv.DictReader(open(syn_file, 'r'), delimiter="\t"):
+        if row['Status'] != "Approved":
+            continue
+        synonyms = []
+        synonyms.extend(row['Previous Symbols'].split(", "))
+        # synonyms.extend(row['Synonyms'].split(", "))
+        for synonym in synonyms:
+            syn_hash[synonym] = row['Approved Symbol']
+    return syn_hash
+
+
+def attach_db(v, db):
+
+        key = v["chrom"] + "_" + v["pos"]
+        # While this is dangerous there should be a 0% chance that the key is not contained within this db.
+        database = db[key]
+        for k,v in database.iteritems():
+            v[k] = v
 
 
 def find_hgnc_genes(chrom, start, end, hgnc_db):
@@ -274,6 +130,20 @@ def find_hgnc_genes(chrom, start, end, hgnc_db):
 
     if res != []:
         return res
+    else:
+        return None
+
+
+def find_ddg2p_gene(chrom, start, end, ddg2p_db):
+    res = []
+    if chrom in ddg2p_db:
+        overlaps = ddg2p_db.get(chrom).overlap(start, end)
+        for d in overlaps:
+            res.append(d.data)
+        if res != []:
+            return res
+        else:
+            return None
     else:
         return None
 
@@ -291,81 +161,30 @@ def hgnc_constrained_subset(genes, constraint_hash):
         return None
 
 
-def create_blast_hash(scored_file):
-    blast_nonrepeats_path = scored_file + ".fasta.hits_nonrepeats"
-    blast_repeats_path = scored_file + ".fasta.hits_repeats"
+def find_protein_coding_ensembl_exon(chrom, start, end, ensembl_exons):
 
-    h = {}
+    res_exons = set()
+    if chrom in ensembl_exons:
+        for v in ensembl_exons[chrom].overlap(start - 10, end + 10):
+            res_exons.add(v[2])
 
-    for row in csv.DictReader(open(blast_nonrepeats_path, 'r'), delimiter="\t"):
-        key = normalize_chr(row['chrom']) + "_" + row["pos"] + "_" + row["query_length"]
-        if key not in h:
-            h[key] = {}
-            h[key]["nonrepeats"] = []
-            h[key]["repeats"] = []
-        h[key]["nonrepeats"].append(row)
-
-    for row in csv.DictReader(open(blast_repeats_path, 'r'), delimiter="\t"):
-        key = normalize_chr(row['chrom']) + "_" + row["pos"] + "_" + row["query_length"]
-        if key not in h:
-            h[key] = {}
-            h[key]["nonrepeats"] = []
-            h[key]["repeats"] = []
-
-        h[key]["repeats"].append(row)
-    return h
-
-
-# THIS IS POSSIBLY THE UGLIEST CODE I'VE EVER WRITTEN - Alejandro ;)
-def annotate_blast(hit, blast_hash, hgnc_db):
-    key = normalize_chr(hit["chrom"]) + "_" + hit["position"] + "_" + str(len(hit["seq_longest"]))
-    if key in blast_hash:
-        blast_hit = blast_hash[key]
-        if blast_hit["repeats"] == []:
-            if len(blast_hit["nonrepeats"]) == 1:
-                blast_hit = blast_hit["nonrepeats"][0]
-                hit["blast_hit"] = "%s:%s-%s" % (
-                blast_hit['target_chrom'], blast_hit['target_start'], blast_hit['target_end'])
-                hit["blast_strand"] = blast_hit["target_strand"]
-
-                if blast_hit["target_chrom"] == hit["chrom"]:
-                    hit["blast_dist"] = min(
-                        abs(int(hit["position"]) - int(blast_hit["target_start"])),
-                        abs(int(hit["position"]) - int(blast_hit["target_end"]))
-                    )
-                    # Choose smallest interval
-                    if abs(int(hit["position"]) - int(blast_hit["target_start"])) > abs(
-                            int(hit["position"]) - int(blast_hit["target_end"])):
-                        hit["blast_hgnc"] = find_hgnc_genes(normalize_chr(hit["chrom"]), hit["position"], blast_hit["target_end"],
-                                                            hgnc_db)
-                    else:
-                        hit["blast_hgnc"] = find_hgnc_genes(normalize_chr(hit["chrom"]), hit["position"], blast_hit["target_start"],
-                                                            hgnc_db)
-                    if hit["blast_hgnc"] != None:
-                        hit["blast_hgnc"] = ";".join(hit["blast_hgnc"])
-                else:
-                    hit["blast_dist"] = "other_chrom"
-                    hit["blast_hgnc"] = "NA"
-                hit["blast_identity"] = blast_hit["target_identity"]
-            else:
-                hit["blast_hit"] = "multi_hit"
-                hit["blast_dist"] = "NA"
-                hit["blast_identity"] = "NA"
-                hit["blast_strand"] = "NA"
-                hit["blast_hgnc"] = "NA"
-        else:
-            hit["blast_hit"] = "repeats_hit"
-            hit["blast_dist"] = "NA"
-            hit["blast_identity"] = "NA"
-            hit["blast_strand"] = "NA"
-            hit["blast_hgnc"] = "NA"
+    if len(res_exons) > 0:
+        return res_exons
     else:
-        hit["blast_hit"] = "no_hit"
-        hit["blast_dist"] = "NA"
-        hit["blast_identity"] = "NA"
-        hit["blast_strand"] = "NA"
-        hit["blast_hgnc"] = "NA"
-    return hit
+        return None
+
+
+def interval_overlap(start1, end1, start2, end2):
+    s1 = min(int(start1), int(end1))
+    e1 = max(int(start1), int(end1))
+    s2 = min(int(start2), int(end2))
+    e2 = max(int(start2), int(end2))
+
+    overlap = max(0, min(e1, e2) - max(s1, s2))
+    if overlap > 0:
+        return True
+    else:
+        return False
 
 
 def annotate(input_path, output_path, database, config):
@@ -374,96 +193,82 @@ def annotate(input_path, output_path, database, config):
 
     # Prepare outputfile
     new_fieldnames = scored_file.fieldnames
-    new_fieldnames.extend(("ddg2p", 'hgnc', 'hgnc_constrained', "exonic", "transcripts", "maf",
-                           "blast_hit", "blast_strand", "blast_identity", "blast_dist", "blast_hgnc","otherside","sv_type"))
+    new_fieldnames.extend(("ddg2p", 'hgnc', 'hgnc_constrained', "exonic", "transcripts", "maf", "otherside","sv_type"))
     output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=scored_file.fieldnames, delimiter="\t", lineterminator="\n")
     output_file.writeheader()
 
     # Prepare searchable hashes
-    bhash = create_blast_hash(input_path)
     ensembl_exons = create_exon_intervaltree(config['ensembl_exons'])
     db = read_database(database)
     constraint_hash = create_exac_constraint_hash(config)
     ddg2p_db = read_ddg2p(config['ddg2p_bed'])
     hgnc_db = read_hgnc_genes(config['hgnc_file'])
-    hit_tree = create_hit_tree(input_path)
 
     for v in scored_file:
 
-        v = annotate_blast(v, bhash, hgnc_db)
+        if v["prob_y"] >= config["SCORE_THRESHOLD"]:
 
-        chrom = normalize_chr(v["chrom"])
-        pos = int(v["position"])
 
-        hgnc_genes = find_hgnc_genes(chrom, pos, pos + 1, hgnc_db)
+            # Keys that I have removed:
+            # hit["blast_hit"] = "no_hit"
+            # hit["blast_dist"] = "NA"
+            # hit["blast_identity"] = "NA"
+            # hit["blast_strand"] = "NA"
+            # hit["blast_hgnc"] = "NA"
 
-        ddg2p_genes = find_ddg2p_gene(chrom, pos, pos + 1, ddg2p_db)
+            chrom = normalize_chr(v["chrom"])
+            pos = int(v["position"])
 
-        if hgnc_genes != None:
-            v["hgnc"] = ";".join(hgnc_genes)
-            hgnc_constrained = hgnc_constrained_subset(hgnc_genes, constraint_hash)
-            if hgnc_constrained != None:
-                v["hgnc_constrained"] = ";".join(hgnc_constrained)
+            v = attach_db(v, db)
+
+            # Decide if we can use additional info from the db for following steps:
+            left_search = pos
+            right_search = pos + 1
+            if v["otherside"] != "NA":
+                other_coord = v["otherside"].split("_")
+                qchr = normalize_chr(other_coord[0])
+                qpos = int(other_coord[1])
+
+                if qchr == chrom:
+                    if qpos < pos:
+                        left_search = qpos
+                        right_search = pos
+                    else:
+                        left_search = pos
+                        right_search = qpos
+
+            hgnc_genes = find_hgnc_genes(chrom, left_search, right_search, hgnc_db)
+            ddg2p_genes = find_ddg2p_gene(chrom, left_search, right_search, ddg2p_db)
+
+            if hgnc_genes != None:
+                v["hgnc"] = ";".join(hgnc_genes)
+                hgnc_constrained = hgnc_constrained_subset(hgnc_genes, constraint_hash)
+                if hgnc_constrained != None:
+                    v["hgnc_constrained"] = ";".join(hgnc_constrained)
+                else:
+                    v["hgnc_constrained"] = "NA"
             else:
-                v["hgnc_constrained"] = "NA"
-        else:
-            v["hgnc"] = "NA"
+                v["hgnc"] = "NA"
 
-        if ddg2p_genes != None:
-            v["ddg2p"] = ";".join(ddg2p_genes)
-        else:
-            v["ddg2p"] = "NA"
+            if ddg2p_genes != None:
+                v["ddg2p"] = ";".join(ddg2p_genes)
+            else:
+                v["ddg2p"] = "NA"
 
-        exons = find_protein_coding_ensembl_exon(chrom, pos, v["blast_hit"], ensembl_exons)
-        if exons == None:
-            v["exonic"] = False
-            v["transcripts"] = "NA"
-        elif len(exons) > 10:
-            v["exonic"] = True
-            v["transcripts"] = "multiple_transcripts"
-        else:
-            v["exonic"] = True
-            v["transcripts"] = ";".join(str(x) for x in exons)
+            exons = find_protein_coding_ensembl_exon(chrom, left_search, right_search, ensembl_exons)
+            if exons == None:
+                v["exonic"] = False
+                v["transcripts"] = "NA"
+            elif len(exons) > 10:
+                v["exonic"] = True
+                v["transcripts"] = "multiple_transcripts"
+            else:
+                v["exonic"] = True
+                v["transcripts"] = ";".join(str(x) for x in exons)
 
-        if pos in db[chrom]:
-            v["maf"] = db[chrom][pos]
-        else:
-            v["maf"] = "NA"
+            if pos in db[chrom]:
+                v["maf"] = db[chrom][pos]
+            else:
+                v["maf"] = "NA"
 
-        # Do SV detection and identification of 5'/3' breakpoints here:
-        # Calling SV Type Possibilities:
-        #  DEL - SR blast should be INSIDE of the variant bps
-        #  DUP - SR blast should be OUTSIDE of the variant bps
-        #  INS - Not sure what this would look like and not sure if actually possible
-        #  MEI - should have repeats hit (not handled here)
-        #  CPLX - Not sure how to resolve this with available information
-        #  INV - SR should be on both sides of BP (not sure if information for this is available in current framework)
-        #       Also often come with duplications on both 5' and 3' flanks as well.
-        #  TRANS_SEGDUP - SR should match to another chr. I don't think we can reliably say if it's a Segdup or Trans w/o more info
-        #  UNK - can't determine from available information
-        if v["blast_hit"] == "repeats_hit": # Typically MEIs
-
-            key = normalize_chr(v["chrom"]) + "_" + v["position"] + "_" + str(len(v["seq_longest"]))
-            blast_hit = bhash[key]["repeats"]
-            min_score = float(1.0)
-            curr_hit = None
-
-            # This will effectively take the first hit if all of the values are the same, which should be roughly the same repeat type anyway...
-            # Need to warn that family information for MEIs in unlikely to be accurate
-            for hit in blast_hit:
-                e_val = float(hit["evalue"])
-                if e_val < min_score:
-                    min_score = e_val
-                    curr_hit = hit["target_chrom"]
-
-            v["otherside"] = "NA"
-            v["sv_type"] = "INS_" + curr_hit
-
-        elif v["blast_hit"] != "no_hit" and v["blast_hit"] != "multi_hit": # DELs/DUPs/SEGDUPs/TRANSLOCATIONS
-            v = determine_sv_type(v, hit_tree, bhash, hgnc_db)
-
-        else: # Unknown
-            v["otherside"] = "NA"
-            v["sv_type"] = "UNK"
-
-        output_file.writerow(v)
+            output_file.writerow(v)
