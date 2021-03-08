@@ -86,7 +86,7 @@ def decide_direction(left, right):
     return dir
 
 
-def build_database(score_files, output_path, fasta, config, bwa_threads, priors):
+def build_database(score_files, output_path, fasta, config, bwa_threads):
 
     # Pull stuff out of arguments/config that we need
     fasta = pysam.FastaFile(fasta)
