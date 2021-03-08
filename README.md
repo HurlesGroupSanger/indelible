@@ -462,7 +462,8 @@ ls InDelible_files/*.scored > fofn.txt
 Example output:
 
 ```
-1   1234    0.0001  1   10000   1_1256  REALN   DEL 21  15  true    false   1:1234-1256    
+1   1234    0.0001  1   10000   1_1256  REALN   DEL 21  15  true    true   1:1234-1256
+1   1256    0.0001  1   10000   1_1234  REALN   DEL 21  15  true    false   1:1234-1256    
 ```
 
 Where columns are:
@@ -477,6 +478,8 @@ Where columns are:
 8. SV Size
 9. Alignment Length
 10. Otherside found elsewhere in MAF database?
+11. Is this the left-most breakpoint when '10.' == true?
+12. VCF-like coordinate for this variant
 
 
 #### 5. Annotate

@@ -51,7 +51,7 @@ def add_alignment_information(curr_bp, decisions, repeat_info):
                 curr_bp["otherside_found"] = "true"
                 if int(other_coord[1]) < curr_bp["pos"]:
                     curr_bp["is_primary"] = "false"
-                    curr_bp["variant_coord"] = "%s:%s-%s" % (curr_bp["chrom"],other_coord[1], curr_bp["pos"])
+                    curr_bp["variant_coord"] = "%s:%s-%s" % (curr_bp["chrom"], other_coord[1], curr_bp["pos"])
                 else:
                     curr_bp["is_primary"] = "true"
                     curr_bp["variant_coord"] = "%s:%s-%s" % (curr_bp["chrom"], curr_bp["pos"], other_coord[1])
