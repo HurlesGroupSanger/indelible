@@ -47,14 +47,14 @@ def read_database(path):
 
     for v in csv.DictReader(open(path, 'r'), fieldnames=header, delimiter="\t"):
         db[normalize_chr(v["chrom"]) + "_" + v["pos"]] = {'maf': float(v["pct"]),
-                                                                    'otherside': v["otherside"],
-                                                                    'mode': v["mode"],
-                                                                    'svtype': v["svtype"],
-                                                                    'size': v["size"],
-                                                                    'aln_length': v["aln_length"],
-                                                                    'otherside_found': v["otherside_found"],
-                                                                    'is_primary': v["is_primary"],
-                                                                    'variant_coord': v["variant_coord"]}
+                                                          'otherside': v["otherside"],
+                                                          'mode': v["mode"],
+                                                          'svtype': v["svtype"],
+                                                          'size': v["size"],
+                                                          'aln_length': v["aln_length"],
+                                                          'otherside_found': v["otherside_found"],
+                                                          'is_primary': v["is_primary"],
+                                                          'variant_coord': v["variant_coord"]}
     return db
 
 
@@ -209,7 +209,7 @@ def annotate(input_path, output_path, database, config):
 
     for v in scored_file:
 
-        if v["prob_y"] >= config["SCORE_THRESHOLD"]:
+        if v["prob_Y"] >= config["SCORE_THRESHOLD"]:
 
             # Keys that I have removed:
             # hit["blast_hit"] = "no_hit"
