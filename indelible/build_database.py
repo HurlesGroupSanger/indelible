@@ -23,11 +23,18 @@ from indelible.blast_repeats import BlastRepeats
 import csv
 
 
-def add_alignment_information(curr_bp, decisions, repeat_info):
+score_threshold = 0.6
+REPEATdb = "/lustre/scratch115/projects/ddd/users/eg15/indelible/Indelible/data/resources_striped/repbase_fixed.fasta"
+fasta = "/lustre/scratch115/projects/ddd/users/eg15/indelible/Indelible/data/resources_striped/hs37d5.fa"
+bwa_threads = 2
+output_path = "/lustre/scratch115/projects/ddd/users/eg15/indelible/final_set/indelible_db_rd2/db.txt"
+score_files = "/lustre/scratch115/projects/ddd/users/eg15/indelible/final_set/indelible_db_rd2/score_files.100.txt"
 
+
+
+def add_alignment_information(curr_bp, decisions, repeat_info):
     name = curr_bp["chrom"] + "_" + str(curr_bp["pos"])
     if name in repeat_info:
-
         curr_bp["otherside"] = "repeats_hit"
         curr_bp["mode"] = "BLAST_REPEAT"
         curr_bp["svtype"] = "INS_" + repeat_info[name]["target_chrom"]
@@ -36,9 +43,7 @@ def add_alignment_information(curr_bp, decisions, repeat_info):
         curr_bp["otherside_found"] = "NA"
         curr_bp["is_primary"] = "NA"
         curr_bp["variant_coord"] = "NA"
-
     elif name in decisions:
-
         curr_bp["otherside"] = decisions[name]["otherside"]
         curr_bp["mode"] = decisions[name]["mode"]
         curr_bp["svtype"] = decisions[name]["svtype"]
@@ -47,7 +52,6 @@ def add_alignment_information(curr_bp, decisions, repeat_info):
         curr_bp["otherside_found"] = "NA"
         curr_bp["is_primary"] = "NA"
         curr_bp["variant_coord"] = "NA"
-
         ## Search for otherside in actual hits
         if curr_bp["otherside"] != "NA":
             if curr_bp["otherside"] in decisions:
@@ -58,9 +62,7 @@ def add_alignment_information(curr_bp, decisions, repeat_info):
                 else:
                     curr_bp["is_primary"] = "true"
                     curr_bp["variant_coord"] = "%s:%s-%s" % (curr_bp["chrom"], curr_bp["pos"], other_coord[1])
-
     else:
-
         #"otherside", "mode", "svtype", "size", "aln_length"
         curr_bp["otherside"] = "NA"
         curr_bp["mode"] = "FAIL_ALIGNMENT"
@@ -70,14 +72,11 @@ def add_alignment_information(curr_bp, decisions, repeat_info):
         curr_bp["otherside_found"] = "NA"
         curr_bp["is_primary"] = "NA"
         curr_bp["variant_coord"] = "NA"
-
     return curr_bp
 
 
 def find_bwa():
-
     paths = os.environ.get("PATH").split(":")
-
     for path in paths:
         search_path = path + "/bwa"
         if os.path.isfile(search_path):
@@ -91,7 +90,6 @@ def decide_direction(left, right):
         dir = "right"
     else:
         dir = "uncer"
-
     return dir
 
 
@@ -110,29 +108,24 @@ def build_database(score_files, output_path, fasta, config, bwa_threads):
     data = []
     allele_count = float(0)
 
+    # Open all scored files and mash them together while filtering low quality variants
     for file in open(score_files, 'r'):
         allele_count += 1
         file = file.rstrip()
-
         sample_id = os.path.basename(file).split(".")[0]
-
         frame = pandas.read_csv(
             file,
             sep="\t",
             header=0)
-
         is_pos = frame["prob_Y"] >= score_threshold
         frame = frame[is_pos][["chrom", "position","seq_longest","sr_long_5","sr_short_5","sr_long_3","sr_short_3"]]
         frame["left"] = frame["sr_long_5"] + frame["sr_short_5"]
         frame["right"] = frame["sr_long_3"] + frame["sr_short_3"]
         frame.drop(["sr_long_5", "sr_short_5", "sr_long_3", "sr_short_3"], axis=1)
-
         data.append(frame)
 
     data_joined = pandas.concat(data)
     data_joined["coord"] = data_joined["chrom"].astype(str) + "_" + data_joined["position"].astype(str)
-
-    counts = data_joined["coord"].value_counts()
 
     final_frame = data_joined.groupby('coord').agg(chrom = ('chrom','first'),
                                                    pos = ('position','first'),

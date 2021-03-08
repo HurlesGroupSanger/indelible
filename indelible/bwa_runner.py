@@ -70,6 +70,7 @@ class BWARunner:
 
     def __get_ref_string(self, dir, chrom, position):
 
+        position = int(position)
         if dir == "left":
 
             left = position
