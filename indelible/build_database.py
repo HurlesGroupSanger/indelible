@@ -18,6 +18,7 @@
 
 import pandas
 import os
+import pysam
 from indelible.bwa_runner import BWARunner
 from indelible.blast_repeats import BlastRepeats
 import csv
@@ -86,7 +87,8 @@ def decide_direction(left, right):
 
 def build_database(score_files, output_path, fasta, config, bwa_threads):
 
-    # Pull stuff out of config that we need
+    # Pull stuff out of arguments/config that we need
+    fasta = pysam.FastaFile(fasta)
     score_threshold = config['SCORE_THRESHOLD']
     REPEATdb = config['repeatdb']
 
@@ -103,13 +105,12 @@ def build_database(score_files, output_path, fasta, config, bwa_threads):
     for file in open(score_files, 'r'):
         allele_count += 1
         file = file.rstrip()
-        sample_id = os.path.basename(file).split(".")[0]
         frame = pandas.read_csv(
             file,
             sep="\t",
             header=0)
         is_pos = frame["prob_Y"] >= score_threshold
-        frame = frame[is_pos][["chrom", "position","seq_longest","sr_long_5","sr_short_5","sr_long_3","sr_short_3"]]
+        frame = frame[is_pos][["chrom", "position", "seq_longest", "sr_long_5", "sr_short_5", "sr_long_3", "sr_short_3"]]
         frame["left"] = frame["sr_long_5"] + frame["sr_short_5"]
         frame["right"] = frame["sr_long_3"] + frame["sr_short_3"]
         frame.drop(["sr_long_5", "sr_short_5", "sr_long_3", "sr_short_3"], axis=1)
@@ -132,8 +133,6 @@ def build_database(score_files, output_path, fasta, config, bwa_threads):
     final_frame["pct"] = final_frame["counts"] / allele_count
     final_frame["tot"] = allele_count
 
-    final_frame = final_frame.sort_values(by=["chrom", "pos"])
-
     # Blast repeat database to mask:
     repeat_blast = BlastRepeats(output_path, final_frame, REPEATdb)
     repeat_info = repeat_blast.get_repeat_blast_info()
@@ -141,6 +140,9 @@ def build_database(score_files, output_path, fasta, config, bwa_threads):
     # Generate bwa files and perform alignment:
     bwa_parser = BWARunner(final_frame, output_path, fasta, bwa_loc, bwa_threads)
     decisions = bwa_parser.get_decisions()
+
+    final_frame["chrom"] = pandas.Categorical(final_frame["chrom"], fasta.references)
+    final_frame = final_frame.sort_values(by=["chrom", "pos"])
 
     # Write final database file:
     header = ["chrom", "pos", "pct", "counts", "tot", "otherside", "mode", "svtype", "size", "aln_length",
@@ -161,3 +163,5 @@ def build_database(score_files, output_path, fasta, config, bwa_threads):
         v = add_alignment_information(v, decisions, repeat_info)
 
         output_file.writerow(v)
+
+    fasta.close()

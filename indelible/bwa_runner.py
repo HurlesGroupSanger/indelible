@@ -16,10 +16,9 @@ import subprocess
 
 class BWARunner:
 
-    def __init__(self, final_frame, output_file, fasta_file, bwa_loc, bwa_threads):
+    def __init__(self, final_frame, output_file, fasta, bwa_loc, bwa_threads):
 
-        self.__fasta_loc = fasta_file
-        self.__fasta = pysam.FastaFile(fasta_file)
+        self.__fasta = fasta
         self.__bwa_loc = bwa_loc
         self.__bwa_threads = bwa_threads
         self.final_frame = final_frame
