@@ -46,7 +46,7 @@ def read_database(path):
      "otherside_found", "is_primary", "variant_coord"]
 
     for v in csv.DictReader(open(path, 'r'), fieldnames=header, delimiter="\t"):
-        db[normalize_chr(v["chrom"]) + "_" + int(v["position"])] = {'maf': float(v["pct"]),
+        db[normalize_chr(v["chrom"]) + "_" + int(v["pos"])] = {'maf': float(v["pct"]),
                                                                     'otherside': v["otherside"],
                                                                     'mode': v["mode"],
                                                                     'svtype': v["svtype"],
