@@ -119,7 +119,7 @@ def attach_db(v, db):
         # (so long as the user didn't change the score cutoff during runtime...)
         db_entry = db[key]
         for key,value in db_entry.iteritems():
-            v[key] = value[key]
+            v[key] = value
 
 
 def find_hgnc_genes(chrom, start, end, hgnc_db):

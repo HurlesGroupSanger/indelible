@@ -32,7 +32,7 @@ def add_alignment_information(curr_bp, decisions, repeat_info):
         curr_bp["svtype"] = "INS_" + repeat_info[name]["target_chrom"]
         curr_bp["size"] = "NA"
         curr_bp["aln_length"] = repeat_info[name]["query_length"]
-        curr_bp["otherside_found"] = "NA"
+        curr_bp["otherside_found"] = "false"
         curr_bp["is_primary"] = "NA"
         curr_bp["variant_coord"] = "NA"
     elif name in decisions:
@@ -41,13 +41,14 @@ def add_alignment_information(curr_bp, decisions, repeat_info):
         curr_bp["svtype"] = decisions[name]["svtype"]
         curr_bp["size"] = decisions[name]["size"]
         curr_bp["aln_length"] = decisions[name]["aln_length"]
-        curr_bp["otherside_found"] = "NA"
+        curr_bp["otherside_found"] = "false"
         curr_bp["is_primary"] = "NA"
         curr_bp["variant_coord"] = "NA"
         ## Search for otherside in actual hits
         if curr_bp["otherside"] != "NA":
             if curr_bp["otherside"] in decisions:
                 other_coord = curr_bp["otherside"].split("_")
+                curr_bp["otherside_found"] = "true"
                 if int(other_coord[1]) < curr_bp["pos"]:
                     curr_bp["is_primary"] = "false"
                     curr_bp["variant_coord"] = "%s:%s-%s" % (curr_bp["chrom"],other_coord[1], curr_bp["pos"])
@@ -61,7 +62,7 @@ def add_alignment_information(curr_bp, decisions, repeat_info):
         curr_bp["svtype"] = "UNK"
         curr_bp["size"] = "NA"
         curr_bp["aln_length"] = "NA"
-        curr_bp["otherside_found"] = "NA"
+        curr_bp["otherside_found"] = "false"
         curr_bp["is_primary"] = "NA"
         curr_bp["variant_coord"] = "NA"
     return curr_bp
@@ -85,7 +86,7 @@ def decide_direction(left, right):
     return dir
 
 
-def build_database(score_files, output_path, fasta, config, bwa_threads):
+def build_database(score_files, output_path, fasta, config, bwa_threads, priors):
 
     # Pull stuff out of arguments/config that we need
     fasta = pysam.FastaFile(fasta)
