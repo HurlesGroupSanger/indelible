@@ -115,10 +115,11 @@ def create_gene_synonym_hash(hgnc_synonyms):
 def attach_db(v, db):
 
         key = v["chrom"] + "_" + v["pos"]
-        # While this is dangerous there should be a 0% chance that the key is not contained within this db.
-        database = db[key]
-        for k,v in database.iteritems():
-            v[k] = v
+        # While this is _slightly_ dangerous there should be a 0% chance that the key is not contained within this db.
+        # (so long as the user didn't change the score cutoff during runtime...)
+        db_entry = db[key]
+        for key,value in db_entry.iteritems():
+            v[key] = value[key]
 
 
 def find_hgnc_genes(chrom, start, end, hgnc_db):
@@ -207,7 +208,6 @@ def annotate(input_path, output_path, database, config):
     for v in scored_file:
 
         if v["prob_y"] >= config["SCORE_THRESHOLD"]:
-
 
             # Keys that I have removed:
             # hit["blast_hit"] = "no_hit"

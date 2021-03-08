@@ -85,6 +85,10 @@ class BWARunner:
             left = position - 50
             right = position + 50
 
+        ## Some coordinates are right at the beginning of a chromosome...
+        if left < 1:
+            left = 1
+
         ref_seq = self.__fasta.fetch(reference=chrom, start=left, end=right)
 
         return(ref_seq)
