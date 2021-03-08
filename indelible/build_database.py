@@ -125,14 +125,14 @@ def build_database(score_files, output_path, fasta, config, bwa_threads):
                                                    tot_right = ('right','sum'),
                                                    longest = ('seq_longest','max'))
 
-    final_frame = final_frame.sort_values(by=["chrom", "pos"])
-
     # Set direction value:
     final_frame['dir'] = final_frame.apply(lambda x: decide_direction(x.tot_left, x.tot_right), axis=1)
 
     # Generate "Allele Frequencies"
     final_frame["pct"] = final_frame["counts"] / allele_count
     final_frame["tot"] = allele_count
+
+    final_frame = final_frame.sort_values(by=["chrom", "pos"])
 
     # Blast repeat database to mask:
     repeat_blast = BlastRepeats(output_path, final_frame, REPEATdb)
