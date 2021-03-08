@@ -91,7 +91,7 @@ class BWARunner:
 
     def __bwa_engine(self, split_fq, ref_fq, outsam):
 
-        cmd = self.__bwa_loc + " mem -t " + str(self.__bwa_threads) + " -T 10 -k 10 -o " + outsam + " " + self.__fasta.filename + " " + split_fq + " " + ref_fq
+        cmd = self.__bwa_loc + " mem -t " + str(self.__bwa_threads) + " -T 10 -k 10 -o " + outsam + " " + self.__fasta.filename.decode() + " " + split_fq + " " + ref_fq
         p = subprocess.Popen(cmd, shell=True)
         p.wait()
         print("bwa ran with code:", p.returncode)
