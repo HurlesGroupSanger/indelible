@@ -33,7 +33,7 @@ score_files = "/lustre/scratch115/projects/ddd/users/eg15/indelible/final_set/in
 
 
 def add_alignment_information(curr_bp, decisions, repeat_info):
-    name = curr_bp["chrom"] + "_" + str(curr_bp["pos"])
+    name = "%s_%s" % (curr_bp["chrom"], curr_bp["pos"])
     if name in repeat_info:
         curr_bp["otherside"] = "repeats_hit"
         curr_bp["mode"] = "BLAST_REPEAT"

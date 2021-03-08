@@ -61,7 +61,7 @@ class BWARunner:
     def __write_fastq_entry(self, writer, chrom, position, sequence):
 
         qual = 'Z' * len(sequence)
-        name = chrom + "_" + str(position)
+        name = "%s_%s" % (chrom, position)
 
         writer.write('@' + name + "\n")
         writer.write(sequence + "\n")
@@ -132,7 +132,6 @@ class BWARunner:
         # Process the last read if possible:
         self.__process_current_group(current_id, read_one, read_two)
 
-
     def __process_current_group(self, current_id, read_one, read_two):
 
         ## Only fill the dictionary if we get valid information, will default to None for empties
@@ -162,7 +161,7 @@ class BWARunner:
                 if curr_data["dir"] == "left":
 
                     size = abs((read_one.reference_end) - curr_data["pos"])
-                    bp = read_one.reference_name + "_" + str(read_one.reference_end)
+                    bp = "%s_%s" % (read_one.reference_name,read_one.reference_end)
 
                     if curr_data["pos"] < read_one.reference_end:
                         sv_type = "DUP"
@@ -172,7 +171,7 @@ class BWARunner:
                 else:
 
                     size = abs((read_one.reference_start) - curr_data["pos"])
-                    bp = read_one.reference_name + "_" + str(read_one.reference_start)
+                    bp = "%s_%s" % (read_one.reference_name, read_one.reference_start)
 
                     if curr_data["pos"] > read_one.reference_start:
                         sv_type = "DUP"
@@ -183,7 +182,6 @@ class BWARunner:
                     self.__fill_dict(current_id, bp, "REALN", sv_type, size, aln_len)
                 else:
                     self.__fill_dict(current_id, bp, "REALN_XL", sv_type, size, aln_len)
-
 
     def __fill_dict(self, breakpoint_id, otherside, mode, svtype, size, aln_length):
 
