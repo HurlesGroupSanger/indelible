@@ -22,6 +22,7 @@ import pysam
 from indelible.bwa_runner import BWARunner
 from indelible.blast_repeats import BlastRepeats
 import csv
+import statistics
 
 
 def build_priors(prior_file, final_frame):
@@ -126,6 +127,12 @@ def build_database(score_files, output_path, fasta, config, priors, bwa_threads)
             file,
             sep="\t",
             header=0)
+        # Calculating mean coverage and then adding a fairly lenient threshold. This prevents areas with a ton of reads
+        # from "poisoning the well" when deciding which read to align later in this algorithm
+        # The 'A' base is a placeholder that will automatically fail alignment if no other sites are found
+        coverage_cutoff = statistics.mean(frame["coverage"]) * 10
+        frame.loc[frame['coverage'] >= coverage_cutoff, 'seq_longest'] = 'A'
+
         is_pos = frame["prob_Y"] >= score_threshold
         frame = frame[is_pos][["chrom", "position", "seq_longest", "sr_long_5", "sr_short_5", "sr_long_3", "sr_short_3"]]
         frame["left"] = frame["sr_long_5"] + frame["sr_short_5"]

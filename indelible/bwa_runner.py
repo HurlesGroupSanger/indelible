@@ -13,6 +13,7 @@
 
 import pysam
 import subprocess
+import re
 
 class BWARunner:
 
@@ -168,8 +169,17 @@ class BWARunner:
 
                     if curr_data["pos"] < read_one.reference_end:
                         sv_type = "DUP"
-                    else:
+                    elif curr_data["pos"] > read_one.reference_end:
                         sv_type = "DEL"
+                    else: # These could be real non-templated insertions – check!
+                        ctuples = read_one.cigartuples
+                        # The only legit split read in this direction SHOULD be on the 3' end
+                        if ctuples[len(ctuples) - 1][0] == 4:
+                            ins_seq = read_one.seq[(len(read_one.seq) - ctuples[0][1]):len(read_one.seq)]
+                            sv_type = "INS_" + ins_seq.upper()
+                            size = len(ins_seq)
+                        else:
+                            sv_type = "UNK"
 
                 else:
 
@@ -178,10 +188,20 @@ class BWARunner:
 
                     if curr_data["pos"] > read_one.reference_start:
                         sv_type = "DUP"
-                    else:
+                    elif curr_data["pos"] < read_one.reference_start:
                         sv_type = "DEL"
+                    else: # These could be real non-templated insertions – check!
+                        ctuples = read_one.cigartuples
+                        if ctuples[0][0] == 4:
+                            ins_seq = read_one.seq[0:ctuples[0][1]]
+                            sv_type = "INS_" + ins_seq.upper()
+                            size = len(ins_seq)
+                        else:
+                            sv_type = "UNK"
 
-                if read_one.is_proper_pair and read_two.is_proper_pair:
+                if sv_type == "UNK":
+                    self.__fill_dict(current_id, "NA", "FAIL_REFERENCE", sv_type, "NA", read_one.query_alignment_length)
+                elif read_one.is_proper_pair and read_two.is_proper_pair:
                     self.__fill_dict(current_id, bp, "REALN", sv_type, size, aln_len)
                 else:
                     self.__fill_dict(current_id, bp, "REALN_XL", sv_type, size, aln_len)

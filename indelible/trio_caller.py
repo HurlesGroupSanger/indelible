@@ -53,21 +53,20 @@ def denovo_caller_trio(child_input, mother_bam, father_bam, output_path, config)
     output_file.writeheader()
 
     for v in csv.DictReader(open(child_input, 'r'), delimiter="\t"):
-        if float(v['prob_Y']) >= config['SCORE_THRESHOLD']:
-            mum_stats = compute_stats(mum_cov, v['chrom'], int(v['position']))
-            dad_stats = compute_stats(dad_cov, v['chrom'], int(v['position']))
+        mum_stats = compute_stats(mum_cov, v['chrom'], int(v['position']))
+        dad_stats = compute_stats(dad_cov, v['chrom'], int(v['position']))
 
-            v['mum_sr'] = mum_stats['sr_context']
-            v['dad_sr'] = dad_stats['sr_context']
-            v['mum_indel_context'] = mum_stats['indel_context']['deletions'] + mum_stats['indel_context']['insertions']
-            v['dad_indel_context'] = dad_stats['indel_context']['deletions'] + dad_stats['indel_context']['insertions']
-            v['mum_cov'] = mum_stats['coverage']
-            v['dad_cov'] = dad_stats['coverage']
+        v['mum_sr'] = mum_stats['sr_context']
+        v['dad_sr'] = dad_stats['sr_context']
+        v['mum_indel_context'] = mum_stats['indel_context']['deletions'] + mum_stats['indel_context']['insertions']
+        v['dad_indel_context'] = dad_stats['indel_context']['deletions'] + dad_stats['indel_context']['insertions']
+        v['mum_cov'] = mum_stats['coverage']
+        v['dad_cov'] = dad_stats['coverage']
 
-            # Only filter here if we have BOTH mom and dad bams
-            if mother_bam is None or father_bam is None:
+        # Only filter here if we have BOTH mom and dad bams
+        if mother_bam is None or father_bam is None:
+            output_file.writerow(v)
+        else:
+            if v['mum_sr'] <= config['SR_THRESHOLD'] and v['dad_sr'] <= config['SR_THRESHOLD'] and v['mum_cov'] >= \
+                    config['COV_THRESHOLD'] and v['dad_cov'] >= config['COV_THRESHOLD']:
                 output_file.writerow(v)
-            else:
-                if v['mum_sr'] <= config['SR_THRESHOLD'] and v['dad_sr'] <= config['SR_THRESHOLD'] and v['mum_cov'] >= \
-                        config['COV_THRESHOLD'] and v['dad_cov'] >= config['COV_THRESHOLD']:
-                    output_file.writerow(v)
