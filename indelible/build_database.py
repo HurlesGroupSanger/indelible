@@ -17,12 +17,16 @@
 """
 
 import pandas
+import numpy as np
 import os
 import pysam
+import itertools as it
+from difflib import SequenceMatcher
 from indelible.bwa_runner import BWARunner
 from indelible.blast_repeats import BlastRepeats
 import csv
 import statistics
+import random
 
 
 def build_priors(prior_file, final_frame):
@@ -93,6 +97,38 @@ def find_bwa():
             return(search_path)
 
 
+def seq_similarity(seq1, seq2):
+    seq = SequenceMatcher(a=seq1, b=seq2)
+    return seq.ratio()
+
+
+def decide_longest(seqs):
+
+    if len(seqs) == 1:
+        return seqs.to_list()[0]
+    else:
+
+        returnable = None
+        for s in sorted(seqs, key = len, reverse=True):
+            if len(seqs) >= 20:
+                # Set seed for random to ensure identical results when variant calling:
+                random.seed(1234)
+                seq_frame = pandas.DataFrame(data={'orig': np.repeat(s, 20), 'old': random.sample(seqs.to_list(), 20)})
+            else:
+                seq_frame = pandas.DataFrame(data={'orig': np.repeat(s, len(seqs)), 'old': seqs})
+
+            seq_frame['similarity'] = seq_frame.apply(lambda x: seq_similarity(x[0], x[1]), axis=1)
+            seq_frame[seq_frame['similarity'] != 1]
+            if statistics.mean(seq_frame['similarity']) >= 0.6:
+                returnable = s
+                break
+
+        if returnable is None:
+            return max(seqs)
+        else:
+            return returnable
+
+
 def decide_direction(left, right):
     if (left * 0.5) > right:
         dir = "left"
@@ -143,12 +179,14 @@ def build_database(score_files, output_path, fasta, config, priors, bwa_threads)
     data_joined = pandas.concat(data)
     data_joined["coord"] = data_joined["chrom"].astype(str) + "_" + data_joined["position"].astype(str)
 
+    print("Total number of sites to iterate through: %s" % len(data_joined.groupby('coord').agg(counts=('coord', len))))
+
     final_frame = data_joined.groupby('coord').agg(chrom = ('chrom','first'),
                                                    pos = ('position','first'),
                                                    counts=('coord', len),
                                                    tot_left = ('left','sum'),
                                                    tot_right = ('right','sum'),
-                                                   longest = ('seq_longest','max'))
+                                                   longest = ('seq_longest',decide_longest))
 
     # Set direction value:
     final_frame['dir'] = final_frame.apply(lambda x: decide_direction(x.tot_left, x.tot_right), axis=1)
