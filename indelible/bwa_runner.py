@@ -153,7 +153,7 @@ class BWARunner:
             elif read_one.reference_name != read_two.reference_name:
 
                 self.__fill_dict(current_id, read_one.reference_name + "_" + str(read_one.reference_start), "REALN_CHR",
-                                 "TRANS_SEGDUP", "NA", read_one.query_alignment_length)
+                                 "TRANSSEGDUP", "NA", read_one.query_alignment_length)
 
             else:
 
@@ -167,15 +167,24 @@ class BWARunner:
                     size = abs((read_one.reference_end) - curr_data["pos"])
                     bp = "%s_%s" % (read_one.reference_name,read_one.reference_end)
 
+                    # First check to see if there is any additional sequence that did not align:
+                    ins_seq = self.__check_ins(curr_data["dir"], read_one)
+
                     if curr_data["pos"] < read_one.reference_end:
-                        sv_type = "DUP"
+                        if ins_seq is not None:
+                            sv_type = "CMPLX_DUP.INS_" + ins_seq.upper()
+                            size = size + len(ins_seq)
+                        else:
+                            sv_type = "DUP"
                     elif curr_data["pos"] > read_one.reference_end:
-                        sv_type = "DEL"
+                        if ins_seq is not None:
+                            sv_type = "CMPLX_DEL.INS_" + ins_seq.upper()
+                            size = len(ins_seq) - size
+                        else:
+                            sv_type = "DEL"
                     else: # These could be real non-templated insertions – check!
-                        ctuples = read_one.cigartuples
-                        # The only legit split read in this direction SHOULD be on the 3' end
-                        if ctuples[len(ctuples) - 1][0] == 4:
-                            ins_seq = read_one.seq[(len(read_one.seq) - ctuples[0][1]):len(read_one.seq)]
+                        ins_seq = self.__check_ins(curr_data["dir"], read_one)
+                        if ins_seq is not None:
                             sv_type = "INS_" + ins_seq.upper()
                             size = len(ins_seq)
                         else:
@@ -186,14 +195,24 @@ class BWARunner:
                     size = abs((read_one.reference_start) - curr_data["pos"])
                     bp = "%s_%s" % (read_one.reference_name, read_one.reference_start)
 
+                    # First check to see if there is any additional sequence that did not align:
+                    ins_seq = self.__check_ins(curr_data["dir"], read_one)
+
                     if curr_data["pos"] > read_one.reference_start:
-                        sv_type = "DUP"
+                        if ins_seq is not None:
+                            sv_type = "CMPLX_DUP.INS_" + ins_seq.upper()
+                            size = size + len(ins_seq)
+                        else:
+                            sv_type = "DUP"
                     elif curr_data["pos"] < read_one.reference_start:
-                        sv_type = "DEL"
+                        if ins_seq is not None:
+                            sv_type = "CMPLX_DEL.INS_" + ins_seq.upper()
+                            size = len(ins_seq) - size
+                        else:
+                            sv_type = "DEL"
                     else: # These could be real non-templated insertions – check!
-                        ctuples = read_one.cigartuples
-                        if ctuples[0][0] == 4:
-                            ins_seq = read_one.seq[0:ctuples[0][1]]
+                        ins_seq = self.__check_ins(curr_data["dir"], read_one)
+                        if ins_seq is not None:
                             sv_type = "INS_" + ins_seq.upper()
                             size = len(ins_seq)
                         else:
@@ -205,6 +224,27 @@ class BWARunner:
                     self.__fill_dict(current_id, bp, "REALN", sv_type, size, aln_len)
                 else:
                     self.__fill_dict(current_id, bp, "REALN_XL", sv_type, size, aln_len)
+
+    def __check_ins(self, dir, read):
+
+        ins_seq = None
+        if dir == "left":
+            ctuples = read.cigartuples
+            # The only legit split read in this direction SHOULD be on the 3' end
+            if ctuples[len(ctuples) - 1][0] == 4:
+                ins_seq = read.seq[(len(read.seq) - ctuples[0][1]):len(read.seq)]
+                sv_type = "INS_" + ins_seq.upper()
+                size = len(ins_seq)
+        elif dir == "right":
+            ctuples = read.cigartuples
+            # The only legit split read in this direction SHOULD be on the 5' end
+            if ctuples[0][0] == 4:
+                ins_seq = read.seq[0:ctuples[0][1]]
+                sv_type = "INS_" + ins_seq.upper()
+                size = len(ins_seq)
+
+        return ins_seq
+
 
     def __fill_dict(self, breakpoint_id, otherside, mode, svtype, size, aln_length):
 
