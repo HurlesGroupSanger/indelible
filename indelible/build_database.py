@@ -203,7 +203,7 @@ def build_database(score_files, output_path, fasta, config, priors, bwa_threads)
     bwa_parser = BWARunner(final_frame, output_path, fasta, bwa_loc, bwa_threads)
     decisions = bwa_parser.get_decisions()
 
-    final_frame["chrom"] = pandas.Categorical(final_frame["chrom"], fasta.references)
+    final_frame["chrom"] = pandas.Categorical(final_frame["chrom"].astype(str), categories = fasta.references, ordered=True)
     final_frame = final_frame.sort_values(by=["chrom", "pos"])
 
     # Write final database file:
