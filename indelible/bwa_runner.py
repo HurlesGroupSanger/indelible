@@ -124,7 +124,7 @@ class BWARunner:
                 read_two = None
 
             if read.is_supplementary or read.is_duplicate or read.is_qcfail or read.is_secondary or read.is_unmapped:
-                # Toss in the bin (have this nothing statement because it's more understandable than negating everything above...)
+                # Toss in the bin (set this variable below that does nothing because it's more understandable than negating everything above...)
                 stuff = 1
             else:
                 current_id = name

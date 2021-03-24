@@ -44,7 +44,7 @@ def read_database(path):
     header = ["chrom", "pos", "pct", "counts", "tot", "otherside", "mode", "svtype", "size", "aln_length",
      "otherside_found", "is_primary", "variant_coord"]
 
-    for v in csv.DictReader(open("/Users/eg15/PycharmProjects/Indelible/test/db.txt", 'r'), fieldnames=header, delimiter="\t"):
+    for v in csv.DictReader(open(path, 'r'), fieldnames=header, delimiter="\t"):
         db[normalize_chr(str(v["chrom"])) + "_" + v["pos"]] = {'maf': float(v["pct"]),
                                                                'otherside': v["otherside"],
                                                                'mode': v["mode"],
@@ -120,7 +120,7 @@ def attach_db(v, db):
         for key,value in db_entry.items():
             v[key] = value
 
-        return(v)
+        return v
 
 
 def find_hgnc_genes(chrom, start, end, hgnc_db):

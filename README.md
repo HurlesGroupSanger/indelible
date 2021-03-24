@@ -96,10 +96,14 @@ reads that InDelible has to process would likely result in significantly increas
 
 _Peer-Reviewed Manuscript_
 
+t.b.d.
+
 _Preprint_
 
 Eugene J. Gardner, Alejandro Sifrim, Sarah J. Lindsay, Elena Prigmore, Diana Rajan, Petr Danecek, Giuseppe Gallone, Ruth Y. Eberhardt, Hilary C. Martin, Caroline F. Wright, David R. FitzPatrick, Helen V. Firth, Matthew E. Hurles.
 **InDelible: Detection and Evaluation of Clinically-relevant Structural Variation from Whole Exome Sequencing.** medRxiv (2020).
+
+https://www.medrxiv.org/content/10.1101/2020.10.02.20194241v1
 
 ### Change Log
 
