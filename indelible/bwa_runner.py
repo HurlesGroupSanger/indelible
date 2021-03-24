@@ -232,7 +232,7 @@ class BWARunner:
             ctuples = read.cigartuples
             # The only legit split read in this direction SHOULD be on the 3' end
             if ctuples[len(ctuples) - 1][0] == 4:
-                ins_seq = read.seq[(len(read.seq) - ctuples[0][1]):len(read.seq)]
+                ins_seq = read.seq[(len(read.seq) - ctuples[len(ctuples) - 1][1]):len(read.seq)]
                 sv_type = "INS_" + ins_seq.upper()
                 size = len(ins_seq)
         elif dir == "right":
