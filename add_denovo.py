@@ -49,6 +49,7 @@ for line in annotated_dict:
 
     key = line['chrom'] + "_" + line['position']
     if key in dnm_db:
+        print(key)
         to_add = dnm_db[key]
         for k,v in to_add.items():
             line[k] = v
