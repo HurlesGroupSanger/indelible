@@ -36,7 +36,7 @@ denovo_file = file_prefix + ".indelible.denovo.tsv"
 denovo_out = file_prefix + ".indelible.denovo.revision.tsv"
 
 dnm_db = build_denovo(denovo_file)
-annotated_dict = csv.DictReader(open(denovo_file), delimiter="\t")
+annotated_dict = csv.DictReader(open(annotated_file), delimiter="\t")
 
 new_fieldnames = annotated_dict.fieldnames
 new_fieldnames.extend(('mum_sr','dad_sr','mum_indel_context','dad_indel_context',
@@ -54,6 +54,3 @@ for line in annotated_dict:
         for k,v in to_add.items():
             line[k] = v
         denovo_writer.writerow(line)
-    else:
-        print("FAILED" + key)
-
