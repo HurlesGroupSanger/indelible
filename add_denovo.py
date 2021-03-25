@@ -2,6 +2,8 @@
 
 import csv
 import sys
+import os
+import re
 
 def build_denovo(denovo):
     denovo_dict = csv.DictReader(open(denovo), delimiter="\t")
@@ -20,9 +22,18 @@ def build_denovo(denovo):
 
     return dnm
 
-denovo_file = sys.argv[1]
-annotated_file = sys.argv[2]
-denovo_out = sys.argv[3]
+
+file_num = int(os.getenv('LSB_JOBINDEX'))
+files = sys.argv[1]
+file_list = open(files).readlines()
+
+annotated_file = file_list[file_num - 1].rstrip()
+annotated_file = annotated_file + ".new_annotated"
+
+match = re.search(r"(\S*\.cram)\.counts\.scored.new_annotated", annotated_file)
+file_prefix = match.group(1)
+denovo_file = file_prefix + ".indelible.denovo.tsv"
+denovo_out = file_prefix + ".indelible.denovo.revision.tsv"
 
 dnm_db = build_denovo(denovo_file)
 annotated_dict = csv.DictReader(open(denovo_file), delimiter="\t")
