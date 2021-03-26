@@ -6,6 +6,8 @@ import os
 import re
 
 def build_denovo(denovo):
+
+    csv.field_size_limit(sys.maxsize)
     denovo_dict = csv.DictReader(open(denovo), delimiter="\t")
 
     dnm = {}
