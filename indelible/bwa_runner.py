@@ -142,11 +142,14 @@ class BWARunner:
         if read_one is not None and read_two is not None:
 
             curr_data = self.final_frame.loc[current_id].to_dict()
+            read_two_closeness = min(abs(read_two.reference_start - curr_data["pos"]),
+                                     abs(read_two.reference_end - curr_data["pos"]))
+
             if curr_data["dir"] == "uncer":
 
                 self.__fill_dict(current_id, "NA", "FAIL_MULTISPLIT", "UNK", "NA", read_one.query_alignment_length)
 
-            elif read_one.mapq == 0:
+            elif read_one.mapq == 0 or read_two.mapq == 0 or read_one.is_reverse or read_two.is_reverse or read_two_closeness > 10:
 
                 self.__fill_dict(current_id, "NA", "FAIL_LOWMAPQ", "UNK", "NA", read_one.query_alignment_length)
 
