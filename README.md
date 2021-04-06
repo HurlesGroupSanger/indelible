@@ -390,14 +390,14 @@ optional arguments:
 
 The InDelible variant calling process follows several steps:
 
-1. [Fetch](#1-fetch) – Soft-clipped reads are extracted from the BAM files 
+1. [Fetch](#1-fetch) – Soft-clipped reads are extracted from the BAM files.
 2. [Aggregate](#2-aggregate) - Information is aggregated across reads to find positions where multiple reads are clipped.
-3. [Score](#3-score) - Positions are scored using a Random Forest model taking into account the number/quality of clipped reads and the sequence context
-4. [Database](#4-database) - 
-5. [Annotate](#5-annotate) - Putative SVs are annotated with additional information (e.g. gene annotations) and the positional results from the previous step
+3. [Score](#3-score) - Positions are scored using a Random Forest model taking into account the number/quality of clipped reads and the sequence context.
+4. [Database](#4-database) - Merges sites across individuals, assigns breakpoint frequency, and determines variant type and breakpoints where possible.
+5. [Annotate](#5-annotate) - Putative SVs are annotated with additional information (e.g. gene annotations) and the positional results from the previous step.
 6. [_denovo_](#6-denovo) - _de novo_ events are called and inheritance information is appended.
 
-**Note**: All commands also take the command-line option `--config` which overrides the default config.yml path. The user 
+**Note**: All commands also take the command-line option `--config`. The user 
 can either change the default config.yml, or provide a path to a different file with this option. See the section above for configuring the `config.yml` file.
 
 These different steps can be performed by the different sub-commands:
@@ -411,7 +411,7 @@ The **fetch** command extracts the reads from the BAM file, it takes 2 arguments
 * `--config` : path to the config.yml file.
 
 ```
-./indelible.py fetch --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.sc_reads
+./indelible.py fetch --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.sc_reads --config config.yml
 ```
 
 #### 2. Aggregate
@@ -425,7 +425,7 @@ The **aggregate** merges information across reads towards a position-level view 
 * `--config` : path to the config.yml file.
 
 ```
-./indelible.py aggregate --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.sc_reads --b test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts --r hs37d5.fasta
+./indelible.py aggregate --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.sc_reads --b test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts --r hs37d5.fasta --config config.yml
 ```
 
 **Note**: It is recommended to [retrain](#train) the RandomForest following this step with data that you have manually inspected. 
@@ -439,10 +439,8 @@ The **score** command scores positions based on the read information and sequenc
 * `--config` : path to the config.yml file.
 
 ```
-./indelible.py score --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored
+./indelible.py score --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored --config config.yml
 ```
-
-**Note**: It is highly recommended if analysing a large amount of data at once to rebuild the InDelible frequency database. Please see the [Database](#database) command below for instructions.
 
 #### 4. Database
 
@@ -459,7 +457,7 @@ from the initial DDD study described in our [manuscript](#how-to-cite-indelible)
 
 ```
 ls InDelible_files/*.scored > fofn.txt
-./indelible.py database --f fofn.txt --o InDelible_db.tsv
+./indelible.py database --f fofn.txt --o InDelible_db.tsv --r hs37db.fa --config config.yml
 ```
 
 *Note* The MAF database provided to `--prior` must conform to the following format:
@@ -495,7 +493,7 @@ The **annotate** command enriches the result with gene/exon annotations and merg
 * `--config` : path to the config.yml file.
 
 ```
-./indelible.py annotate --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored.annotated --d data/InDelible_db_10k.bed
+./indelible.py annotate --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored.annotated --d data/InDelible_db_10k.bed --config config.yml
 ```
 
 #### 6. Denovo
@@ -511,7 +509,7 @@ One can then look for *de novo* mutation events using the **denovo** command:
 * `--config` : path to the config.yml file.
 
 ```
-./indelible.py denovo --c test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored.annotated --m maternal.bam --p paternal.bam --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.indelible.denovo.tsv
+./indelible.py denovo --c test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.counts.scored.annotated --m maternal.bam --p paternal.bam --o test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam.indelible.denovo.tsv --config config.yml
 ```
 
 ### Additional Commands

@@ -170,7 +170,7 @@ def build_database(score_files, output_path, fasta, config, priors, bwa_threads)
         frame.loc[frame['coverage'] >= coverage_cutoff, 'seq_longest'] = 'A'
 
         is_pos = frame["prob_Y"] >= score_threshold
-        frame = frame[is_pos][["chrom", "position", "seq_longest", "sr_long_5", "sr_short_5", "sr_long_3", "sr_short_3"]]
+        frame = frame[is_pos][["chrom", "position", "coverage", "seq_longest", "sr_long_5", "sr_short_5", "sr_long_3", "sr_short_3"]]
         frame["left"] = frame["sr_long_5"] + frame["sr_short_5"]
         frame["right"] = frame["sr_long_3"] + frame["sr_short_3"]
         frame.drop(["sr_long_5", "sr_short_5", "sr_long_3", "sr_short_3"], axis=1)
@@ -186,6 +186,7 @@ def build_database(score_files, output_path, fasta, config, priors, bwa_threads)
                                                    counts=('coord', len),
                                                    tot_left = ('left','sum'),
                                                    tot_right = ('right','sum'),
+                                                   coverage = ('coverage','mean'),
                                                    longest = ('seq_longest',decide_longest))
 
     # Set direction value:
@@ -207,7 +208,7 @@ def build_database(score_files, output_path, fasta, config, priors, bwa_threads)
     final_frame = final_frame.sort_values(by=["chrom", "pos"])
 
     # Write final database file:
-    header = ["chrom", "pos", "pct", "counts", "tot", "otherside", "mode", "svtype", "size", "aln_length",
+    header = ["chrom", "pos", "pct", "counts", "tot", "coverage", "otherside", "mode", "svtype", "size", "aln_length",
               "otherside_found", "is_primary", "variant_coord"]
     output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=header, delimiter="\t",
                                  lineterminator="\n")
@@ -221,6 +222,7 @@ def build_database(score_files, output_path, fasta, config, priors, bwa_threads)
         v["pct"] = row_dict["pct"]
         v["counts"] = row_dict["counts"]
         v["tot"] = row_dict["tot"]
+        v["coverage"] = row_dict["coverage"]
 
         v = add_alignment_information(v, decisions, repeat_info)
 
