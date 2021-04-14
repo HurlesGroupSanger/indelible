@@ -32,6 +32,7 @@ sub new
 	$$self{indelible} = undef;
 	$$self{database} = undef;
 	$$self{limits}   = { memory=>10_000};
+	$$self{bwa_threads} = 1;
     $$self{config_version} = '1427807557';
     $$self{_sampleconf} = q[
             # For sanity checking that your config file is not obsolete. Update
@@ -51,10 +52,9 @@ sub new
             # Path to indelible
             indelible => undef,
 
-            limits => { memory=>10_000 },
+            bwa_threads => 1,
 
-            # Path to the indelible MAF database, leave as undef if you want this script to rebuild the database
-            database => undef
+            limits => { memory=>10_000 },
 
     ]."\n";
 
@@ -64,7 +64,6 @@ sub new
         "Options:\n" .
         "   -b, --bams-list <file>      File with bam files\n" .
         "   -o, --outdir <dir>          Output directory\n" .
-        "   -d, --database <file>       Path to a precomputed MAF database [null]\n" .
         "   -c, --config <file>         Path to InDelible config file" .
         "   -r, --ref <file>            Path to the reference genome" .
         "\n";
@@ -79,7 +78,6 @@ sub parse_args
     {
         if ( $arg eq '-b' or $arg eq '--bams-list' ) { $$self{bams}=shift(@ARGV); next; }
         if ( $arg eq '-o' or $arg eq '--outdir' ) { $$self{outdir}=shift(@ARGV); next; }
-        if ( $arg eq '-d' or $arg eq '--database' ) { $$self{database}=shift(@ARGV); next; }
         if ( $arg eq '-c' or $arg eq '--config' ) { $$self{config}=shift(@ARGV); next; }
         if ( $arg eq '-r' or $arg eq '--ref' ) { $$self{config}=shift(@ARGV); next; }
         $self->throw();
@@ -123,41 +121,31 @@ sub main
     }
     $self->wait;
 
-    # Rebuild the MAF database if requested
+    # Rebuild the MAF database
     my $db_file;
-    if (!defined($$self{database})) {
-        #This part prints the fofn.txt file that is necessary for building the db...
-        open(my $fh,'<',$$self{bams}) or $self->throw("$$self{bams}: $!");
-        my $dir = "./indelible_db/";
-        if (! -e $dir) {
-            system("mkdir $dir");
-        }
-
-        my $fofn_file = $dir . "fofn.txt";
-        open (my $fofn, '>', $fofn_file);
-
-        while (my $line=<$fh>) {
-                chomp $line;
-            my @data = split("\t",$line);
-            my $bam = $data[0];
-            if (-e $bam . ".counts.scored") {
-                print $fofn $bam . ".counts.scored\n";
-            }
-        }
-        close($fh) or $self->throw("close failed: $$self{bams}");
-        close($fofn) or $self->throw("close failed on fofn.txt file");
-
-        $db_file = $dir . "indelible_db.tsv";
-        $self->spawn('run_db', $db_file, $fofn_file);
-        $self->wait;
-    } else {
-        $db_file = $$self{database};
+    #This part prints the fofn.txt file that is necessary for building the database...
+    open(my $fh,'<',$$self{bams}) or $self->throw("$$self{bams}: $!");
+    my $dir = "./indelible_db/";
+    if (! -e $dir) {
+        system("mkdir $dir");
     }
 
-    # Run Indelible blast
-    for my $job (@$jobs) {
-	    $self->spawn('run_blast',$$self{outdir} . "/" . $$job{basename} . ".counts.scored.fasta.blast_done", $$self{outdir} . "/" . $$job{basename} . ".counts.scored");
+    my $fofn_file = $dir . "fofn.txt";
+    open (my $fofn, '>', $fofn_file);
+
+    while (my $line=<$fh>) {
+            chomp $line;
+        my @data = split("\t",$line);
+        my $bam = $data[0];
+        if (-e $bam . ".counts.scored") {
+            print $fofn $bam . ".counts.scored\n";
+        }
     }
+    close($fh) or $self->throw("close failed: $$self{bams}");
+    close($fofn) or $self->throw("close failed on fofn.txt file");
+
+    $db_file = $dir . "indelible_db.tsv";
+    $self->spawn('run_db', $db_file, $fofn_file);
     $self->wait;
 
     # Run Indelible annotate
@@ -253,20 +241,9 @@ sub run_db
 	
 	my ($self, $outfile, $fofn) = @_;
 	
-	my $cmd = $$self{indelible} . " database --f " . $fofn . " --o " . $outfile . ".part --config $$self{config}";
+	my $cmd = $$self{indelible} . " database --f " . $fofn . " --o " . $outfile . ".part --r $$self{ref} --config $$self{config}";
 	$self->cmd($cmd);
 	$cmd = "mv $outfile.part $outfile";
-	$self->cmd($cmd);
-
-}
-
-sub run_blast
-{
-	
-	my ($self,$outfile,$infile) = @_;
-	my $cmd = $$self{indelible} . " blast --i $infile --config $$self{config}";
-	$self->cmd($cmd);
-	$cmd = "touch $outfile";
 	$self->cmd($cmd);
 
 }

@@ -13,13 +13,13 @@
 
 import pysam
 import subprocess
+import re
 
 class BWARunner:
 
-    def __init__(self, final_frame, output_file, fasta_file, bwa_loc, bwa_threads):
+    def __init__(self, final_frame, output_file, fasta, bwa_loc, bwa_threads):
 
-        self.__fasta_loc = fasta_file
-        self.__fasta = pysam.FastaFile(fasta_file)
+        self.__fasta = fasta
         self.__bwa_loc = bwa_loc
         self.__bwa_threads = bwa_threads
         self.final_frame = final_frame
@@ -86,13 +86,17 @@ class BWARunner:
             left = position - 50
             right = position + 50
 
+        ## Some coordinates are right at the beginning of a chromosome...
+        if left < 1:
+            left = 1
+
         ref_seq = self.__fasta.fetch(reference=chrom, start=left, end=right)
 
         return(ref_seq)
 
     def __bwa_engine(self, split_fq, ref_fq, outsam):
 
-        cmd = self.__bwa_loc + " mem -t " + str(self.__bwa_threads) + " -T 10 -k 10 -o " + outsam + " " + self.__fasta_loc + " " + split_fq + " " + ref_fq
+        cmd = self.__bwa_loc + " mem -t " + str(self.__bwa_threads) + " -T 10 -k 10 -o " + outsam + " " + self.__fasta.filename.decode() + " " + split_fq + " " + ref_fq
         p = subprocess.Popen(cmd, shell=True)
         p.wait()
         print("bwa ran with code:", p.returncode)
@@ -120,7 +124,7 @@ class BWARunner:
                 read_two = None
 
             if read.is_supplementary or read.is_duplicate or read.is_qcfail or read.is_secondary or read.is_unmapped:
-                # Toss in the bin (have this nothing statement because it's more understandable than negating everything above...)
+                # Toss in the bin (set this variable below that does nothing because it's more understandable than negating everything above...)
                 stuff = 1
             else:
                 current_id = name
@@ -138,18 +142,21 @@ class BWARunner:
         if read_one is not None and read_two is not None:
 
             curr_data = self.final_frame.loc[current_id].to_dict()
+            read_two_closeness = min(abs(read_two.reference_start - curr_data["pos"]),
+                                     abs(read_two.reference_end - curr_data["pos"]))
+
             if curr_data["dir"] == "uncer":
 
                 self.__fill_dict(current_id, "NA", "FAIL_MULTISPLIT", "UNK", "NA", read_one.query_alignment_length)
 
-            elif read_one.mapq == 0:
+            elif read_one.mapq == 0 or read_two.mapq == 0 or read_one.is_reverse or read_two.is_reverse or read_two_closeness > 10:
 
                 self.__fill_dict(current_id, "NA", "FAIL_LOWMAPQ", "UNK", "NA", read_one.query_alignment_length)
 
             elif read_one.reference_name != read_two.reference_name:
 
                 self.__fill_dict(current_id, read_one.reference_name + "_" + str(read_one.reference_start), "REALN_CHR",
-                                 "TRANS_SEGDUP", "NA", read_one.query_alignment_length)
+                                 "TRANSSEGDUP", "NA", read_one.query_alignment_length)
 
             else:
 
@@ -163,25 +170,84 @@ class BWARunner:
                     size = abs((read_one.reference_end) - curr_data["pos"])
                     bp = "%s_%s" % (read_one.reference_name,read_one.reference_end)
 
+                    # First check to see if there is any additional sequence that did not align:
+                    ins_seq = self.__check_ins(curr_data["dir"], read_one)
+
                     if curr_data["pos"] < read_one.reference_end:
-                        sv_type = "DUP"
-                    else:
-                        sv_type = "DEL"
+                        if ins_seq is not None:
+                            sv_type = "CMPLX_DUP.INS_" + ins_seq.upper()
+                            size = size + len(ins_seq)
+                        else:
+                            sv_type = "DUP"
+                    elif curr_data["pos"] > read_one.reference_end:
+                        if ins_seq is not None:
+                            sv_type = "CMPLX_DEL.INS_" + ins_seq.upper()
+                            size = len(ins_seq) - size
+                        else:
+                            sv_type = "DEL"
+                    else: # These could be real non-templated insertions – check!
+                        ins_seq = self.__check_ins(curr_data["dir"], read_one)
+                        if ins_seq is not None:
+                            sv_type = "INS_" + ins_seq.upper()
+                            size = len(ins_seq)
+                        else:
+                            sv_type = "UNK"
 
                 else:
 
                     size = abs((read_one.reference_start) - curr_data["pos"])
                     bp = "%s_%s" % (read_one.reference_name, read_one.reference_start)
 
-                    if curr_data["pos"] > read_one.reference_start:
-                        sv_type = "DUP"
-                    else:
-                        sv_type = "DEL"
+                    # First check to see if there is any additional sequence that did not align:
+                    ins_seq = self.__check_ins(curr_data["dir"], read_one)
 
-                if read_one.is_proper_pair and read_two.is_proper_pair:
+                    if curr_data["pos"] > read_one.reference_start:
+                        if ins_seq is not None:
+                            sv_type = "CMPLX_DUP.INS_" + ins_seq.upper()
+                            size = size + len(ins_seq)
+                        else:
+                            sv_type = "DUP"
+                    elif curr_data["pos"] < read_one.reference_start:
+                        if ins_seq is not None:
+                            sv_type = "CMPLX_DEL.INS_" + ins_seq.upper()
+                            size = len(ins_seq) - size
+                        else:
+                            sv_type = "DEL"
+                    else: # These could be real non-templated insertions – check!
+                        ins_seq = self.__check_ins(curr_data["dir"], read_one)
+                        if ins_seq is not None:
+                            sv_type = "INS_" + ins_seq.upper()
+                            size = len(ins_seq)
+                        else:
+                            sv_type = "UNK"
+
+                if sv_type == "UNK":
+                    self.__fill_dict(current_id, "NA", "FAIL_REFERENCE", sv_type, "NA", read_one.query_alignment_length)
+                elif read_one.is_proper_pair and read_two.is_proper_pair:
                     self.__fill_dict(current_id, bp, "REALN", sv_type, size, aln_len)
                 else:
                     self.__fill_dict(current_id, bp, "REALN_XL", sv_type, size, aln_len)
+
+    def __check_ins(self, dir, read):
+
+        ins_seq = None
+        if dir == "left":
+            ctuples = read.cigartuples
+            # The only legit split read in this direction SHOULD be on the 3' end
+            if ctuples[len(ctuples) - 1][0] == 4:
+                ins_seq = read.seq[(len(read.seq) - ctuples[len(ctuples) - 1][1]):len(read.seq)]
+                sv_type = "INS_" + ins_seq.upper()
+                size = len(ins_seq)
+        elif dir == "right":
+            ctuples = read.cigartuples
+            # The only legit split read in this direction SHOULD be on the 5' end
+            if ctuples[0][0] == 4:
+                ins_seq = read.seq[0:ctuples[0][1]]
+                sv_type = "INS_" + ins_seq.upper()
+                size = len(ins_seq)
+
+        return ins_seq
+
 
     def __fill_dict(self, breakpoint_id, otherside, mode, svtype, size, aln_length):
 

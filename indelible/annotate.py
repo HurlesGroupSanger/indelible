@@ -3,7 +3,6 @@ import pybedtools as bedtools
 import re
 import sys
 from indelible.indelible_lib import *
-import re
 from intervaltree import Interval, IntervalTree
 
 
@@ -40,21 +39,21 @@ def create_exon_intervaltree(exon_file):
 
 
 def read_database(path):
-    db = defaultdict(dict)
+    db = {}
 
     header = ["chrom", "pos", "pct", "counts", "tot", "otherside", "mode", "svtype", "size", "aln_length",
      "otherside_found", "is_primary", "variant_coord"]
 
     for v in csv.DictReader(open(path, 'r'), fieldnames=header, delimiter="\t"):
-        db[normalize_chr(v["chrom"]) + "_" + int(v["position"])] = {'maf': float(v["pct"]),
-                                                                    'otherside': v["otherside"],
-                                                                    'mode': v["mode"],
-                                                                    'svtype': v["svtype"],
-                                                                    'size': int(v["size"]),
-                                                                    'aln_length': int(v["aln_length"]),
-                                                                    'otherside_found': bool(v["otherside_found"]),
-                                                                    'is_primary': bool(v["is_primary"]),
-                                                                    'variant_coord': v["variant_coord"]}
+        db[normalize_chr(str(v["chrom"])) + "_" + v["pos"]] = {'maf': float(v["pct"]),
+                                                               'otherside': v["otherside"],
+                                                               'mode': v["mode"],
+                                                               'svtype': v["svtype"],
+                                                               'size': v["size"],
+                                                               'aln_length': v["aln_length"],
+                                                               'otherside_found': v["otherside_found"],
+                                                               'is_primary': v["is_primary"],
+                                                               'variant_coord': v["variant_coord"]}
     return db
 
 
@@ -114,11 +113,14 @@ def create_gene_synonym_hash(hgnc_synonyms):
 
 def attach_db(v, db):
 
-        key = v["chrom"] + "_" + v["pos"]
-        # While this is dangerous there should be a 0% chance that the key is not contained within this db.
-        database = db[key]
-        for k,v in database.iteritems():
-            v[k] = v
+        key = v["chrom"] + "_" + v["position"]
+        # While this is _slightly_ dangerous there should be a 0% chance that the key is not contained within this db.
+        # (so long as the user didn't change the score cutoff during runtime...)
+        db_entry = db[key]
+        for key,value in db_entry.items():
+            v[key] = value
+
+        return v
 
 
 def find_hgnc_genes(chrom, start, end, hgnc_db):
@@ -193,7 +195,8 @@ def annotate(input_path, output_path, database, config):
 
     # Prepare outputfile
     new_fieldnames = scored_file.fieldnames
-    new_fieldnames.extend(("ddg2p", 'hgnc', 'hgnc_constrained', "exonic", "transcripts", "maf", "otherside","sv_type"))
+    new_fieldnames.extend(("ddg2p",'hgnc','hgnc_constrained','exonic','transcripts','maf','mode',"otherside","svtype",
+                           'size','variant_coord','otherside_found','is_primary','aln_length'))
     output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=scored_file.fieldnames, delimiter="\t", lineterminator="\n")
     output_file.writeheader()
 
@@ -206,8 +209,7 @@ def annotate(input_path, output_path, database, config):
 
     for v in scored_file:
 
-        if v["prob_y"] >= config["SCORE_THRESHOLD"]:
-
+        if float(v["prob_Y"]) >= config["SCORE_THRESHOLD"]:
 
             # Keys that I have removed:
             # hit["blast_hit"] = "no_hit"
@@ -221,10 +223,10 @@ def annotate(input_path, output_path, database, config):
 
             v = attach_db(v, db)
 
-            # Decide if we can use additional info from the db for following steps:
+            # Decide if we can use additional info from the db for following search steps:
             left_search = pos
             right_search = pos + 1
-            if v["otherside"] != "NA":
+            if v["otherside"] != "NA" and v["otherside"] != "repeats_hit":
                 other_coord = v["otherside"].split("_")
                 qchr = normalize_chr(other_coord[0])
                 qpos = int(other_coord[1])
@@ -236,6 +238,7 @@ def annotate(input_path, output_path, database, config):
                     else:
                         left_search = pos
                         right_search = qpos
+
 
             hgnc_genes = find_hgnc_genes(chrom, left_search, right_search, hgnc_db)
             ddg2p_genes = find_ddg2p_gene(chrom, left_search, right_search, ddg2p_db)
@@ -265,10 +268,5 @@ def annotate(input_path, output_path, database, config):
             else:
                 v["exonic"] = True
                 v["transcripts"] = ";".join(str(x) for x in exons)
-
-            if pos in db[chrom]:
-                v["maf"] = db[chrom][pos]
-            else:
-                v["maf"] = "NA"
 
             output_file.writerow(v)

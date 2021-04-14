@@ -17,10 +17,32 @@
 """
 
 import pandas
+import numpy as np
 import os
+import pysam
+import itertools as it
+from difflib import SequenceMatcher
 from indelible.bwa_runner import BWARunner
 from indelible.blast_repeats import BlastRepeats
 import csv
+import statistics
+import random
+
+
+def build_priors(prior_file, final_frame):
+    priors_frame = pandas.read_csv("/Users/eg15/PycharmProjects/Indelible/test/test_db.txt",
+                                   sep="\t",
+                                   header=None,
+                                   names = ("chrom", "pos", "pct", "counts", "tot", "otherside", "mode", "svtype",
+                                            "size", "aln_length", "otherside_found", "is_primary", "variant_coord"))
+    priors_frame["coord"] = priors_frame["chrom"].astype(str) + "_" + priors_frame["pos"].astype(str)
+    priors_frame = priors_frame.set_index("coord")
+
+    ## Drop sites that have already been identified
+    already_found = final_frame.index.to_list()
+    priors_frame = priors_frame.drop(index=already_found)
+
+    return(priors_frame)
 
 
 def add_alignment_information(curr_bp, decisions, repeat_info):
@@ -31,7 +53,7 @@ def add_alignment_information(curr_bp, decisions, repeat_info):
         curr_bp["svtype"] = "INS_" + repeat_info[name]["target_chrom"]
         curr_bp["size"] = "NA"
         curr_bp["aln_length"] = repeat_info[name]["query_length"]
-        curr_bp["otherside_found"] = "NA"
+        curr_bp["otherside_found"] = "false"
         curr_bp["is_primary"] = "NA"
         curr_bp["variant_coord"] = "NA"
     elif name in decisions:
@@ -40,16 +62,17 @@ def add_alignment_information(curr_bp, decisions, repeat_info):
         curr_bp["svtype"] = decisions[name]["svtype"]
         curr_bp["size"] = decisions[name]["size"]
         curr_bp["aln_length"] = decisions[name]["aln_length"]
-        curr_bp["otherside_found"] = "NA"
+        curr_bp["otherside_found"] = "false"
         curr_bp["is_primary"] = "NA"
         curr_bp["variant_coord"] = "NA"
         ## Search for otherside in actual hits
         if curr_bp["otherside"] != "NA":
             if curr_bp["otherside"] in decisions:
                 other_coord = curr_bp["otherside"].split("_")
+                curr_bp["otherside_found"] = "true"
                 if int(other_coord[1]) < curr_bp["pos"]:
                     curr_bp["is_primary"] = "false"
-                    curr_bp["variant_coord"] = "%s:%s-%s" % (curr_bp["chrom"],other_coord[1], curr_bp["pos"])
+                    curr_bp["variant_coord"] = "%s:%s-%s" % (curr_bp["chrom"], other_coord[1], curr_bp["pos"])
                 else:
                     curr_bp["is_primary"] = "true"
                     curr_bp["variant_coord"] = "%s:%s-%s" % (curr_bp["chrom"], curr_bp["pos"], other_coord[1])
@@ -60,7 +83,7 @@ def add_alignment_information(curr_bp, decisions, repeat_info):
         curr_bp["svtype"] = "UNK"
         curr_bp["size"] = "NA"
         curr_bp["aln_length"] = "NA"
-        curr_bp["otherside_found"] = "NA"
+        curr_bp["otherside_found"] = "false"
         curr_bp["is_primary"] = "NA"
         curr_bp["variant_coord"] = "NA"
     return curr_bp
@@ -74,6 +97,38 @@ def find_bwa():
             return(search_path)
 
 
+def seq_similarity(seq1, seq2):
+    seq = SequenceMatcher(a=seq1, b=seq2)
+    return seq.ratio()
+
+
+def decide_longest(seqs):
+
+    if len(seqs) == 1:
+        return seqs.to_list()[0]
+    else:
+
+        returnable = None
+        for s in sorted(seqs, key = len, reverse=True):
+            if len(seqs) >= 20:
+                # Set seed for random to ensure identical results when variant calling:
+                random.seed(1234)
+                seq_frame = pandas.DataFrame(data={'orig': np.repeat(s, 20), 'old': random.sample(seqs.to_list(), 20)})
+            else:
+                seq_frame = pandas.DataFrame(data={'orig': np.repeat(s, len(seqs)), 'old': seqs})
+
+            seq_frame['similarity'] = seq_frame.apply(lambda x: seq_similarity(x[0], x[1]), axis=1)
+            seq_frame[seq_frame['similarity'] != 1]
+            if statistics.mean(seq_frame['similarity']) >= 0.6:
+                returnable = s
+                break
+
+        if returnable is None:
+            return max(seqs)
+        else:
+            return returnable
+
+
 def decide_direction(left, right):
     if (left * 0.5) > right:
         dir = "left"
@@ -84,9 +139,10 @@ def decide_direction(left, right):
     return dir
 
 
-def build_database(score_files, output_path, fasta, config, bwa_threads):
+def build_database(score_files, output_path, fasta, config, priors, bwa_threads):
 
-    # Pull stuff out of config that we need
+    # Pull stuff out of arguments/config that we need
+    fasta = pysam.FastaFile(fasta)
     score_threshold = config['SCORE_THRESHOLD']
     REPEATdb = config['repeatdb']
 
@@ -103,13 +159,18 @@ def build_database(score_files, output_path, fasta, config, bwa_threads):
     for file in open(score_files, 'r'):
         allele_count += 1
         file = file.rstrip()
-        sample_id = os.path.basename(file).split(".")[0]
         frame = pandas.read_csv(
             file,
             sep="\t",
             header=0)
+        # Calculating mean coverage and then adding a fairly lenient threshold. This prevents areas with a ton of reads
+        # from "poisoning the well" when deciding which read to align later in this algorithm
+        # The 'A' base is a placeholder that will automatically fail alignment if no other sites are found
+        coverage_cutoff = statistics.mean(frame["coverage"]) * 10
+        frame.loc[frame['coverage'] >= coverage_cutoff, 'seq_longest'] = 'A'
+
         is_pos = frame["prob_Y"] >= score_threshold
-        frame = frame[is_pos][["chrom", "position","seq_longest","sr_long_5","sr_short_5","sr_long_3","sr_short_3"]]
+        frame = frame[is_pos][["chrom", "position", "coverage", "seq_longest", "sr_long_5", "sr_short_5", "sr_long_3", "sr_short_3"]]
         frame["left"] = frame["sr_long_5"] + frame["sr_short_5"]
         frame["right"] = frame["sr_long_3"] + frame["sr_short_3"]
         frame.drop(["sr_long_5", "sr_short_5", "sr_long_3", "sr_short_3"], axis=1)
@@ -118,14 +179,15 @@ def build_database(score_files, output_path, fasta, config, bwa_threads):
     data_joined = pandas.concat(data)
     data_joined["coord"] = data_joined["chrom"].astype(str) + "_" + data_joined["position"].astype(str)
 
+    print("Total number of sites to iterate through: %s" % len(data_joined.groupby('coord').agg(counts=('coord', len))))
+
     final_frame = data_joined.groupby('coord').agg(chrom = ('chrom','first'),
                                                    pos = ('position','first'),
                                                    counts=('coord', len),
                                                    tot_left = ('left','sum'),
                                                    tot_right = ('right','sum'),
-                                                   longest = ('seq_longest','max'))
-
-    final_frame = final_frame.sort_values(by=["chrom", "pos"])
+                                                   coverage = ('coverage','mean'),
+                                                   longest = ('seq_longest',decide_longest))
 
     # Set direction value:
     final_frame['dir'] = final_frame.apply(lambda x: decide_direction(x.tot_left, x.tot_right), axis=1)
@@ -142,8 +204,11 @@ def build_database(score_files, output_path, fasta, config, bwa_threads):
     bwa_parser = BWARunner(final_frame, output_path, fasta, bwa_loc, bwa_threads)
     decisions = bwa_parser.get_decisions()
 
+    final_frame["chrom"] = pandas.Categorical(final_frame["chrom"].astype(str), categories = fasta.references, ordered=True)
+    final_frame = final_frame.sort_values(by=["chrom", "pos"])
+
     # Write final database file:
-    header = ["chrom", "pos", "pct", "counts", "tot", "otherside", "mode", "svtype", "size", "aln_length",
+    header = ["chrom", "pos", "pct", "counts", "tot", "coverage", "otherside", "mode", "svtype", "size", "aln_length",
               "otherside_found", "is_primary", "variant_coord"]
     output_file = csv.DictWriter(open(output_path, 'w'), fieldnames=header, delimiter="\t",
                                  lineterminator="\n")
@@ -157,7 +222,17 @@ def build_database(score_files, output_path, fasta, config, bwa_threads):
         v["pct"] = row_dict["pct"]
         v["counts"] = row_dict["counts"]
         v["tot"] = row_dict["tot"]
+        v["coverage"] = row_dict["coverage"]
 
         v = add_alignment_information(v, decisions, repeat_info)
 
         output_file.writerow(v)
+
+    ## Check priors and append to the bottom:
+    if priors is not None:
+        priors_frame = build_priors(priors, final_frame)
+        for index, row in priors_frame.iterrows():
+            row_dict = row.to_dict()
+            output_file.writerow(row_dict)
+
+    fasta.close()
