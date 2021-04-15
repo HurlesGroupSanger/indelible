@@ -64,8 +64,14 @@ def denovo_caller_trio(child_input, mother_bam, father_bam, output_path, config)
         v['dad_cov'] = dad_stats['coverage']
 
         # Only filter here if we have BOTH mom and dad bams
-        if mother_bam is None or father_bam is None:
+        if mother_bam is None and father_bam is None:
             output_file.writerow(v)
+        elif mother_bam is None and father_bam is not None:
+            if v['dad_sr'] <= config['SR_THRESHOLD'] and v['dad_cov'] >= config['COV_THRESHOLD']:
+                output_file.writerow(v)
+        elif mother_bam is not None and father_bam is None:
+            if v['mum_sr'] <= config['SR_THRESHOLD'] and v['mum_cov'] >= config['COV_THRESHOLD']:
+                output_file.writerow(v)
         else:
             if v['mum_sr'] <= config['SR_THRESHOLD'] and v['dad_sr'] <= config['SR_THRESHOLD'] and v['mum_cov'] >= \
                     config['COV_THRESHOLD'] and v['dad_cov'] >= config['COV_THRESHOLD']:

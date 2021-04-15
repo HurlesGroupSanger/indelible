@@ -234,8 +234,10 @@ significantly.
 A brief note on Hg38 resources: 
 
 * The InDelible MAF database provided with this distribution is a [liftOver](https://genome.ucsc.edu/cgi-bin/hgLiftOver)
-of project resources generated using version hg19 of the human genome. As such, the position accuracy of variants contained there-in
-should not be considered 100% accurate.
+of project resources generated using version hg19 of the human genome. When performing liftover, approximately 0.8% of 
+  breakpoints were lost and are not included in the resources file. Additionally, the position accuracy of variants 
+  contained there-in should not be considered 100% accurate. This is particularly true for variant size estimates – we 
+  **did not** recalculate variant lengths.
 * The training data packaged with InDelible is technically agnostic to genome build. However, differences between alignment methods and/or genome builds
 may result in slight differences in covariate importance. As such, it may be a good idea to train the random forest with data from study being assessed, if sufficiently large enough.
 * As gnomAD has not generated pLI scores specifically using Hg38-aligned genomes, pLI values are from gnomADv2.1.1.
@@ -576,19 +578,20 @@ The primary output from InDelible is the output file from the [_denovo_](#6-deno
 |exonic| 28 | Does this breakpoint intersect any exons given by `ensembl_exons` in config.yml |
 |transcripts| 29 | What transcripts does this breakpoint intersect? If > 10 transcripts, will return 'multiple_transcripts' |
 |maf| 30 | "Allele Frequency" based on the InDelible database provided with `--d`
-|blast_hit| 31 | The coordinate given by BLAST for the longest SR of this breakpoint. If multiple BLAST hits, will be 'multi_hit', if overlaps a region from `repeatdb` in config.yml, will be repeats hit. |
-|blast_strand| 32 | Strand of blast_hit |
-|blast_identity| 33 | Percent identity of blast_hit |
-|blast_dist| 34 | Distance to blast_hit from 'position' |
-|blast_hgnc| 35 | Gene overlap of blast_hit |
-|otherside| 36 | Coordinate of likely 5'/3' breakpoint if present |
-|sv_type| 37 | If otherside found or blast_hit = "repeats_hit" potential SV type. Possible values are DUP (duplication), DEL (deletion), INS_<CLASS> (mobile element insertion), or SEGDUP_TRANS (segmental duplication or translocation). For INS, this will list the likely type of templated insertion from the *.fasta.hits_repeats file. SEGDUP_TRANS represents either a segmenetal duplication or translocation. As we cannot discern with short read data between a SEGDUP or translocation, we list both here. |
-|mum_sr| 38 | Number of SRs in the bam/cram provided to --m with the same 'position' |
-|dad_sr| 39 | Number of SRs in the bam/cram provided to --d with the same 'position' |
-|mum_indel_context| 40 | Number of reads in the bam/cram provided to --m with cigar 'I/D' values |
-|dad_indel_context| 41 | Number of reads in the bam/cram provided to --d with cigar 'I/D' values | 
-|mum_cov| 42 | Coverage in in the bam/cram provided to --m |
-|dad_cov| 43 | Coverage in in the bam/cram provided to --d |
+|mode| 31 | How did bwa alignment perform? One of: BLAST_REPEAT (Aligned to a repeat/ME sequence), REALN (Aligned to unique sequence), REALN_CHR (Aligned to unique sequence on another chromosome), REALN_XL (Aligned to unique sequence on the same chromosome, but was flagged as an "improper pair by bwa"), FAIL_ALIGNMENT (split sequence did not align at all), FAIL_LOWMAPQ (split sequence aligned with MAPQ = 0), FAIL_MULTISPLIT (InDelible could not decide whether the sequence was in the 5' or 3' direction), FAIL_REFERENCE (anchoring reference read aligned in the wrong place). |
+|otherside| 32 | Putative coordinate for alternate breakpoint |
+|svtype| 33 | Putative SV class. Possible values are DUP (duplication), DEL (deletion), INS (followed by either the assembled sequence OR the type of repeat insertion [i.e. Alu, L1, etc.]), CMPLX (followed by DEL/DUP and assembled additional insertion sequence), or TRANSSEGDUP (segmental duplication or translocation). SEGDUP_TRANS represents either a segmenetal duplication or translocation. As we cannot discern with short read data between a SEGDUP or translocation, we list both here. |
+|size| 34 | Distance to otherside from 'position' |
+|variant_coord| 35 | Simply 'chrom' : 'position' - 'otherside', where possible |
+|otherside_found| 36 | Was InDelible sucessful in identifying the other breakpoint? |
+|is_primary| 37 | If otherside found or blast_hit = "repeats_hit" potential SV type  |
+|aln_length| 38 | Length of the aligned sequence  |
+|mum_sr| 39 | Number of SRs in the bam/cram provided to --m with the same 'position' |
+|dad_sr| 40 | Number of SRs in the bam/cram provided to --d with the same 'position' |
+|mum_indel_context| 41 | Number of reads in the bam/cram provided to --m with cigar 'I/D' values |
+|dad_indel_context| 42 | Number of reads in the bam/cram provided to --d with cigar 'I/D' values | 
+|mum_cov| 43 | Coverage in in the bam/cram provided to --m |
+|dad_cov| 44 | Coverage in in the bam/cram provided to --d |
 
 ### Recommended Filtering
 
@@ -599,7 +602,7 @@ of operations.
 
 1. maf ≤ 0.0004 **AND** avg_mapq ≥ 20
     * *Note*: The maf filter is dependent on using the maf data provided in one of the *data.zip files
-2. (pct_double_split > 0.1 **AND** blast_hit != "no_hit") **OR** pct_double_split ≤ 0.1 
+2. pct_double_split < 0.5 && (pct_double_split > 0.1 **AND** svtype != "UNK" **AND** svtype != "TRANSSEGDUP") **OR** pct_double_split ≤ 0.1 
 3. ddg2p != "NA" **AND** sr_total ≥ 5 **AND** exonic = "True"
 4. mom_sr < 2 **AND** dad_sr < 2
 
