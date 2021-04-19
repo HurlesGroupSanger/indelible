@@ -35,7 +35,7 @@ def build_priors(prior_file, final_frame):
                                    header=None,
                                    names = ("chrom", "pos", "pct", "counts", "tot", "otherside", "mode", "svtype",
                                             "size", "aln_length", "otherside_found", "is_primary", "variant_coord"))
-    priors_frame["coord"] = priors_frame["chrom"].astype(str) + "_" + priors_frame["pos"].astype(str)
+    priors_frame["coord"] = priors_frame["chrom"].astype(str) + ":" + priors_frame["pos"].astype(str)
     priors_frame = priors_frame.set_index("coord")
 
     ## Drop sites that have already been identified
@@ -46,7 +46,7 @@ def build_priors(prior_file, final_frame):
 
 
 def add_alignment_information(curr_bp, decisions, repeat_info):
-    name = "%s_%s" % (curr_bp["chrom"], curr_bp["pos"])
+    name = "%s:%s" % (curr_bp["chrom"], curr_bp["pos"])
     if name in repeat_info:
         curr_bp["otherside"] = "repeats_hit"
         curr_bp["mode"] = "BLAST_REPEAT"
@@ -68,7 +68,7 @@ def add_alignment_information(curr_bp, decisions, repeat_info):
         ## Search for otherside in actual hits
         if curr_bp["otherside"] != "NA":
             if curr_bp["otherside"] in decisions:
-                other_coord = curr_bp["otherside"].split("_")
+                other_coord = curr_bp["otherside"].split(":")
                 curr_bp["otherside_found"] = "true"
                 if int(other_coord[1]) < curr_bp["pos"]:
                     curr_bp["is_primary"] = "false"
@@ -177,7 +177,7 @@ def build_database(score_files, output_path, fasta, config, priors, bwa_threads)
         data.append(frame)
 
     data_joined = pandas.concat(data)
-    data_joined["coord"] = data_joined["chrom"].astype(str) + "_" + data_joined["position"].astype(str)
+    data_joined["coord"] = data_joined["chrom"].astype(str) + ":" + data_joined["position"].astype(str)
 
     print("Total number of sites to iterate through: %s" % len(data_joined.groupby('coord').agg(counts=('coord', len))))
 

@@ -51,7 +51,7 @@ class BlastRepeats:
         output_fasta = open(output_path + ".fasta", 'w')
         for index, row in final_frame.iterrows():
             if len(row['longest']) >= MINIMUM_LENGTH:
-                output_fasta.write(">%s_%s_%s\n" % (row['chrom'], row['pos'], len(row['longest'])))
+                output_fasta.write(">%s:%s:%s\n" % (row['chrom'], row['pos'], len(row['longest'])))
                 output_fasta.write("%s\n" % row['longest'])
         output_fasta.close()
         return output_path + ".fasta"
@@ -83,8 +83,8 @@ class BlastRepeats:
             if len(hits[seq]) < 10:
                 for result in hits[seq]:
 
-                    id_split = result[0].split("_")
-                    current_id = id_split[0] + "_" + id_split[1]
+                    id_split = result[0].split(":")
+                    current_id = id_split[0] + ":" + id_split[1]
                     res = {}
                     res["target_chrom"] = result[1]
                     res["evalue"] = float(result[11])

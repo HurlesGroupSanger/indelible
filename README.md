@@ -126,6 +126,9 @@ The python package Biopython requires a local install of [blast](https://blast.n
 
 To install InDelible:
 
+**Note**: We recommend cloning the latest version of our github repo unless you need to reproduce your analysis
+with an older version. This should allow us to readily fix issues that you may experience with the software.
+
 1. Clone the git repo:
 
 ```

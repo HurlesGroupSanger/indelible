@@ -61,7 +61,7 @@ class BWARunner:
     def __write_fastq_entry(self, writer, chrom, position, sequence):
 
         qual = 'Z' * len(sequence)
-        name = "%s_%s" % (chrom, position)
+        name = "%s:%s" % (chrom, position)
 
         writer.write('@' + name + "\n")
         writer.write(sequence + "\n")
@@ -155,7 +155,7 @@ class BWARunner:
 
             elif read_one.reference_name != read_two.reference_name:
 
-                self.__fill_dict(current_id, read_one.reference_name + "_" + str(read_one.reference_start), "REALN_CHR",
+                self.__fill_dict(current_id, read_one.reference_name + ":" + str(read_one.reference_start), "REALN_CHR",
                                  "TRANSSEGDUP", "NA", read_one.query_alignment_length)
 
             else:
@@ -168,7 +168,7 @@ class BWARunner:
                 if curr_data["dir"] == "left":
 
                     size = abs((read_one.reference_end) - curr_data["pos"])
-                    bp = "%s_%s" % (read_one.reference_name,read_one.reference_end)
+                    bp = "%s:%s" % (read_one.reference_name,read_one.reference_end)
 
                     # First check to see if there is any additional sequence that did not align:
                     ins_seq = self.__check_ins(curr_data["dir"], read_one)
@@ -196,7 +196,7 @@ class BWARunner:
                 else:
 
                     size = abs((read_one.reference_start) - curr_data["pos"])
-                    bp = "%s_%s" % (read_one.reference_name, read_one.reference_start)
+                    bp = "%s:%s" % (read_one.reference_name, read_one.reference_start)
 
                     # First check to see if there is any additional sequence that did not align:
                     ins_seq = self.__check_ins(curr_data["dir"], read_one)

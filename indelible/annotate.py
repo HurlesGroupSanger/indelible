@@ -41,11 +41,11 @@ def create_exon_intervaltree(exon_file):
 def read_database(path):
     db = {}
 
-    header = ["chrom", "pos", "pct", "counts", "tot", "otherside", "mode", "svtype", "size", "aln_length",
+    header = ["chrom", "pos", "pct", "counts", "tot", "mean_cov", "otherside", "mode", "svtype", "size", "aln_length",
      "otherside_found", "is_primary", "variant_coord"]
 
     for v in csv.DictReader(open(path, 'r'), fieldnames=header, delimiter="\t"):
-        db[normalize_chr(str(v["chrom"])) + "_" + v["pos"]] = {'maf': float(v["pct"]),
+        db[normalize_chr(str(v["chrom"])) + ":" + v["pos"]] = {'maf': float(v["pct"]),
                                                                'otherside': v["otherside"],
                                                                'mode': v["mode"],
                                                                'svtype': v["svtype"],
@@ -113,7 +113,7 @@ def create_gene_synonym_hash(hgnc_synonyms):
 
 def attach_db(v, db):
 
-        key = v["chrom"] + "_" + v["position"]
+        key = v["chrom"] + ":" + v["position"]
         # While this is _slightly_ dangerous there should be a 0% chance that the key is not contained within this db.
         # (so long as the user didn't change the score cutoff during runtime...)
         db_entry = db[key]
@@ -227,7 +227,7 @@ def annotate(input_path, output_path, database, config):
             left_search = pos
             right_search = pos + 1
             if v["otherside"] != "NA" and v["otherside"] != "repeats_hit":
-                other_coord = v["otherside"].split("_")
+                other_coord = v["otherside"].split(":")
                 qchr = normalize_chr(other_coord[0])
                 qpos = int(other_coord[1])
 
