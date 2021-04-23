@@ -113,7 +113,7 @@ def create_gene_synonym_hash(hgnc_synonyms):
 
 def attach_db(v, db):
 
-        key = v["chrom"] + ":" + v["position"]
+        key = normalize_chr(v["chrom"]) + ":" + v["position"]
         # While this is _slightly_ dangerous there should be a 0% chance that the key is not contained within this db.
         # (so long as the user didn't change the score cutoff during runtime...)
         db_entry = db[key]
