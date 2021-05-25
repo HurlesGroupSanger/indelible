@@ -72,7 +72,7 @@ InDelible is likely to be adaptable to a wide range of sequencing technologies, 
 However, we have not specifically tested InDelible with:
 
 1. _Whole Genome Sequencing (WGS) Data_
-    - While InDelible should in theory be able to identify variants from WGS, the number of 
+    - While InDelible should, in theory, be able to identify variants from WGS, the number of 
 reads that InDelible has to process would likely result in significantly increased run-times. 
 
 2. _Other Diseases_
