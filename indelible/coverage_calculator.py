@@ -54,8 +54,7 @@ class CoverageCalculator:
         # this threshold, but I don't think it does too much damage anyway as the time to calculate WES coverage is
         # relatively low
 
-        if count <= 3000:
-            print(count)
+        if count <= 30000:
             self.__use_bam = True
         else:
             self.__use_bam = False
@@ -64,7 +63,6 @@ class CoverageCalculator:
 
     def __calculate_coverage_bam(self, output_file):
 
-        print("Running bedtools...")
         cmd = "bedtools genomecov -bg -ibam " + self.input_bam
         proc = subprocess.Popen(cmd, shell=True, stdout=open(output_file, "w"), stderr=subprocess.PIPE)
         stderr = proc.communicate()
@@ -75,11 +73,6 @@ class CoverageCalculator:
             print("STDERROR follows\n")
             print(stderr.decode('utf-8'))
             raise
-
-        # bt = bedtools.BedTool(self.input_bam)
-        # bt._isbam = True ## This is ugly and is only required because pybedtools does not check for cram!
-        # bg_file = bt.genome_coverage(bg=True)
-        # bg_file.moveto(self.__input_path + ".bg")
 
         bgzip_and_tabix(output_file)
 
