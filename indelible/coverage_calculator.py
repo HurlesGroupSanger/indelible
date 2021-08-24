@@ -54,7 +54,8 @@ class CoverageCalculator:
         # this threshold, but I don't think it does too much damage anyway as the time to calculate WES coverage is
         # relatively low
 
-        if count <= 30000:
+        if count <= 3000:
+            print(count)
             self.__use_bam = True
         else:
             self.__use_bam = False
