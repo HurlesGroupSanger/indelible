@@ -65,7 +65,7 @@ class CoverageCalculator:
     def __calculate_coverage_bam(self, output_file):
 
         print("Running bedtools...")
-        cmd = "bedtools genomecov -bg " + self.input_bam
+        cmd = "bedtools genomecov -bg -ibam " + self.input_bam
         proc = subprocess.Popen(cmd, shell=True, stdout=open(output_file, "w"), stderr=subprocess.PIPE)
         stderr = proc.communicate()
 
