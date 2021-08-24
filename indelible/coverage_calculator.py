@@ -49,12 +49,12 @@ class CoverageCalculator:
 
         # It is much faster to calculate bam-wide coverage all at once:
         # (__calculate_coverage_bam + __coverage_at_position_tabix)
-        # than doing the bam iterator method (__coverage_at_position_pileup) individual for each coordinant if the
+        # than doing the bam iterator method (__coverage_at_position_pileup) individual for each coordinate if the
         # number of reads is excessive. I haven't exactly pinpointed when the number of coordinates to examine reaches
         # this threshold, but I don't think it does too much damage anyway as the time to calculate WES coverage is
         # relatively low
 
-        if count <= 30000 or self.__is_cram is True:
+        if count <= 30000:
             self.__use_bam = True
         else:
             self.__use_bam = False
@@ -63,10 +63,22 @@ class CoverageCalculator:
 
     def __calculate_coverage_bam(self, output_file):
 
-        bt = bedtools.BedTool(self.input_bam)
-        bt._isbam = True ## This is ugly and is only required because pybedtools does not check for cram!
-        bg_file = bt.genome_coverage(bg=True)
-        bg_file.moveto(self.__input_path + ".bg")
+        print("Running bedtools...")
+        cmd = "bedtools genomecov -bg " + self.input_bam
+        proc = subprocess.Popen(cmd, shell=True, stdout=open(output_file, "w"), stderr=subprocess.PIPE)
+        stderr = proc.communicate()
+
+        if proc.returncode != 0:
+            print("The following bedtools command failed:")
+            print(cmd)
+            print("STDERROR follows\n")
+            print(stderr.decode('utf-8'))
+            raise
+
+        # bt = bedtools.BedTool(self.input_bam)
+        # bt._isbam = True ## This is ugly and is only required because pybedtools does not check for cram!
+        # bg_file = bt.genome_coverage(bg=True)
+        # bg_file.moveto(self.__input_path + ".bg")
 
         bgzip_and_tabix(output_file)
 
