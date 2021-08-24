@@ -105,6 +105,10 @@ Eugene J. Gardner, Alejandro Sifrim, Sarah J. Lindsay, Elena Prigmore, Diana Raj
 
 https://www.medrxiv.org/content/10.1101/2020.10.02.20194241v1
 
+For code used to generate figures/text for these manuscripts, please see the following repository:
+
+https://github.com/HurlesGroupSanger/indelible_paper
+
 ## Installation
 
 ### Required Software Dependencies
