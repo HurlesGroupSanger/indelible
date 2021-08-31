@@ -1,5 +1,4 @@
 import csv
-import pybedtools as bedtools
 import re
 import sys
 from indelible.indelible_lib import *
