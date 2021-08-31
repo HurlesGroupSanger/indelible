@@ -72,7 +72,7 @@ InDelible is likely to be adaptable to a wide range of sequencing technologies, 
 However, we have not specifically tested InDelible with:
 
 1. _Whole Genome Sequencing (WGS) Data_
-    - While InDelible should in theory be able to identify variants from WGS, the number of 
+    - While InDelible should, in theory, be able to identify variants from WGS, the number of 
 reads that InDelible has to process would likely result in significantly increased run-times. 
 
 2. _Other Diseases_
@@ -104,6 +104,10 @@ Eugene J. Gardner, Alejandro Sifrim, Sarah J. Lindsay, Elena Prigmore, Diana Raj
 **InDelible: Detection and Evaluation of Clinically-relevant Structural Variation from Whole Exome Sequencing.** medRxiv (2020).
 
 https://www.medrxiv.org/content/10.1101/2020.10.02.20194241v1
+
+For code used to generate figures/text for these manuscripts, please see the following repository:
+
+https://github.com/HurlesGroupSanger/indelible_paper
 
 ## Installation
 

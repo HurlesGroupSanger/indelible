@@ -1,6 +1,5 @@
-numpy
+numpy==1.17.2
 pandas
-pybedtools
 pyfaidx
 pysam
 scipy

@@ -1,5 +1,4 @@
 import csv
-import pybedtools as bedtools
 import re
 import sys
 from indelible.indelible_lib import *
@@ -116,9 +115,13 @@ def attach_db(v, db):
         key = normalize_chr(v["chrom"]) + ":" + v["position"]
         # While this is _slightly_ dangerous there should be a 0% chance that the key is not contained within this db.
         # (so long as the user didn't change the score cutoff during runtime...)
-        db_entry = db[key]
-        for key,value in db_entry.items():
-            v[key] = value
+        if key in db:
+            db_entry = db[key]
+            for key,value in db_entry.items():
+                v[key] = value
+        else:
+            raise ValueError('site ' + key + ' not found in database found in file provided to --d. Did you run database properly?')
+            sys.exit(1)
 
         return v
 
