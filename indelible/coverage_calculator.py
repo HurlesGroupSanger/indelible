@@ -14,7 +14,6 @@
 
 """
 
-import pybedtools as bedtools
 import subprocess
 from indelible.indelible_lib import *
 import pysam
