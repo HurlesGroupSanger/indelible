@@ -168,7 +168,6 @@ Indelible was tested with the following version of the packages in requirements.
 - cython v0.29.13
 - numpy v1.17.2
 - pandas v0.25.1
-- pybedtools v0.8.0
 - pyfaidx v0.5.5.2
 - pysam v0.15.3
 - scipy v1.3.1
