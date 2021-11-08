@@ -30,7 +30,7 @@ import random
 
 
 def build_priors(prior_file, final_frame):
-    priors_frame = pandas.read_csv("/Users/eg15/PycharmProjects/Indelible/test/test_db.txt",
+    priors_frame = pandas.read_csv(prior_file,
                                    sep="\t",
                                    header=None,
                                    names = ("chrom", "pos", "pct", "counts", "tot", "otherside", "mode", "svtype",
