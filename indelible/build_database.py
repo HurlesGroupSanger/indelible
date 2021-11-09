@@ -34,6 +34,7 @@ def build_priors(prior_file, final_frame):
                                    sep="\t",
                                    header=None,
                                    index_col=False,
+                                   low_memory=False,
                                    names = ("chrom", "pos", "pct", "counts", "tot", "otherside", "mode", "svtype",
                                             "size", "aln_length", "otherside_found", "is_primary", "variant_coord"))
     priors_frame["coord"] = priors_frame["chrom"].astype(str) + ":" + priors_frame["pos"].astype(str)
