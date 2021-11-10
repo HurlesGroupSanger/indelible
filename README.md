@@ -445,6 +445,7 @@ from the initial DDD study described in our [manuscript](#how-to-cite-indelible)
 * `--config` : path to the config.yml file.
 * `--priors`: path to prior MAF database.
 * `--tb`: threads for multi-threaded bwa mem alignment [default: 1]
+* `--old-maf`: Use MAF from priors file rather than from sample(s)
 
 ```
 ls InDelible_files/*.scored > fofn.txt
@@ -454,8 +455,8 @@ ls InDelible_files/*.scored > fofn.txt
 *Note* The MAF database provided to `--prior` must conform to the following format:
 
 ```
-1   1234    0.0001  1   10000   1_1256  REALN   DEL 21  15  true    true   1:1234-1256
-1   1256    0.0001  1   10000   1_1234  REALN   DEL 21  15  true    false   1:1234-1256    
+1   1234    0.0001  1   10000   10.5    1_1256  REALN   DEL 21  15  true    true   1:1234-1256
+1   1256    0.0001  1   10000   45.2    1_1234  REALN   DEL 21  15  true    false   1:1234-1256    
 ```
 
 Where columns are:
@@ -465,13 +466,15 @@ Where columns are:
 3. Breakpoint frequency
 4. Breakpoint count (i.e. number of individuals with this breakpoint)
 5. Total individuals assessed
-6. Alignment coordinate – where the split read from the score file aligned to in 'chr_position' (can be NA)
-7. SV Type (either DEL/DUP/INS/TRANS_SEGDUP/UNK)
-8. SV Size (can be NA)
-9. Alignment Length (can be NA)
-10. Otherside found elsewhere in MAF database?
-11. Is this the left-most breakpoint when '10.' == true? (can be NA)
-12. VCF-like coordinate for this variant (can be NA)
+6. Mean coverage overlapping this locus
+7. Alignment coordinate – where the split read from the score file aligned to in 'chr_position' (can be NA)
+8. Alignment mode – Did we align with bwa (REALN), blast (BLAST_REPEAT), or fail (FAIL_*)? 
+9. SV Type (either DEL/DUP/INS/TRANS_SEGDUP/UNK)
+10. SV Size (can be NA)
+11. Alignment Length (can be NA)
+12. Otherside found elsewhere in MAF database?
+13. Is this the left-most breakpoint when '10.' == true? (can be NA)
+14. VCF-like coordinate for this variant (can be NA)
 
 We have provided a priors file within the data.zip file included with InDelible. We recommend using this file when
 analysing a small number of genomes.
@@ -521,6 +524,8 @@ All steps in the InDelible calling pipeline can be performed in succession autom
 * `--p` : path to paternal CRAM/BAM file. [optional]
 * `--keeptmp` : If this flag is given, intermediate files are kept. Otherwise these files will be removed once the analysis is finished.
 * `--config` : path to the config.yml file.
+* `--priors`: path to prior MAF database.
+* `--old-maf`: Use MAF from priors file rather than from sample(s)
 
 ```
 ./indelible.py complete --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o test_data/ --r hs37d5.fasta --keeptmp --m maternal.bam --p paternal.bam

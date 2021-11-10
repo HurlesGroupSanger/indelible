@@ -48,6 +48,7 @@ subparser.add_argument('--f', help='File of files from the score command represe
 subparser.add_argument('--r', help='path to reference genome', metavar="<reference_path>", required=True, dest="reference_path")
 subparser.add_argument('--o', help='path to output file', metavar="<output_path>", required=True, dest="output_path")
 subparser.add_argument('--priors', help='path to priors MAF database [optional]', metavar="<priors>", required=False, dest="priors", default=None)
+subparser.add_argument('--old-maf', help='Use MAF from the priors file for rediscovered loci?', metavar="<old_maf>", dest="old_maf", action='store_const', const = True)
 subparser.add_argument('--tb', help='number of threads to use for bwa alignment. [1]', metavar="<bwa_thread>", required=False, dest="bwa_thread",default=1)
 
 subparser = subparsers.add_parser('annotate', help='annotate positions with additional information')
@@ -71,6 +72,7 @@ subparser.add_argument('--r', help='path to reference genome', metavar="<referen
 subparser.add_argument('--m', help='path to maternal BAM file', metavar="<mother_bam_path>", required=False, dest="mother_bam")
 subparser.add_argument('--p', help='path to paternal BAM file', metavar="<father_bam_path>", required=False, dest="father_bam")
 subparser.add_argument('--priors', help='path to priors MAF database [optional]', metavar="<priors>", required=False, dest="priors", default=None)
+subparser.add_argument('--old-maf', help='Use MAF from the priors file for rediscovered loci?', metavar="<old_maf>", dest="old_maf", action='store_const', const = True)
 subparser.add_argument('--tb', help='number of threads to use for bwa alignment. [1]', metavar="<bwa_thread>", required=False, dest="bwa_thread",default=1)
 subparser.add_argument('--keeptmp', action='store_const', const=True,  dest="keep_tmp")
 
@@ -143,7 +145,7 @@ if args.command == "score":
 DATABASE command
 """
 if args.command == "database":
-    indelible.build_database(args.fof, args.output_path, args.reference_path, config, args.priors, args.bwa_thread)
+    indelible.build_database(args.fof, args.output_path, args.reference_path, config, args.priors, args.old_maf, args.bwa_thread)
 
 """
 ANNOTATE command
@@ -207,7 +209,7 @@ if args.command == "complete":
     print(("%s: Scoring positions..." % timestamp()))
     indelible.score_positions(counts_path, scored_path, config)
     print(("%s: Building InDelible database and adding priors..." % timestamp()))
-    indelible.build_database(score_list_path, db_path, args.reference_path, config, args.priors, args.bwa_thread)
+    indelible.build_database(score_list_path, db_path, args.reference_path, config, args.priors, args.old_maf, args.bwa_thread)
     print(("%s: Annotating positions..." % timestamp()))
     indelible.annotate(scored_path, annotated_path, db_path, config)
     shutil.copy(annotated_path,final_path)
