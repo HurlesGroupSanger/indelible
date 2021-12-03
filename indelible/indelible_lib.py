@@ -24,6 +24,7 @@ def bam_open(bam_file):
         bam_reader = pysam.Samfile(bam_file, 'rc')
         is_cram = True
     else:
+        bam_reader = None
         raise Exception("Provided .bam/.cram does not appear to be named/formatted correctly... Exiting!")
 
     return {"reader": bam_reader, "is_cram": is_cram}

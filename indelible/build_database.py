@@ -38,7 +38,7 @@ def build_priors(prior_file, final_frame, fasta):
                                             "size", "aln_length", "otherside_found", "is_primary", "variant_coord"),
                                    dtype = {'chrom': pandas.CategoricalDtype(categories = fasta.references, ordered=True), 'pos': np.int, 'pct': np.float, 'counts': np.int,
                                             'tot': np.int, 'coverage': np.float, 'otherside': np.str, 'mode': np.str, 'svtype': np.str,
-                                            'size': np.float, 'aln_length': np.float, 'otherside_found': "boolean", 'is_primary': np.str,
+                                            'size': np.float, 'aln_length': np.float, 'otherside_found': "bool", 'is_primary': np.str,
                                             'variant_coord': np.str})
     priors_frame["coord"] = priors_frame["chrom"].astype(str) + ":" + priors_frame["pos"].astype(str)
     priors_frame = priors_frame.set_index("coord")
