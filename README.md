@@ -122,9 +122,9 @@ InDelible requires the following software to be installed and in `$PATH`:
 * [tabix](http://www.htslib.org/download/) 
 * [bgzip](http://www.htslib.org/download/)
 * [bwa](https://github.com/lh3/bwa)
-
-The python package Biopython requires a local install of [blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
- in `$PATH` in order to function. This needs to be installed prior to [installing InDelible](#installing-InDelible).
+* [blast](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
+    * The python package Biopython requires a local install of in `$PATH` in order to function. This needs to be installed
+      prior to [installing InDelible](#installing-InDelible).
 
 ### Installing InDelible on a Local Machine
 
@@ -154,16 +154,23 @@ python3 -m venv venv/
 source venv/bin/activate
 ```
 
-3. Install cython and other required packages:
+3. Install cython, numpy, and other required packages:
 
 ```
-pip install cython
+pip install "cython==0.29.13"
+pip install "numpy==1.17.2"
 pip install -r requirements.txt
 ```
 
-**Note**: If you get error(s) about pysam not being able to load specific libraries (like openssl, libbz2, etc.) that is a pysam problem related to htslib. Please see the pysam website to get help.
+**Note**: If you get error(s) about pysam not being able to load specific libraries (like openssl, libbz2, etc.) 
+that is a pysam problem related to htslib. Please see the pysam website to get help.
 
-Indelible was tested with the following version of the packages in requirements.txt:
+**Note**: We have tested this installation protocol, but other versions of pip may try to install packages out of order.
+If you get errors pertaining to dependencies stored within `requirements.txt`, you may need to install them one at a time
+in the order listed in `requirements.txt`. In particular, pandas may not properly install unless numpy is installed first,
+as we have done above.
+
+Indelible was tested with the following package versions:
 
 - cython v0.29.13
 - numpy v1.17.2
@@ -519,16 +526,16 @@ All steps in the InDelible calling pipeline can be performed in succession autom
 * `--i` : path to the input CRAM/BAM file.
 * `--o` : path to directory where output files will be generated.
 * `--r` : path to reference genome
-* `--d` : path to the InDelible frequency [database](#database).
 * `--m` : path to maternal CRAM/BAM file. [optional]
 * `--p` : path to paternal CRAM/BAM file. [optional]
 * `--keeptmp` : If this flag is given, intermediate files are kept. Otherwise these files will be removed once the analysis is finished.
 * `--config` : path to the config.yml file.
 * `--priors`: path to prior MAF database.
 * `--old-maf`: Use MAF from priors file rather than from sample(s)
+* `--tb`: threads for multi-threaded bwa mem alignment [default: 1]
 
 ```
-./indelible.py complete --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o test_data/ --r hs37d5.fasta --keeptmp --m maternal.bam --p paternal.bam
+./indelible.py complete --i test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam --o test_data/ --r data/hs37d5.fa --keeptmp --config example_config.hg19.yml --p data/Indelible_db_10k.bed
 ```
 
 For InDelible _de novo_ discovery behaviour when not providing maternal or paternal bams, please see [de novo](#6-denovo).

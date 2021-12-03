@@ -255,7 +255,7 @@ def build_database(score_files, output_path, fasta, config, priors, old_maf, bwa
     output_maf_db.flush()
 
     ## Check priors and append to the bottom:
-    if priors_frame is not None:
+    if priors is not None:
         priors_frame = priors_frame[priors_frame["already_found"] == False]
         priors_frame = priors_frame.drop("already_found", axis = 1)
         for index, row in priors_frame.iterrows():

@@ -20,7 +20,7 @@ today = time.strftime('%Y%m%d')
 def timestamp():
     return time.strftime('%d/%m/%y - %H:%M:%S')
 
-version = "1.1.2"
+version = "1.1.3"
 
 parser = argparse.ArgumentParser(prog='indelible',description="InDelible v" + version + " -- Structural variant discovery with split reads.\n\n")
 subparsers = parser.add_subparsers(help='One of the following commands:',dest="command",metavar="<command>")
