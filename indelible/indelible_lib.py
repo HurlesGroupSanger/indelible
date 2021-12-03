@@ -23,8 +23,10 @@ def bam_open(bam_file):
     elif 'cram' in bam_file:
         bam_reader = pysam.Samfile(bam_file, 'rc')
         is_cram = True
+    else:
+        raise Exception("Provided .bam/.cram does not appear to be named/formatted correctly... Exiting!")
 
-    return {"reader":bam_reader, "is_cram": is_cram}
+    return {"reader": bam_reader, "is_cram": is_cram}
 
 
 def hard_clip(seq, qual, threshold=10):
