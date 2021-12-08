@@ -4,22 +4,31 @@
 
 1. [Development Team](#development-team)
 2. [About InDelible](#about-indelible)
+    * [Abstract](#abstract)
+    * [What is InDelible for?](#what-is-indelible-for-)
+    * [Potential Limitations of InDelible](#potential-limitations-of-indelible)
+    * [How to Cite InDelible](#how-to-cite-indelible)
+        + [Peer-Reviewed _Open Access_ Manuscript](#peer-reviewed--open-access--manuscript)
+        + [Preprint](#preprint)
 3. [Installation](#installation)
-
-    a. [Required Software Dependencies](#required-software-dependencies)
-    
-    b. [Local Installation](#installing-indelible-on-a-local-machine)
-    
-    c. [Using vr-runner](#using-vr-runner) 
-    
-    d. [Docker & Singularity](#using-singularity-or-docker)
-    
+    * [Required Software Dependencies](#required-software-dependencies)
+    * [Installing InDelible on a Local Machine](#installing-indelible-on-a-local-machine)
+    * [Using vr-runner](#using-vr-runner)
+    * [Using Singularity or Docker](#using-singularity-or-docker)
 4. [Usage](#usage)
+    * [Primary SV Calling Pipeline](#primary-sv-calling-pipeline)
+        + [1. Fetch](#1-fetch)
+        + [2. Aggregate](#2-aggregate)
+        + [3. Score](#3-score)
+        + [4. Database](#4-database)
+        + [5. Annotate](#5-annotate)
+        + [6. Denovo](#6-denovo)
+    * [Additional Commands](#additional-commands)
+        + [InDelible Complete](#indelible-complete)
+        + [Train](#train)
 5. [Output](#output)
-    
-    a. [Primary TSV File](#primary-tsv-file)
-    
-    b. [Recommended Filtering](#recommended-filtering)
+    * [Primary TSV File](#primary-tsv-file)
+    * [Recommended Filtering](#recommended-filtering)
 
 ## Development Team
 
@@ -38,6 +47,8 @@ Matthew Hurles (Group Leader)
 We are affiliated with the [Wellcome Sanger Institute](http://www.sanger.ac.uk/science/groups/hurles-group), Cambridge, United Kingdom
 
 ## About InDelible
+
+Version 1.1.3
 
 ### Abstract
 
@@ -94,16 +105,19 @@ reads that InDelible has to process would likely result in significantly increas
 
 ### How to Cite InDelible
 
-_Peer-Reviewed Manuscript_
-
-t.b.d.
-
-_Preprint_
+#### Peer-Reviewed _Open Access_ Manuscript
 
 Eugene J. Gardner, Alejandro Sifrim, Sarah J. Lindsay, Elena Prigmore, Diana Rajan, Petr Danecek, Giuseppe Gallone, Ruth Y. Eberhardt, Hilary C. Martin, Caroline F. Wright, David R. FitzPatrick, Helen V. Firth, Matthew E. Hurles.
-**InDelible: Detection and Evaluation of Clinically-relevant Structural Variation from Whole Exome Sequencing.** medRxiv (2020).
+**Detecting cryptic clinically relevant structural variation in exome-sequencing data increases diagnostic yield for developmental disorders.** _The American Journal of Human Genetics_ (2021).
 
-https://www.medrxiv.org/content/10.1101/2020.10.02.20194241v1
+https://www.cell.com/ajhg/fulltext/S0002-9297(21)00346-3
+
+#### Preprint
+
+Eugene J. Gardner, Alejandro Sifrim, Sarah J. Lindsay, Elena Prigmore, Diana Rajan, Petr Danecek, Giuseppe Gallone, Ruth Y. Eberhardt, Hilary C. Martin, Caroline F. Wright, David R. FitzPatrick, Helen V. Firth, Matthew E. Hurles.
+**Detecting cryptic clinically-relevant structural variation in exome sequencing data increases diagnostic yield for developmental disorders.** medRxiv (2021).
+
+https://www.medrxiv.org/content/10.1101/2020.10.02.20194241v2
 
 For code used to generate figures/text for these manuscripts, please see the following repository:
 
@@ -315,25 +329,58 @@ Additional commands for run-indelible:
 
 ### Using Singularity or Docker
 
-We have developed both a [Docker](https://www.docker.com/) and derived [Singularity](https://sylabs.io/docs/) VM image to enable quick deployment of InDelible to both local and cloud compute platforms.
-The InDelible docker image is available through [Docker Hub](https://hub.docker.com/) here: 
+We have developed both a [Docker](https://www.docker.com/) and derived [Singularity](https://sylabs.io/docs/) VM image 
+to enable quick deployment of InDelible to both local and cloud compute platforms. The InDelible docker image is 
+available through [Docker Hub](https://hub.docker.com/) here: 
 
 https://hub.docker.com/repository/docker/mercury/indelible
- 
-Please see Docker's documentation for information on running InDelible via the Docker framework.
 
-We have also developed a separate github repository which hosts the associated InDelible Dockerfile as well as instructions for converting this Dockerfile into
-a Singularity image:
+This Docker/Singularity image contains both an install of InDelible running on Python3.7 as well as required
+library files as described in the [local install](#installing-indelible-on-a-local-machine) instructions. We describe here
+a basic command-line for running InDelible via Singularity. Please see the [Singularity documentation](https://sylabs.io/docs/)
+for more detail instructions for running Singularity itself. Docker can then be run for either Hg38 or Hg19 using the 
+following example command for the [complete subcommand](#indelible-complete):
+
+```commandline
+# pull the docker image:
+docker pull mercury/indelible:hg19_feb0a6f
+
+# Example with hg19
+docker run -v /home/user/:/scratch/ mercury/indelible python3 indelible.py complete \
+    --config config.hg19.yml \
+    --i /scratch/indelible/test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam \
+    --o /scratch/indelible/test_data/ \
+    --r data/hs37d5.fa \
+    --priors data/Indelible_db_10k.bed
+
+# Example with hg38
+docker run -v /home/user/:/scratch/ mercury/indelible python3 indelible.py complete \
+    --config config.hg38.yml \
+    --i /scratch/indelible/test_data/DDD_MAIN5194229_Xchrom_subset_sorted.hg38.bam \
+    --o /scratch/indelible/test_data/ \
+    --r data/GRCh38_full_analysis_set.fa \
+    --priors data/Indelible_db_10k.hg38.bed
+```
+
+Additional notes on the above command(s):
+
+1. The docker pull command will change according to the latest tag on Dockerhub. This tag _should_ align with the current
+   version number, but please check dockerhub to be sure
+1. `-v` simply mounts the current home directory as a directory within the Docker instance. This will need to be modified 
+   according to your local file system
+2. If any of the files provided to `config.*.yml` need to be modified, you will need to create a new config file outside
+   of the Docker instance and provide modified paths.
+
+The `Dockerfile` used to create this image is available as part of this repository (`./Dockerfile`). We have also 
+developed a separate github repository which hosts both this Dockerfile and instructions for converting this Dockerfile
+into a Singularity image:
 
 https://github.com/wtsi-hgi/indelible-docker/tree/master
 
-This Docker/Singularity image contains both an install of InDelible running on Python3.7 as well as all of the required 
-library files as described in the [local install](#installing-indelible-on-a-local-machine) instructions. We describe here 
-a basic command-line for running InDelible via Singularity. Please see the [Singularity documentation](https://sylabs.io/docs/) for more detail instructions
-for running Singularity itself.
+An example singlularity command follows:
 
 ```
-/software/singularity-v3.5.3/bin/singularity exec \
+singularity exec \
     -c \
     --cleanenv \
     --bind /path/to/local/storage/device/ \
@@ -356,9 +403,9 @@ Additional notes on the above command:
 3. `--pwd` is the location of the InDelible directory **within** the Singularity image. This part of the command line **must not** be changed.
 4.  `--r` and `--d` point to reference files within the Singularity image. The other references files are also located within the Singularity instance at `4.  `--r` and `--d` point to reference files within the Singularity image. Prebuilt references files are also located within the Singularity instance at /usr/src/app/Indelible/data`.
   
-**Big Note**: If using InDelible for anything beyond the built-in data files (i.e. on files aligned to other human references), 
-you will need to generate a local version of the `config.hg19.yml` file, edit it to point to your own resource files, and then point 
-indelible.py to it with `--config /path/to/config.new.yml`. The paths in `config.new.yml` can reflect a mix of both local paths and 
+**Big Note**: If using InDelible for anything beyond the built-in data files, you will need to generate a local version 
+of the `config.hg19.yml` file, edit it to point to your own resource files, and then point indelible.py to it with 
+`--config /path/to/config.new.yml`. The paths in `config.new.yml` can reflect a mix of both local paths and 
 paths already within the Singularity instance.
 
 ## Usage
