@@ -343,10 +343,10 @@ following example command for the [complete subcommand](#indelible-complete):
 
 ```commandline
 # pull the docker image:
-docker pull mercury/indelible:hg19_feb0a6f
+docker pull mercury/indelible:1.1.3
 
 # Example with hg19
-docker run -v /home/user/:/scratch/ mercury/indelible python3 indelible.py complete \
+docker run -v /home/user/:/scratch/ mercury/indelible python indelible.py complete \
     --config config.hg19.yml \
     --i /scratch/indelible/test_data/DDD_MAIN5194229_Xchrom_subset_sorted.bam \
     --o /scratch/indelible/test_data/ \
@@ -354,7 +354,7 @@ docker run -v /home/user/:/scratch/ mercury/indelible python3 indelible.py compl
     --priors data/Indelible_db_10k.bed
 
 # Example with hg38
-docker run -v /home/user/:/scratch/ mercury/indelible python3 indelible.py complete \
+docker run -v /home/user/:/scratch/ mercury/indelible python indelible.py complete \
     --config config.hg38.yml \
     --i /scratch/indelible/test_data/DDD_MAIN5194229_Xchrom_subset_sorted.hg38.bam \
     --o /scratch/indelible/test_data/ \
@@ -364,7 +364,7 @@ docker run -v /home/user/:/scratch/ mercury/indelible python3 indelible.py compl
 
 Additional notes on the above command(s):
 
-1. The docker pull command will change according to the latest tag on Dockerhub. This tag _should_ align with the current
+1. The docker pull command will change according to the latest tag (e.g. `1.1.3`) on Dockerhub. This tag _should_ align with the current
    version number, but please check dockerhub to be sure
 1. `-v` simply mounts the current home directory as a directory within the Docker instance. This will need to be modified 
    according to your local file system
