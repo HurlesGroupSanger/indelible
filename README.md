@@ -365,9 +365,9 @@ docker run -v /home/user/:/scratch/ mercury/indelible python indelible.py comple
 Additional notes on the above command(s):
 
 1. The docker pull command will change according to the latest tag (e.g. `1.1.3`) on Dockerhub. This tag _should_ align with the current
-   version number, but please check dockerhub to be sure
+   version number, but please check dockerhub to be sure. One can also pull the default tag (`latest`).
 1. `-v` simply mounts the current home directory as a directory within the Docker instance. This will need to be modified 
-   according to your local file system
+   according to your local file system.
 2. If any of the files provided to `config.*.yml` need to be modified, you will need to create a new config file outside
    of the Docker instance and provide modified paths.
 
