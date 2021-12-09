@@ -30,6 +30,9 @@ WORKDIR /usr/src/app/indelible/data/
 RUN unzip data_hg19.zip \
     && unzip -n data_hg38.zip
 
+# indelible.py looks for python ("#!/usr/bin/env python"), but it requires python3
+RUN ln -s /usr/bin/python3 /usr/bin/python && chmod a+rx /usr/bin/python
+
 ## Download the GRCh37 human reference and create blastdb.
 ADD https://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz hs37d5.fa.gz
 # Have to do exit 0 because of odd exit behaviour from gunzip
