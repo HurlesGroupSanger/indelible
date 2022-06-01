@@ -490,7 +490,7 @@ The **score** command scores positions based on the read information and sequenc
 #### 4. Database
 
 The **database** command generates the allele frequency and breakpoint database required for the next step – [Annotate](#5-annotate). 
-If analysing a small amount of data, it is highly recommended to use the '-p' flag with this command to include breakpoints
+If analysing a small amount of data, it is highly recommended to use the '--priors' flag with this command to include breakpoints
 from the initial DDD study described in our [manuscript](#how-to-cite-indelible).
 
 * `--f` : file of files to merge to generate split read "allele frequencies"
